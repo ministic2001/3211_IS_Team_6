@@ -1,4 +1,5 @@
 from kepconfig import connection, admin, connectivity
+import json
 
 # 172.16.2.77 if at lv 7
 # 172.16.2.223 if at lv 6
@@ -6,23 +7,67 @@ server = connection.server(host = '172.16.2.77', port = 57412, user = 'Administr
 
 DATA = ""
 
-print(server.get_info())
+### Get Server info
+#print(server.get_info())
 
-print(admin.users.get_all_users(server))
+### Get all users
+#print(admin.users.get_all_users(server))
 
-print(admin.users.enable_user(server, "User1"))
+### Enable/Disable single user
+#print(admin.users.enable_user(server, "User1"))
+#print(admin.users.disable_user(server, "User1"))
 
-print(admin.users.get_user(server, "User1"))
+### Get single user to confirm
+#print(admin.users.get_user(server, "administrator"))
+#print(admin.users.get_user(server, "bigboi"))
 
+### Get all user groups
+#print(json.dumps(admin.user_groups.get_all_user_groups(server), indent=4))
 
-#Get all channel
-print("\n\n" + str(connectivity.channel.get_all_channels(server)))
+### Get single user group
+print(json.dumps(admin.user_groups.get_user_group(server, "readtesting"), indent=4))
 
-#After getting channel, get single device within channel
+### Modify user group permissions
+# print(json.dumps(admin.user_groups.modify_user_group(server, {"common.ALLTYPES_DESCRIPTION": "Built-in group for bigboi", "libadminsettings.USERMANAGER_IO_TAG_READ": "Enable" 
+#         # "libadminsettings.USERMANAGER_GROUP_ENABLED": "true",
+#         # "libadminsettings.USERMANAGER_IO_TAG_READ": "true" , 
+#         # "libadminsettings.USERMANAGER_IO_TAG_WRITE": "true",
+#         # "libadminsettings.USERMANAGER_IO_TAG_DYNAMIC_ADDRESSING": "true",
+#         # "libadminsettings.USERMANAGER_SYSTEM_TAG_READ": "true",
+#         # "libadminsettings.USERMANAGER_SYSTEM_TAG_WRITE": "true",
+#         # "libadminsettings.USERMANAGER_INTERNAL_TAG_READ": "true",
+#         # "libadminsettings.USERMANAGER_INTERNAL_TAG_WRITE": "true",
+#         # "libadminsettings.USERMANAGER_SERVER_MANAGE_LICENSES": "true",
+#         # "libadminsettings.USERMANAGER_SERVER_RESET_OPC_DIAGS_LOG": "true",
+#         # "libadminsettings.USERMANAGER_SERVER_RESET_COMM_DIAGS_LOG": "true",
+#         # "libadminsettings.USERMANAGER_SERVER_MODIFY_SERVER_SETTINGS": "true",
+#         # "libadminsettings.USERMANAGER_SERVER_DISCONNECT_CLIENTS": "true",
+#         # "libadminsettings.USERMANAGER_SERVER_RESET_EVENT_LOG": "true",
+#         # "libadminsettings.USERMANAGER_SERVER_OPCUA_DOTNET_CONFIGURATION": "true",
+#         # "libadminsettings.USERMANAGER_SERVER_CONFIG_API_LOG_ACCESS": "true",
+#         # "libadminsettings.USERMANAGER_SERVER_REPLACE_RUNTIME_PROJECT": "true",
+#         # "libadminsettings.USERMANAGER_BROWSE_BROWSENAMESPACE": "true",
+#         # "libadminsettings.USERMANAGER_SERVER_VIEW_EVENT_LOG_SECURITY": "true",
+#         # "libadminsettings.USERMANAGER_SERVER_VIEW_EVENT_LOG_ERROR": "true",
+#         # "libadminsettings.USERMANAGER_SERVER_VIEW_EVENT_LOG_WARNING": "true",
+#         # "libadminsettings.USERMANAGER_SERVER_VIEW_EVENT_LOG_INFO": "true"
+#         }, user_group="readtesting"), indent=4)) 
 
-print("\n\n" + str(connectivity.device.get_device(server, "SmartMeter.Device10")))
+### Get all channel
+#print("\n\n" + json.dumps(connectivity.channel.get_all_channels(server), indent=4))
 
-#After getting channel, get all device within channel
-
+### After getting channel, get all device within channel
 #print("\n\n" + str(connectivity.device.get_all_devices(server, "SmartMeter")))
+
+### After getting channel, get single device within channel
+#print("\n\n" + json.dumps(connectivity.device.get_device(server, "SmartMeter.ministicHACKED"), indent=4))
+ 
+###  Add Device to spoof 
+#print("ADD DEVICE: " + json.dumps(connectivity.device.add_device(server, "SmartMeter", {"common.ALLTYPES_NAME": "Device69", "servermain.MULTIPLE_TYPES_DEVICE_DRIVER": "Modbus RTU Serial", "servermain.DEVICE_SCAN_MODE_RATE_MS": 8888888}), indent=4))
+#print("\n" + json.dumps(connectivity.device.get_device(server, "SmartMeter.Device69"), indent=4))
+
+### Delete Device 
+#print("DELETE DEVICE: " + json.dumps(connectivity.device.del_device(server, "SmartMeter.Device69"), indent=4))
+
+
 
