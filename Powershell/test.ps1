@@ -1,6 +1,4 @@
-# CSV file structure should be:
-# Username,Password
-# user1,pass1
+# Run bruteforceWindowsOS.ps1 first to get the password, then run this script to get the process list.
 
 # Import a CSV file with credentials
 $credentialFile = Import-Csv -Path "Powershell\credentials.csv"

