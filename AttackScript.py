@@ -459,6 +459,7 @@ def changeBaudRate():
     executable_path = current_directory + "\\modpoll.exe"
 
     # Call checkBaudRate to determine current baudrate
+    print(f"HEY HEY R U PRINTING")
     current_baudrate = checkBaudRate()
     print(f"Current BaudRate:{current_baudrate}")
 
@@ -468,12 +469,15 @@ def changeBaudRate():
     if current_baudrate == "4800":
         new_baudrate = "1"
         identifyBR = "9600"
+        print(f"Went thru 1")
     elif current_baudrate == "9600":
         new_baudrate = "2"
         identifyBR = "19200"
+        print(f"Went thru 2")
     elif current_baudrate == "19200":
         new_baudrate = "0"
         identifyBR = "4800"
+        print(f"Went thru 3")
     else:
         print("Error: Unknown baudrate")
         return
@@ -521,16 +525,18 @@ def checkBaudRate():
 
     for baudrate in baudrate_list:
         parameters = ["-b", baudrate, "-p", "none", "-m", "rtu", "-a", "25", "-r", "206", "-1", "COM1"]
-        cp = run([executable_path] + parameters, stdout=PIPE, check=False)
+        cp = run([executable_path] + parameters, stdout=PIPE, stderr=PIPE, check=False)
         baudRateOutput = cp.stdout.decode('utf-8').strip().split()
 
-        print(f"Checking baudrate {baudrate}: \n")
-        print(baudRateOutput)
+        print(f"Checking baudrate {baudrate}:")
+        # print(baudRateOutput)
        
         if "[206]:" in baudRateOutput:
-            print(f"Baudrate is {baudrate}")
+            print(f"Baudrate is {baudrate}\n")
+            found_baudrate = baudrate
+            break
         else:
-            print(f"Baudrate is not {baudrate}")
+            print(f"Baudrate is not {baudrate}\n")
         
     try: 
         service_name = "KEPServerEXV6"
