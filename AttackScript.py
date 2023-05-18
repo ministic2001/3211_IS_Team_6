@@ -498,26 +498,17 @@ def checkBaudRate():
     baudrate_list = ["4800", "9600", "19200"]
 
     for baudrate in baudrate_list:
-        parameters = ["-b", baudrate, "-p", "none", "-m", "rtu", "-a", "25", "-r", "206", "COM1"]
-        baudRateOutput = check_call([executable_path] + parameters)
+        parameters = ["-b", baudrate, "-p", "none", "-m", "rtu", "-a", "25", "-r", "206", "-1", "COM1"]
+        cp = run([executable_path] + parameters, stdout=PIPE, check=False)
+        baudRateOutput = cp.stdout.decode('utf-8').strip().split()
 
         print(f"Checking baudrate {baudrate}: \n")
-        print(baudRateOutput.stdout)
-        if "Smgth" in baudRateOutput.stdout:
-            found_baudrate = baudrate
-            print("WORKS!")
-            break
-        # checkmodpoll = run(['modpoll.exe', "-1", "-b", '9600', '-p', 'none', '-m', 'rtu', '-a', '2', 'COM1'], stdout=PIPE, stderr=PIPE, text=True)
-
-        # if "Polling" in checkmodpoll.stdout:
-        #     print("Modinterrupt is running \nOk.\n")
-        #     parameters = ["-b", "9600", "-p", "none", "-m", "rtu", "-a", "2", "COM1"]
-        #     try:
-        #         run(['modpoll.exe', "-b", '9600', '-p', 'none', '-m', 'rtu', '-a', '2', 'COM1'], stdout=PIPE, stderr=PIPE, text=True)
-        #     except CalledProcessError as e:
-        #         print("Error executing the executable file:", e)
-        # else:
-        #     print("Modinterrupt is not running. \n Fail.\n")
+        print(baudRateOutput)
+       
+        if "[206]:" in baudRateOutput:
+            print(f"Baudrate is {baudrate}")
+        else:
+            print(f"Baudrate is not {baudrate}")
         
     try: 
         service_name = "KEPServerEXV6"
