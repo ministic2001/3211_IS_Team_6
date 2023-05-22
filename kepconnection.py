@@ -8,23 +8,29 @@ server = connection.server(host = '172.16.2.77', port = 57412, user = 'Administr
 DATA = ""
 
 ### Get Server info
-#print(server.get_info())
+print("=====SERVER INFORMATION:=====")
+print(server.get_info())
 
 ### Get all users
-#print(admin.users.get_all_users(server))
+print("\n\n=====GET ALL USERS:=====")
+print(admin.users.get_all_users(server))
 
 ### Enable/Disable single user
-#print(admin.users.enable_user(server, "User1"))
-#print(admin.users.disable_user(server, "User1"))
+print("\n\n=====ENABLING AND DISABLING USER 1:=====")
+print(admin.users.enable_user(server, "User1"))
+# print(admin.users.disable_user(server, "User1"))
 
 ### Get single user to confirm
-#print(admin.users.get_user(server, "administrator"))
-#print(admin.users.get_user(server, "bigboi"))
+print("\n\n=====GET SINGLE USER:=====")
+print(admin.users.get_user(server, "administrator"))
+print(admin.users.get_user(server, "bigboi"))
 
 ### Get all user groups
-#print(json.dumps(admin.user_groups.get_all_user_groups(server), indent=4))
+print("\n\n=====GET ALL USER GROUPS:=====")
+print(json.dumps(admin.user_groups.get_all_user_groups(server), indent=4))
 
 ### Get single user group
+print("\n\n=====GET SINGLE USER GROUP:=====")
 print(json.dumps(admin.user_groups.get_user_group(server, "readtesting"), indent=4))
 
 ### Modify user group permissions
@@ -54,19 +60,24 @@ print(json.dumps(admin.user_groups.get_user_group(server, "readtesting"), indent
 #         }, user_group="readtesting"), indent=4)) 
 
 ### Get all channel
-#print("\n\n" + json.dumps(connectivity.channel.get_all_channels(server), indent=4))
+print("\n\n=====GET ALL CHANNELS:=====")
+print("\n\n" + json.dumps(connectivity.channel.get_all_channels(server), indent=4))
 
 ### After getting channel, get all device within channel
-#print("\n\n" + str(connectivity.device.get_all_devices(server, "SmartMeter")))
+print("\n\n=====GET ALL DEVICES WITHIN CHANNEL:=====")
+print("\n\n" + str(connectivity.device.get_all_devices(server, "SmartMeter")))
 
 ### After getting channel, get single device within channel
-#print("\n\n" + json.dumps(connectivity.device.get_device(server, "SmartMeter.ministicHACKED"), indent=4))
+print("\n\n=====GET SINGLE DEVICE WITHIN CHANNEL:=====")
+print("\n\n" + json.dumps(connectivity.device.get_device(server, "SmartMeter.ministicHACKED"), indent=4))
  
 ###  Add Device to spoof 
-#print("ADD DEVICE: " + json.dumps(connectivity.device.add_device(server, "SmartMeter", {"common.ALLTYPES_NAME": "Device69", "servermain.MULTIPLE_TYPES_DEVICE_DRIVER": "Modbus RTU Serial", "servermain.DEVICE_SCAN_MODE_RATE_MS": 8888888}), indent=4))
-#print("\n" + json.dumps(connectivity.device.get_device(server, "SmartMeter.Device69"), indent=4))
+print("\n\n=====ADD DEVICE:=====")
+print("ADD DEVICE: " + json.dumps(connectivity.device.add_device(server, "SmartMeter", {"common.ALLTYPES_NAME": "Device69", "servermain.MULTIPLE_TYPES_DEVICE_DRIVER": "Modbus RTU Serial", "servermain.DEVICE_SCAN_MODE_RATE_MS": 8888888}), indent=4))
+print("\n" + json.dumps(connectivity.device.get_device(server, "SmartMeter.Device69"), indent=4))
 
 ### Delete Device 
+# print("=====DELETE DEVICE:=====")
 #print("DELETE DEVICE: " + json.dumps(connectivity.device.del_device(server, "SmartMeter.Device69"), indent=4))
 
 
