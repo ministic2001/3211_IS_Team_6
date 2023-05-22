@@ -1084,7 +1084,7 @@ def kep_disable_user(user):
 
 def kep_get_single_user(user):
     server = kep_connect()
-    print(admin.users.get_user(server, user),file=sys.stdoutt)
+    print(json.dumps(admin.users.get_user(server, user),indent=4),file=sys.stdoutt)
 
 
 if __name__ == '__main__':
