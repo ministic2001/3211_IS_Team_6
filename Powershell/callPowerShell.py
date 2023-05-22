@@ -16,7 +16,7 @@ def getPowershellPath():
     # Detect OS for PowerShell executable path (assumption, not final)
     ps_executable = None
     # Check Linux
-    if platform.system() == "Posix":
+    if platform.system() == "Linux":
         # Check if PowerShell is installed
         if os.path.exists("/usr/bin/pwsh"):
             ps_executable = "/usr/bin/pwsh"
@@ -151,7 +151,7 @@ def testPowershellLocally(command, outFile=None):
 # Demo of how to use the functions, uncomment each block to try it out
 
 # Grab the services from the machine with IP 172.16.2.77
-# startPowershellSession(ip='172.16.2.77', command='Get-Service')
+startPowershellSession(ip='172.16.2.77', command='Get-TimeZone')
 
 # Grab the services from your machine and save it to Powershell\Get-Service.csv
 # testCmd = convertToCommand(command='Get-Service | Export-CSV -Path "Powershell\\Get-Service.csv"')
