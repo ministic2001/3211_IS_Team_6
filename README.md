@@ -1,6 +1,6 @@
 # 3211_IS_Team_6
 
-pip install -r pip-install-requirements.txt
+To install the packages, type the command pip install -r requirements.txt.
 
 ## Gaining Access to the Windows
 ```
