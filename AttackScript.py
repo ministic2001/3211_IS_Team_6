@@ -1072,7 +1072,7 @@ def kep_server_info():
 
 def kep_get_all_users():
     server = kep_connect()
-    print(json.dumps(admin.users.get_all_users(server),indent=4))
+    print(json.dumps(admin.users.get_all_users(server),indent=4),file=sys.stdout)
 
 def kep_enable_user(user):
     server = kep_connect()
