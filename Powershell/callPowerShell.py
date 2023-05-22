@@ -16,7 +16,7 @@ def getPowershellPath():
     # Detect OS for PowerShell executable path (assumption, not final)
     ps_executable = None
     # Check Linux
-    if platform.system() == "Posix":
+    if platform.system() == "Linux":
         # Check if PowerShell is installed
         if os.path.exists("/usr/bin/pwsh"):
             ps_executable = "/usr/bin/pwsh"
