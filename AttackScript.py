@@ -905,7 +905,7 @@ zS4k0XE7GMLQRiQ8pLpFWLAF+t7xU/081wvKpWnmr0iQqPxSUc90qFs=
                
         cp = run('netsh advfirewall set allprofiles state on',stdout=PIPE , shell=True)
         if cp.stdout.decode('utf-8').strip() == "Ok.":
-            print("Revert Firewall diasble successfull.")
+            print("Revert Firewall diasble successful.")
         else:
             print("Revert Firewall diasble failed.")
         
