@@ -97,7 +97,7 @@ def startPowershellSession(ip, command, outFile=None):
     ps_executable = getPowershellPath()
 
     # Import a CSV file with credentials
-    with open("Powershell\credentials.csv", "r") as csv_file:
+    with open("credentials.csv", "r") as csv_file:
         # Read the first line of the CSV
             csv_reader = csv.DictReader(csv_file)
             for credRow in csv_reader:
@@ -151,7 +151,7 @@ def testPowershellLocally(command, outFile=None):
 # Demo of how to use the functions, uncomment each block to try it out
 
 # Grab the services from the machine with IP 172.16.2.77
-# startPowershellSession(ip='172.16.2.77', command='Get-Service')
+startPowershellSession(ip='172.16.2.77', command='Get-TimeZone')
 
 # Grab the services from your machine and save it to Powershell\Get-Service.csv
 # testCmd = convertToCommand(command='Get-Service | Export-CSV -Path "Powershell\\Get-Service.csv"')
