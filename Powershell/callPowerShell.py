@@ -97,7 +97,7 @@ def startPowershellSession(ip, command, outFile=None):
     ps_executable = getPowershellPath()
 
     # Import a CSV file with credentials
-    with open("credentials.csv", "r") as csv_file:
+    with open("Powershell\credentials.csv", "r") as csv_file:
         # Read the first line of the CSV
             csv_reader = csv.DictReader(csv_file)
             for credRow in csv_reader:
