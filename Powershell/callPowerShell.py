@@ -3,6 +3,7 @@
 import csv
 import subprocess
 import os
+import platform
 
 def getPowershellPath():
     """
@@ -15,15 +16,15 @@ def getPowershellPath():
     # Detect OS for PowerShell executable path
     ps_executable = None
     # Check Linux
-    if os.name == "posix":
+    if platform.system() == "Posix":
         # Check if PowerShell is installed
-        if os.path.exists("/usr/bin/powershell"):
-            ps_executable = "/usr/bin/powershell"
+        if os.path.exists("/usr/bin/pwsh"):
+            ps_executable = "/usr/bin/pwsh"
         else:
             print("PowerShell is not installed on this system.")
             exit()
     # Check Windows
-    elif os.name == "nt":
+    elif platform.system() == "Windows":
         # Check if PowerShell is installed
         if os.path.exists("C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"):
             ps_executable = "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
@@ -31,10 +32,10 @@ def getPowershellPath():
             print("PowerShell is not installed on this system.")
             exit()
     # Check macOS
-    elif os.name == "darwin":
+    elif platform.system() == "Darwin":
         # Check if PowerShell is installed
-        if os.path.exists("/usr/local/bin/powershell"):
-            ps_executable = "/usr/local/bin/powershell"
+        if os.path.exists("/usr/local/bin/pwsh"):
+            ps_executable = "/usr/local/bin/pwsh"
         else:
             print("PowerShell is not installed on this system.")
             exit()
@@ -112,7 +113,6 @@ def startPowershellSession(ip, command, outFile=None):
     if outFile:
         # Open the file for writing
         with open(outFile, "w") as f:
-            # Run the command and write the output to the file
             subprocess.call('{} -Command \"{}\"'.format(ps_executable, command), shell=True, stdout=f)
     # Else, just run and print the output of the command
     else:
@@ -151,7 +151,7 @@ def testPowershellLocally(command, outFile=None):
 # Demo of how to use the functions, uncomment each block to try it out
 
 # Grab the services from the machine with IP 172.16.2.77
-# startPowershellSession(ip='172.16.2.77', cmd='Get-Service')
+# startPowershellSession(ip='172.16.2.77', command='Get-Service')
 
 # Grab the services from your machine and save it to Powershell\Get-Service.csv
 # testCmd = convertToCommand(command='Get-Service | Export-CSV -Path "Powershell\\Get-Service.csv"')
@@ -162,7 +162,8 @@ def testPowershellLocally(command, outFile=None):
 # testPowershellLocally(command=testCmd)
 
 # Disable the Windows Firewall on the machine with IP 172.16.2.77
-# startPowershellSession(ip='172.16.2.77', cmd='Set-NetFirewallProfile -All -Enabled False')
+# startPowershellSession(ip='172.16.2.77', command='Set-NetFirewallProfile -All -Enabled False')
+# testPowershellLocally(command='Set-NetFirewallProfile -All -Enabled False')
 
 # Enable the Windows Firewall on the machine with IP 172.16.2.77
 # startPowershellSession(ip='172.16.2.77', cmd='Set-NetFirewallProfile -All -Enabled True')
