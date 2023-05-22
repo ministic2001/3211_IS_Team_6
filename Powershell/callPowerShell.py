@@ -13,7 +13,7 @@ def getPowershellPath():
         string: The path to the PowerShell executable.
     """
 
-    # Detect OS for PowerShell executable path
+    # Detect OS for PowerShell executable path (assumption, not final)
     ps_executable = None
     # Check Linux
     if platform.system() == "Posix":
