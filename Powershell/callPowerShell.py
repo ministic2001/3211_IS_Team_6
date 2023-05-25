@@ -4,46 +4,46 @@ import csv
 import subprocess
 import os
 import platform
+import shutil
 
 def getPowershellPath():
     """
     Helper function to get the path to the PowerShell executable. If it doesn't exist, stop the whole program.
-    
+
     Returns:
         string: The path to the PowerShell executable.
     """
 
     # Detect OS for PowerShell executable path (assumption, not final)
     ps_executable = None
+
     # Check Linux
     if platform.system() == "Linux":
         # Check if PowerShell is installed
         if os.path.exists("/usr/bin/pwsh"):
             ps_executable = "/usr/bin/pwsh"
-        else:
-            print("PowerShell is not installed on this system.")
-            exit()
+
     # Check Windows
     elif platform.system() == "Windows":
-        # Check if PowerShell is installed
+        # Check if PowerShell is installed at the default location
         if os.path.exists("C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"):
             ps_executable = "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
-        else:
-            print("PowerShell is not installed on this system.")
-            exit()
+
     # Check macOS
     elif platform.system() == "Darwin":
-        # Check if PowerShell is installed
+        # Check if PowerShell is installed at the default location
         if os.path.exists("/usr/local/bin/pwsh"):
             ps_executable = "/usr/local/bin/pwsh"
-        else:
-            print("PowerShell is not installed on this system.")
-            exit()
-    # Else, we don't know what OS this is
-    else:
-        print("Unknown OS. Cannot determine path to PowerShell executable.")
+
+    # If the path is still not found, use shutil to search for the executable
+    if ps_executable is None:
+        ps_executable = shutil.which("pwsh")
+
+    # If PowerShell is still not found, stop the program
+    if ps_executable is None:
+        print("PowerShell is not installed on this system.")
         exit()
-    
+
     return ps_executable
 
 
@@ -107,16 +107,25 @@ def startPowershellSession(ip, command, outFile=None):
     username = credRow["Username"]
     password = credRow["Password"]
     # Create the PSSession (Broken on Windows with PS 5.1 on cmd on PS 7.3)
-    subprocess.call('{} -Command \"New-PSSession -ComputerName {} -Credential (New-Object System.Management.Automation.PSCredential -ArgumentList {}, (ConvertTo-SecureString {} -AsPlainText -Force)\")'.format(ps_executable, ip, username, password), shell=True)
+    # Added $remoteSession = to command, revert if does not work
+    subprocess.call('{} -Command \"$remoteSession = New-PSSession -ComputerName {} -Credential (New-Object System.Management.Automation.PSCredential -ArgumentList {}, (ConvertTo-SecureString {} -AsPlainText -Force)\")'.format(ps_executable, ip, username, password), shell=True)
+    # old code
+    #subprocess.call('{} -Command \"New-PSSession -ComputerName {} -Credential (New-Object System.Management.Automation.PSCredential -ArgumentList {}, (ConvertTo-SecureString {} -AsPlainText -Force)\")'.format(ps_executable, ip, username, password), shell=True)
 
     # If outFile is not None, then we want to write the output of the command to a file
     if outFile:
         # Open the file for writing
         with open(outFile, "w") as f:
-            subprocess.call('{} -Command \"{}\"'.format(ps_executable, command), shell=True, stdout=f)
+            # old code, see testPowershellLocally
+            #subprocess.call('{} -Command \"{}\"'.format(ps_executable, command), shell=True, stdout=f)
+            subprocess.call('{} -Command "Invoke-Command -Session $remoteSession -ScriptBlock {{ {} }}"'.format(ps_executable, command), shell=True, stdout=f)
     # Else, just run and print the output of the command
     else:
-        subprocess.call('{} -Command \"{}\"'.format(ps_executable, command), shell=True)
+        #subprocess.call('{} -Command \"{}\"'.format(ps_executable, command), shell=True)
+        subprocess.call('{} -Command "Invoke-Command -Session $remoteSession -ScriptBlock {{ {} }}"'.format(ps_executable, command), shell=True)
+
+    # print(('{} -Command \"New-PSSession -ComputerName {} -Credential (New-Object System.Management.Automation.PSCredential -ArgumentList {}, (ConvertTo-SecureString {} -AsPlainText -Force)); $sb = [scriptblock]::Create(\'{}\'); Invoke-Command -Session $remoteSession -ScriptBlock $sb\"').format(ps_executable, ip, username, password, command))
+    # subprocess.call(('{} -Command \"$remoteSession = New-PSSession -ComputerName {} -Credential (New-Object System.Management.Automation.PSCredential -ArgumentList {}, (ConvertTo-SecureString {} -AsPlainText -Force)); $sb = [scriptblock]::Create(\'{}\'); Invoke-Command -Session $remoteSession -ScriptBlock $sb\"').format(ps_executable, ip, username, password, command))
 
     # Exit the PSSession
     subprocess.call('{} -Command \"Exit-PSSession\"'.format(ps_executable), shell=True)
@@ -141,29 +150,79 @@ def testPowershellLocally(command, outFile=None):
         # Open the file for writing
         with open(outFile, "w") as f:
             # Run the command and write the output to the file
-            subprocess.call('{} -Command \"{}\"'.format(ps_executable, command), shell=True, stdout=f)
+            subprocess.call('{} -Command "Invoke-Command -ScriptBlock {{ {} }}"'.format(ps_executable, command), shell=True, stdout=f)
     # Else, just run and print the output of the command
     else:
-        print('{} -Command \"{}\"'.format(ps_executable, command))
-        subprocess.call('{} -Command \"{}\"'.format(ps_executable, command), shell=True)
+        # old code
+        #subprocess.call('{} -Command \"{}\"'.format(ps_executable, command), shell=True)
+        print('{} -Command "Invoke-Command -ScriptBlock {{ {} }}"'.format(ps_executable, command))
+        subprocess.call('{} -Command "Invoke-Command -ScriptBlock {{ {} }}"'.format(ps_executable, command), shell=True)
 
+
+def runPowerShellScript(scriptPath, parameters=None, outFile=None):
+    """
+    Runs a PowerShell script and prints the output to the console.
+    If outFile is specified, then the output of the command will be written to the file specified by outFile.
+
+    Inputs:
+        scriptPath: The path to the PowerShell script to run. Required.
+        parameters: Any additional parameters to pass to the PowerShell script as a single string. Optional.
+        outFile: The path to the file to write the output of the command to. Optional.
+    """
+
+    # Call the helper function to get the path to the PowerShell executable
+    ps_executable = getPowershellPath()
+
+    # Build the command to execute the PowerShell script with parameters
+    command = [ps_executable, "-ExecutionPolicy", "Bypass", "-File", scriptPath]
+
+    # If parameters are provided, add them to the command as a single string
+    if parameters is not None:
+        command.append(parameters)
+
+    # Run the PowerShell script
+    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    stdout, stderr = process.communicate()
+
+    # Check if there were any errors
+    if process.returncode != 0:
+        print("An error occurred while executing the PowerShell script:")
+        print(stderr.decode("utf-8"))
+    else:
+        print("PowerShell script executed successfully.")
+        # If outFile is not None, then we want to write the output to a file
+        if outFile:
+            with open(outFile, "w") as f:
+                f.write(stdout.decode("utf-8"))
+        # Else, just print the output
+        else:
+            print(stdout.decode("utf-8"))
+
+
+scriptPath = "Powershell\\baseScriptElevated.ps1"
+parameters = "Get-Process;Get-NetFirewallProfile -All | Select-Object -Property Name,Enabled"  # Pass the parameters as a single string
+runPowerShellScript(scriptPath, parameters)
 
 # Demo of how to use the functions, uncomment each block to try it out
 
 # Grab the services from the machine with IP 172.16.2.77
-startPowershellSession(ip='172.16.2.77', command='Get-TimeZone')
+# startPowershellSession(ip='172.16.2.77', command='Get-TimeZone')
 
 # Grab the services from your machine and save it to Powershell\Get-Service.csv
-# testCmd = convertToCommand(command='Get-Service | Export-CSV -Path "Powershell\\Get-Service.csv"')
-# testPowershellLocally(command=testCmd)
+# testCmd = convertToCommand(command='Get-Service')
+# testPowershellLocally(command=testCmd, outFile="Powershell\Get-Service.csv")
 
 # Start Google Chrome in Dark Mode, Incognito, and navigate to https://www.google.com on your machine
 # testCmd = convertToCommand(command='Start-Process', filePath="C:\Program Files\Google\Chrome\Application\Chrome.exe", parameters='--force-dark-mode --incognito --new-window https://www.google.com')
 # testPowershellLocally(command=testCmd)
 
-# Disable the Windows Firewall on the machine with IP 172.16.2.77
+# Disable the Windows Firewall on the machine with IP 172.16.2.77 (not working due to permissions)
 # startPowershellSession(ip='172.16.2.77', command='Set-NetFirewallProfile -All -Enabled False')
 # testPowershellLocally(command='Set-NetFirewallProfile -All -Enabled False')
 
-# Enable the Windows Firewall on the machine with IP 172.16.2.77
+# Enable the Windows Firewall on the machine with IP 172.16.2.77 (not working due to permissions)
 # startPowershellSession(ip='172.16.2.77', cmd='Set-NetFirewallProfile -All -Enabled True')
+
+# Get the Windows Firewall status from your machine
+#testPowershellLocally(command='Get-NetFirewallProfile -All | Select-Object -Property Name,Enabled')
+#startPowershellSession(ip='172.16.2.77', command='Get-NetFirewallProfile -All | Select-Object -Property Name,Enabled')

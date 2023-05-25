@@ -12,12 +12,18 @@
 # Set-Item wsman:\localhost\client\trustedhosts *
 # Restart-Service WinRM
 
-# Take in any number of command line parameters
-# Example: .\baseScriptElevated.ps1 "Get-Service", "Get-Process"
+# Take in any number of command line parameters, sseparated by commas
+# Example: .\baseScriptElevated.ps1 "Get-Service, Get-Process"
+
+# Accept a single parameter as a string
 param (
-    [Parameter(Mandatory=$true)]
-    [string[]]$cmdStrings
+    [Parameter(Position = 0, Mandatory = $true)]
+    [String]
+    $Parameters
 )
+
+# Split the string into individual parameters using ,, as a delimiter
+$Params = $Parameters -split ';'
 
 # Import a CSV file with credentials
 $credential = Import-Csv -Path "Powershell\credentials.csv" | Select-Object -First 1
@@ -32,13 +38,13 @@ $out = "Powershell\output.txt"
 $remoteSession = New-PSSession -ComputerName $ip -Credential (New-Object System.Management.Automation.PSCredential -ArgumentList $credential.Username, (ConvertTo-SecureString $credential.Password -AsPlainText -Force))
 Write-Host "Connected"
 
-# Run each command in the cmdStrings array
-foreach ($cmdString in $cmdStrings) {
+# Print the parameters
+$Params | ForEach-Object {
     # Convert inner command to scriptblock format
-    $sb = [scriptblock]::Create($cmdString)
+    $sb = [scriptblock]::Create($_)
 
     # Invoke the command on the remote machine
-    Write-Host "Running $cmdString"
+    Write-Host "Running $_"
     Invoke-Command -Session $remoteSession -ScriptBlock $sb | Out-File -FilePath $out -Append
 }
 
