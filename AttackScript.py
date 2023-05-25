@@ -582,21 +582,20 @@ def getHardwareInfo():
 
         parameters[9] = "9006" # DPM33 Address for reading hardwareOutput
         hardwareOutput = run([executable_path] + parameters, stdout=PIPE, check=False).stdout.decode('utf-8').strip().split()
+        try:
+            # TODO: For "cannot be detected" stuff, raise an exception
+            if "[9005]:" in firmwareOutput:
+                firmware_index = firmwareOutput.index("[9005]:")
+                print(f"Firmware version: {firmwareOutput[firmware_index + 1]}")
+            else:
+                raise Exception("Firmware version cannot be detected")
 
-        # TODO: For "cannot be detected" stuff, raise an exception
-        if "[9005]:" in firmwareOutput:
-            firmware_index = firmwareOutput.index("[9005]:")
-            print(f"Firmware version: {firmwareOutput[firmware_index + 1]}")
-        else:
-            print(f"Firmware version cannot be detected")
-
-        if "[9006]:" in hardwareOutput:
-            hardware_index = hardwareOutput.index("[9006]:")
-            print(f"Hardware version: {hardwareOutput[hardware_index + 1]}")
-        else:
-            print(f"Hardware version cannot be detected")
+            if "[9006]:" in hardwareOutput:
+                hardware_index = hardwareOutput.index("[9006]:")
+                print(f"Hardware version: {hardwareOutput[hardware_index + 1]}")
+            else:
+                raise Exception("Hardware version cannot be detected")
         
-        try: 
             service_name = "KEPServerEXV6"
             cp = run(["sc", "start", service_name], stdout=PIPE, check=False)
             output = cp.stdout.decode('utf-8').strip().split()
@@ -610,7 +609,10 @@ def getHardwareInfo():
         except CalledProcessError as e:
             print("Error executing the executable file:", e)
             print("Fail.\n")
-    
+
+        except Exception as e:
+            print(e)
+            print("Fail.\n")
     else:
         try: 
             service_name = "KEPServerEXV6"
@@ -1064,30 +1066,53 @@ zS4k0XE7GMLQRiQ8pLpFWLAF+t7xU/081wvKpWnmr0iQqPxSUc90qFs=
 def kep_connect():
     # 172.16.2.77 if at lv 7
     # 172.16.2.223 if at lv 6
-    server = connection.server(host = '172.16.2.223', port = 57412, user = 'Administrator', pw = 'administrator2022')
-    print("Connected to KEP server.")
+    try:
+        server = connection.server(host = '172.16.2.223', port = 57412, user = 'Administrator', pw = 'administrator2022')
+        print("Connected to KEP server.")
+    except Exception as e:
+            print(e)
+            print("\nFail.\n")
     return server
 
 def kep_server_info():
-    server = kep_connect()
-    print(json.dumps(server.get_info(), indent=4),file=sys.stdout)
+    try:
+        server = kep_connect()
+        print(json.dumps(server.get_info(), indent=4),file=sys.stdout)
+    except Exception as e:
+            print(e)
+            print("\nFail.\n")
 
 def kep_get_all_users():
-    server = kep_connect()
-    print(json.dumps(admin.users.get_all_users(server),indent=4),file=sys.stdout)
+    try:
+        server = kep_connect()
+        print(json.dumps(admin.users.get_all_users(server),indent=4),file=sys.stdout)
+    except Exception as e:
+            print(e)
+            print("\nFail.\n")
 
 def kep_enable_user(user):
-    server = kep_connect()
-    print(admin.users.enable_user(server, user),file=sys.stdout)
+    try:
+        server = kep_connect()
+        print(admin.users.enable_user(server, user),file=sys.stdout)
+    except Exception as e:
+            print(e)
+            print("\nFail.\n")
 
 def kep_disable_user(user):
-    server = kep_connect()
-    print(admin.users.disable_user(server, user),file=sys.stdout)
+    try:
+        server = kep_connect()
+        print(admin.users.disable_user(server, user),file=sys.stdout)
+    except Exception as e:
+        print(e)
+        print("\nFail.\n")
 
 def kep_get_single_user(user):
-    server = kep_connect()
-    print(json.dumps(admin.users.get_user(server, user),indent=4),file=sys.stdout)
-
+    try:
+        server = kep_connect()
+        print(json.dumps(admin.users.get_user(server, user),indent=4),file=sys.stdout)
+    except Exception as e:
+            print(e)
+            print("\nFail.\n")
 
 if __name__ == '__main__':
     attackoption = str(argv[1])
