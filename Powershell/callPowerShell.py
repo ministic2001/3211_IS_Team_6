@@ -25,9 +25,13 @@ def getPowershellPath():
 
     # Check Windows
     elif platform.system() == "Windows":
-        # Check if PowerShell is installed at the default location
-        if os.path.exists("C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"):
+        # Check if Powershell 7 exists
+        if os.path.exists("C:\\Program Files\\PowerShell\\7\\pwsh.EXE"):
+            ps_executable = "C:\\Program Files\\PowerShell\\7\\pwsh.EXE"
+        # Check if PowerShell 5.1 or lower exists
+        elif os.path.exists("C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"):
             ps_executable = "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
+            print("Powershell 5.1 or below being used instead of Powershell 7")
 
     # Check macOS
     elif platform.system() == "Darwin":
@@ -199,9 +203,9 @@ def runPowerShellScript(scriptPath, parameters=None, outFile=None):
             print(stdout.decode("utf-8"))
 
 
-scriptPath = "Powershell\\baseScriptElevated.ps1"
-#parameters = "Get-Process;Get-NetFirewallProfile -All | Select-Object -Property Name,Enabled"  # Pass the parameters as a single string
-parameters = "Get-Timezone;Get-Timezone"
+scriptPath = "Powershell\\test.ps1"
+parameters = "Get-Process;Get-NetFirewallProfile -All | Select-Object -Property Name,Enabled"  # Pass the parameters as a single string
+#parameters = "Get-Timezone;Get-Timezone"
 runPowerShellScript(scriptPath, parameters)
 
 # Demo of how to use the functions, uncomment each block to try it out

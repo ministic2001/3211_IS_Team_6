@@ -32,11 +32,16 @@ $credential = Import-Csv -Path "Powershell\credentials.csv" | Select-Object -Fir
 $ip = "172.16.2.77"
 
 # Define filename + filepath to save to
-$out = "Powershell\output.txt"
+$out = "Powershell\Output.txt"
+
+$target = $credential.Username + "@" + $ip
 
 # Oneliner to read username, password from file, then start a new PSSession
-$remoteSession = New-PSSession -ComputerName $ip -Credential (New-Object System.Management.Automation.PSCredential -ArgumentList $credential.Username, (ConvertTo-SecureString $credential.Password -AsPlainText -Force))
+$session = New-PSSession -HostName $target
 Write-Host "Connected"
+
+Enter-PSSession $session
+Write-Host "Entering session"
 
 # Print the parameters
 $Params | ForEach-Object {
@@ -45,7 +50,7 @@ $Params | ForEach-Object {
 
     # Invoke the command on the remote machine
     Write-Host "Running $_"
-    Invoke-Command -Session $remoteSession -ScriptBlock $sb | Out-File -FilePath $out -Append
+    Invoke-Command -ScriptBlock $sb | Out-File -FilePath $out -Append
 }
 
 # Closes the PSSession
