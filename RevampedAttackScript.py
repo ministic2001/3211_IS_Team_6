@@ -669,25 +669,25 @@ def revert(revertoption):
         
     elif revertoption == "2":
         count = 0
-        cp = run('netsh advfirewall firewall delete rule name="QRadar Test"',stdout=PIPE)
+        cp = run('netsh advfirewall firewall delete rule name="QRadar Test"', stdout=PIPE)
         if "Ok." in cp.stdout.decode('utf-8'):
             count += 1
             print("Inbound Firewall Successfully Removed (Un-Blocked: TCP/22)")
         else:
             print("Inbound Firewall Not Removed (TCP/22)")
-        cp = run('netsh advfirewall firewall delete rule name="QRadar Test 2"',stdout=PIPE)
+        cp = run('netsh advfirewall firewall delete rule name="QRadar Test 2"', stdout=PIPE)
         if "Ok." in cp.stdout.decode('utf-8'):
             count += 1
             print("Inbound Firewall Successfully Removed (Un-Blocked: UDP/22)")
         else:
             print("Inbound Firewall Not Removed (UDP/22)")
-        cp = run('netsh advfirewall firewall delete rule name="QRadar Test 3"',stdout=PIPE)
+        cp = run('netsh advfirewall firewall delete rule name="QRadar Test 3"', stdout=PIPE)
         if "Ok." in cp.stdout.decode('utf-8'):
             count += 1
             print("Outbound Firewall Successfully Removed (Un-Blocked: TCP/22)")
         else:
             print("Outbound Firewall Not Removed (TCP/22)")
-        cp = run('netsh advfirewall firewall delete rule name="QRadar Test 4"',stdout=PIPE)
+        cp = run('netsh advfirewall firewall delete rule name="QRadar Test 4"', stdout=PIPE)
         if "Ok." in cp.stdout.decode('utf-8'):
             count += 1
             print("Outbound Firewall Successfully Removed (Un-Blocked: UDP/22)")
@@ -928,7 +928,7 @@ zS4k0XE7GMLQRiQ8pLpFWLAF+t7xU/081wvKpWnmr0iQqPxSUc90qFs=
         # Re-Enable Firewall
         print("\n==================================\n")
                
-        cp = run('netsh advfirewall set allprofiles state on',stdout=PIPE , shell=True)
+        cp = run('netsh advfirewall set allprofiles state on', stdout=PIPE, shell=True)
         if cp.stdout.decode('utf-8').strip() == "Ok.":
             print("Revert Firewall diasble successful.")
         else:
@@ -937,25 +937,25 @@ zS4k0XE7GMLQRiQ8pLpFWLAF+t7xU/081wvKpWnmr0iQqPxSUc90qFs=
         # Remove Firewall In/Outbound rules added.
         print("\n==================================\n")
         count = 0
-        cp = run('netsh advfirewall firewall delete rule name="QRadar Test"',stdout=PIPE)
+        cp = run('netsh advfirewall firewall delete rule name="QRadar Test"', stdout=PIPE)
         if "Ok." in cp.stdout.decode('utf-8'):
             count += 1
             print("Inbound Firewall Successfully Removed (Un-Blocked: TCP/22)")
         else:
             print("Inbound Firewall Not Removed (TCP/22)")
-        cp = run('netsh advfirewall firewall delete rule name="QRadar Test 2"',stdout=PIPE)
+        cp = run('netsh advfirewall firewall delete rule name="QRadar Test 2"', stdout=PIPE)
         if "Ok." in cp.stdout.decode('utf-8'):
             count += 1
             print("Inbound Firewall Successfully Removed (Un-Blocked: UDP/22)")
         else:
             print("Inbound Firewall Not Removed (UDP/22)")
-        cp = run('netsh advfirewall firewall delete rule name="QRadar Test 3"',stdout=PIPE)
+        cp = run('netsh advfirewall firewall delete rule name="QRadar Test 3"', stdout=PIPE)
         if "Ok." in cp.stdout.decode('utf-8'):
             count += 1
             print("Outbound Firewall Successfully Removed (Un-Blocked: TCP/22)")
         else:
             print("Outbound Firewall Not Removed (TCP/22)")
-        cp = run('netsh advfirewall firewall delete rule name="QRadar Test 4"',stdout=PIPE)
+        cp = run('netsh advfirewall firewall delete rule name="QRadar Test 4"', stdout=PIPE)
         if "Ok." in cp.stdout.decode('utf-8'):
             count += 1
             print("Outbound Firewall Successfully Removed (Un-Blocked: UDP/22)")
@@ -971,7 +971,7 @@ zS4k0XE7GMLQRiQ8pLpFWLAF+t7xU/081wvKpWnmr0iQqPxSUc90qFs=
         print("\n==================================\n")
             
         service_name = "KEPServerEXV6"
-        cp = run(["sc", "start", service_name],stdout=PIPE , check=False)
+        cp = run(["sc", "start", service_name], stdout=PIPE, check=False)
         output = cp.stdout.decode('utf-8').strip().split()
         if "FAILED" in cp.stdout.decode('utf-8'):
             print("FAILED: " + " ".join(output[4:]))
@@ -1111,6 +1111,21 @@ def kep_get_single_user(user):
     server = kep_connect()
     print(json.dumps(admin.users.get_user(server, user),indent=4),file=sys.stdout)
 
+def disable_running_schedules() -> None:
+    # NOTE: UNTESTED
+    cp = run(["schtasks", "/change", "/TN", "'\MoveFiles'", "/disable"], stdout=PIPE, check=False)
+    output = cp.stdout.decode('utf-8').strip().split()
+    if "SUCCESS:" in output:
+        print("Successfully disabled \MoveFiles Tasks Scheduler")
+        print("Ok.")
+
+    cp = run(["schtasks", "/change", "/TN", "'\KEPServerEX 6.12'", "/disable"], stdout=PIPE, check=False)
+    if "SUCCESS:" in output:
+        print("Successfully disabled \KEPServerEX 6.12 Tasks Scheduler")
+        print("Ok.")
+    
+
+
 ########
 # MAIN #
 ########
@@ -1159,6 +1174,7 @@ if __name__ == '__main__':
         case 17: kep_enable_user("User1")
         case 18: kep_disable_user("User1")
         case 19: kep_get_single_user("User1")
+        case 20: disable_running_schedules()
         case "-h":
             print("\nChoose \n1 Delete file, \n2 Copy file, \n3 Disable firewall, \n4 Disable ssh through firewall, \n5 Disable Kepserver, \n6 Interrupt modbus reading, \n7 Disable COMPORT, \n8 Encrypt files, \n9 Change Meter25 Id to 26, \n10 Clear Energy Reading, \n11 Revert with options, \n12 Bruteforce KEPServer Password, \n13 Disable sshd Service.")
         case _: print("Invalid Option! Use option \"-h\" for help!")

