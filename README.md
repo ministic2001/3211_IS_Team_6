@@ -36,7 +36,7 @@ To install the packages, type the command pip install -r requirements.txt.
 Python 3.10 is required for this to work.
 If you do not have Powershell 7, please install that first 
 </div>
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
+<p align="right">(<a href="#readme-top">Back to top</a>)</p>
 
 ## Gaining Access to Windows
 
@@ -44,11 +44,11 @@ If you do not have Powershell 7, please install that first
   
 The credentials.csv should only have the headers (Username,Password) at the start
 Run bruteforceWindowsOS.ps1 to get the credentials and write it to the credentials.csv
-Afterwards the credentials.csv will contain the credentials in the format (user1,pass1)
+Afterwards, the credentials.csv will contain the credentials in the format (user1,pass1)
 You can then run baseScriptElevated.ps1
-You can also run callPowerShell.py to call baseScriptElevated.ps1
+You can also run callPowerShell.py to call baseScriptElevated.ps1.
 </div>
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
+<p align="right">(<a href="#readme-top">Back to top</a>)</p>
 
 <!-- ABOUT THE PROJECT -->
 ## About The Project
