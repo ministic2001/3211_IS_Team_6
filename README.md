@@ -2,6 +2,8 @@
 
 To install the packages, type the command pip install -r requirements.txt.
 
+Python 3.10 is required for this to work.
+
 ## Gaining Access to the Windows
 ```
 The credentials.csv should only have the headers (Username,Password) at the start
