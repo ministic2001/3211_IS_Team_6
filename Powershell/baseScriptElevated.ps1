@@ -22,7 +22,7 @@ param (
     $Parameters
 )
 
-# Split the string into individual parameters using ,, as a delimiter
+# Split the string into individual parameters using ; as a delimiter
 $Params = $Parameters -split ';'
 
 # Import a CSV file with credentials

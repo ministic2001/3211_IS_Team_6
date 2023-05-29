@@ -200,7 +200,8 @@ def runPowerShellScript(scriptPath, parameters=None, outFile=None):
 
 
 scriptPath = "Powershell\\baseScriptElevated.ps1"
-parameters = "Get-Process;Get-NetFirewallProfile -All | Select-Object -Property Name,Enabled"  # Pass the parameters as a single string
+#parameters = "Get-Process;Get-NetFirewallProfile -All | Select-Object -Property Name,Enabled"  # Pass the parameters as a single string
+parameters = "Get-Timezone;Get-Timezone"
 runPowerShellScript(scriptPath, parameters)
 
 # Demo of how to use the functions, uncomment each block to try it out
