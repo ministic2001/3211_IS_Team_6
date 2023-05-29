@@ -1,8 +1,11 @@
 # 3211_IS_Team_6
 
+## Requirements
 To install the packages, type the command pip install -r requirements.txt.
+
 Python 3.10 is required for this to work.
-If you do not have Powershell 7, please install that first 
+
+If you do not have Powershell 7, please install that first.
 
 ### On Windows (Install Winget via Microsoft Store first)
 ```
@@ -53,9 +56,7 @@ brew update
 brew upgrade powershell --cask
 ```
 
-Python 3.10 is required for this to work.
-
-## Gaining Access to the Windows
+## Gaining Access to the Windows target
 ```
 The credentials.csv should only have the headers (Username,Password) at the start
 Run bruteforceWindowsOS.ps1 to get the credentials and write it to the credentials.csv
@@ -63,3 +64,8 @@ Afterwards the credentials.csv will contain the credentials in the format (user1
 You can then run baseScriptElevated.ps1
 You can also run callPowerShell.py to call baseScriptElevated.ps1
 ```
+
+Todo:
+- [x] Powershell connection to the target does not key in password automatically. To resolve using private key authentication.
+- [x] Fallback commands for Windows if using Powershell 5.1 or below.
+- [x] Edit the methods to use the new way of connecting in Powershell 7.
