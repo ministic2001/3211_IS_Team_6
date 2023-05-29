@@ -1089,16 +1089,16 @@ def kep_get_single_user(user):
     print(json.dumps(admin.users.get_user(server, user),indent=4),file=sys.stdout)
 
 def disable_running_schedules() -> None:
-    # NOTE: UNTESTED
-    cp = run(["schtasks", "/change", "/TN", "'\MoveFiles'", "/disable"], stdout=PIPE, check=False)
+    cp = run(["schtasks", "/change", "/TN", "\MoveFiles", "/disable"], stdout=PIPE, check=False)
     output = cp.stdout.decode('utf-8').strip().split()
     if "SUCCESS:" in output:
-        print("Successfully disabled \MoveFiles Tasks Scheduler")
+        print("Successfully disabled \MoveFiles Tasks Scheduler", file=sys.stdout)
         print("Ok.")
 
-    cp = run(["schtasks", "/change", "/TN", "'\KEPServerEX 6.12'", "/disable"], stdout=PIPE, check=False)
+    cp = run(["schtasks", "/change", "/TN", "\KEPServerEX 6.12", "/disable"], stdout=PIPE, check=False)
+    output = cp.stdout.decode('utf-8').strip().split()
     if "SUCCESS:" in output:
-        print("Successfully disabled \KEPServerEX 6.12 Tasks Scheduler")
+        print("Successfully disabled \KEPServerEX 6.12 Tasks Scheduler", file=sys.stdout)
         print("Ok.")
 
 if __name__ == '__main__':

