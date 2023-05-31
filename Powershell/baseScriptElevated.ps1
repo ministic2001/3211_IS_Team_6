@@ -12,12 +12,18 @@
 # Set-Item wsman:\localhost\client\trustedhosts *
 # Restart-Service WinRM
 
-# Take in any number of command line parameters
-# Example: .\baseScriptElevated.ps1 "Get-Service", "Get-Process"
+# Take in any number of command line parameters, sseparated by commas
+# Example: .\baseScriptElevated.ps1 "Get-Service, Get-Process"
+
+# Accept a single parameter as a string
 param (
-    [Parameter(Mandatory=$true)]
-    [string[]]$cmdStrings
+    [Parameter(Position = 0, Mandatory = $true)]
+    [String]
+    $Parameters
 )
+
+# Split the string into individual parameters using ; as a delimiter
+$Params = $Parameters -split ';'
 
 # Import a CSV file with credentials
 $credential = Import-Csv -Path "Powershell\credentials.csv" | Select-Object -First 1
@@ -26,20 +32,25 @@ $credential = Import-Csv -Path "Powershell\credentials.csv" | Select-Object -Fir
 $ip = "172.16.2.77"
 
 # Define filename + filepath to save to
-$out = "Powershell\output.txt"
+$out = "Powershell\Output.txt"
+
+$target = $credential.Username + "@" + $ip
 
 # Oneliner to read username, password from file, then start a new PSSession
-$remoteSession = New-PSSession -ComputerName $ip -Credential (New-Object System.Management.Automation.PSCredential -ArgumentList $credential.Username, (ConvertTo-SecureString $credential.Password -AsPlainText -Force))
+$session = New-PSSession -HostName $target
 Write-Host "Connected"
 
-# Run each command in the cmdStrings array
-foreach ($cmdString in $cmdStrings) {
+Enter-PSSession $session
+Write-Host "Entering session"
+
+# Print the parameters
+$Params | ForEach-Object {
     # Convert inner command to scriptblock format
-    $sb = [scriptblock]::Create($cmdString)
+    $sb = [scriptblock]::Create($_)
 
     # Invoke the command on the remote machine
-    Write-Host "Running $cmdString"
-    Invoke-Command -Session $remoteSession -ScriptBlock $sb | Out-File -FilePath $out -Append
+    Write-Host "Running $_"
+    Invoke-Command -ScriptBlock $sb | Out-File -FilePath $out -Append
 }
 
 # Closes the PSSession

