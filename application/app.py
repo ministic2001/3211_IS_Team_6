@@ -236,32 +236,27 @@ def get_list_of_sh_files_dict():
 # ===========================================================================================================================#
 # This route is responsible for handling .exe and .sh file uploads to the local filesystem
 @app.route('/uploadfile', methods=['GET', 'POST'])
-@csrf_protect
 def file_upload():
+
     form = UploadForm()
 
     if form.validate_on_submit(): 
+        # Get file upload data and its filename       
         f = form.upload.data
         filename = secure_filename(f.filename)
-        file_path = ''
 
-        # Validate file type
-        file_type = magic.from_buffer(f.stream.read(1024), mime=True)
-        if file_type == 'application/x-dosexec':
-            file_path = os.path.join(app.config['EXECUTABLES_PATH'], filename)
-        elif file_type == 'text/x-shellscript':
-            file_path = os.path.join(app.config['SCRIPTS_PATH'], filename)
+        if filename.endswith('.exe'):
+            fullFileName = os.path.join('./executables/', filename)
+            f.save(fullFileName)
+            flash(u'.exe File has been uploaded', 'success')
+        elif filename.endswith('.sh'):
+            fullFileName = os.path.join('./scripts/', filename)
+            f.save(fullFileName)
+            flash(u'.sh File has been uploaded', 'success')
         else:
-            return jsonify({'message': 'Invalid file type. Only .exe and .sh files are allowed.'}), 400
+            flash(u'File submitted is not a .exe or .sh file', 'danger')
 
-        try:
-            f.save(file_path)
-            return jsonify({'message': 'File has been uploaded successfully.'}), 200
-        except (FileNotFoundError, PermissionError, IOError):
-            return jsonify({'message': 'Failed to upload the file.'}), 500
-
-    return render_template('uploadfile.html', form=form)
-
+    return render_template('uploadfile.html', form = form)
 
 # =====================================File Upload============================================================================ #
 # Route is responsible for getting a list of .exe files uploaded to the local file system 
