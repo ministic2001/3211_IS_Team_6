@@ -25,10 +25,6 @@ SHORT PROJ DESCRIPTION
 
 # 3211_IS_Team_6
 
-<div align="center">
-Python 3.10 is required for this to work.
-</div>
-<br />
 
 <div align="center">
 To ensure compatibility and install the required packages, please follow the steps below:
