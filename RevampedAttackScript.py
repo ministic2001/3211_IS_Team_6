@@ -1117,6 +1117,27 @@ def kep_server_start():
         print("Something went wrong!")
         return False
 
+def capturefilechangedatavalueandsendback():
+    directory = r'C:\Users\Student\Documents\SmartMeterData\Meter2'
+    os.chdir(directory)
+
+    latest_file = max(os.listdir(directory), key=os.path.getctime)
+    print(f"The most recently created file is {latest_file}")
+
+    with open(latest_file, 'r+') as file:
+        content = file.read()
+        content = content.replace('False', 'True').replace('0', '1')
+        file.seek(0)
+        file.write(content)
+        file.truncate()
+
+def capturefileandsendtodiffdest():
+    winscp_path = r'C:\Program Files (x86)\WinSCP\winscp.com'
+    script_path = r'path\to\script.txt'
+
+    command = [winscp_path, '/ini=nul', f'/script={script_path}']
+    subprocess.run(command, shell=True)
+
 #Getting status for GUI
 def gui_get_kep_status():
     ssh = paramiko.SSHClient()
@@ -1168,6 +1189,8 @@ if __name__ == '__main__':
         case "23": kep_get_single_device()
         case "24": kep_delete_spoofed_device()
         case "25": kep_add_spoofed_device()
+        case "26": capturefilechangedatavalueandsendback()
+        case "27": capturefileandsendtodiffdest()
         case "-h":
             print("\nChoose \n1 Delete file, \n2 Copy file, \n3 Disable firewall, \n4 Disable ssh through firewall, \n5 Disable Kepserver, \n6 Interrupt modbus reading, \n7 Disable COMPORT, \n8 Encrypt files, \n9 Change Meter25 Id to 26, \n10 Clear Energy Reading, \n11 Revert with options, \n12 Bruteforce KEPServer Password, \n13 Disable sshd Service, \n14 Get hardware info, \n15 Obtain KEPServer info, \n16 Get all KEPServer Users, \n17 Enable KEP Users, \n18 Disable KEP Users, \n19 Obtain KEP User Info.")
         case _: print("Invalid Option! Use option \"-h\" for help!")
