@@ -12,47 +12,41 @@
 # Set-Item wsman:\localhost\client\trustedhosts *
 # Restart-Service WinRM
 
-# Take in any number of command line parameters, sseparated by commas
-# Example: .\baseScriptElevated.ps1 "Get-Service, Get-Process"
-
-# Accept a single parameter as a string
-param (
-    [Parameter(Position = 0, Mandatory = $true)]
-    [String]
-    $Parameters
-)
-
-# Split the string into individual parameters using ; as a delimiter
-$Params = $Parameters -split ';'
-
 # Import a CSV file with credentials
 $credential = Import-Csv -Path "Powershell\credentials.csv" | Select-Object -First 1
 
+# Define SSH private key file
+$keyFile = "Powershell\accessKey"
+
 # Define IP address
-$ip = "172.16.2.77"
+# $ip = "172.16.2.77"
+$ip = "100.87.185.10"
 
 # Define filename + filepath to save to
 $out = "Powershell\Output.txt"
 
+# Define command to run
+$command = "Set-NetFirewallProfile -All -Enabled False"
+$command2 = "Get-NetFirewallProfile | Select-Object Name, Enabled"
+
+# Convert command to scriptblock format
+$sb = [scriptblock]::Create($command)
+$sb2 = [scriptblock]::Create($command2)
+
 $target = $credential.Username + "@" + $ip
 
-# Oneliner to read username, password from file, then start a new PSSession
-$session = New-PSSession -HostName $target
-# Write-Host "Connected"
+# Oneliner to start session and run command
+$sess = New-PSSession -HostName $target -KeyFilePath $keyFile
+Invoke-Command -Session $sess -ScriptBlock $sb
+Invoke-Command -Session $sess -ScriptBlock $sb2 | Out-File -FilePath $out -Append
 
-Enter-PSSession $session
-# Write-Host "Entering session"
-
-# Print the parameters
-$Params | ForEach-Object {
-    # Convert inner command to scriptblock format
-    $sb = [scriptblock]::Create($_)
-
-    # Invoke the command on the remote machine
-    # Write-Host "Running $_"
-    Invoke-Command -ScriptBlock $sb | Out-File -FilePath $out -Append
+# Check if last command ran successfully
+if($?)
+{
+    Get-PSSession | Remove-PSSession
+    Write-Host "Cleared all sessions"
 }
-
-# Closes the PSSession
-Exit-PSSession
-# Write-Host "Done"
+else 
+{
+    Write-Host "Failed running $command"
+}
