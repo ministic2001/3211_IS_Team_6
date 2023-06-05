@@ -1039,24 +1039,24 @@ def kep_connect(host: str=WINDOWS_SERVER_IP, port: int=57412) -> connection.serv
     print("Connected to KEP server.")
     return server
 
-def kep_server_info():
-    server = kep_connect()
+def kep_server_info(ip):
+    server = kep_connect(ip)
     print(json.dumps(server.get_info(), indent=4),file=sys.stdout)
 
 def kep_get_all_users():
-    server = kep_connect()
+    server = kep_connect("172.16.2.77")
     print(json.dumps(admin.users.get_all_users(server),indent=4),file=sys.stdout)
 
 def kep_enable_user(user):
-    server = kep_connect()
+    server = kep_connect("172.16.2.77")
     print(admin.users.enable_user(server, user),file=sys.stdout)
 
 def kep_disable_user(user):
-    server = kep_connect()
+    server = kep_connect("172.16.2.77")
     print(admin.users.disable_user(server, user),file=sys.stdout)
 
 def kep_get_single_user(user):
-    server = kep_connect()
+    server = kep_connect("172.16.2.77")
     print(json.dumps(admin.users.get_user(server, user),indent=4),file=sys.stdout)
 
 def kep_get_all_channels():
