@@ -191,6 +191,52 @@ brew upgrade powershell --cask
  <p align="right">(<a href="#readme-top">back to top</a>)</p>
 <br />
 
+## Setup SSH key on target machine
+1. Create the SSH key pair
+   ```sh
+   cd .ssh
+   ssh-keygen -t ed25519 -b 256 -f <sshKeyName> -q -N ""
+   ```
+2. Transfer the sshd_config file to your machine, edit, then transfer it back
+   
+   Changes made:
+   ``` 
+   PubkeyAuthentication yes
+   PasswordAuthentication yes
+   Subsystem powershell c:/progra~1/powershell/7/pwsh.exe -sshs -nologo
+   # Match Group administrators
+   #       AuthorizedKeysFile __PROGRAMDATA__/ssh/administrators_authorized_keys
+   ```
+   
+   ```sh
+   scp <user>@<ip>:C:\ProgramData\ssh\sshd_config sshd_config
+   <Make above edits>
+   scp sshd_config <user>@<ip>:C:\ProgramData\ssh\sshd_config
+   ```
+3. Transfer the contents of the SSH key to the target machine, and place it in the authorized_keys file
+   ```sh
+   scp accessKey.pub <user>@<ip>:C:\Users\<user>\.ssh\authorized_keys
+   ```
+4. SSH into the target machine and edit the ACL of the authorized_keys file, then restart the sshd service
+   ```sh
+   ssh <user>@<ip>
+   $acl = Get-Acl C:\Users\<user>\.ssh\authorized_keys
+   $acl.SetAccessRuleProtection($true, $false)
+   $administratorsRule = New-Object system.security.accesscontrol.filesystemaccessrule("Administrators","FullControl","Allow")
+   $systemRule = New-Object system.security.accesscontrol.filesystemaccessrule("SYSTEM","FullControl","Allow")
+   $acl.SetAccessRule($administratorsRule)
+   $acl.SetAccessRule($systemRule)
+   $acl | Set-Acl
+   Restart-Service sshd
+   ```
+   
+5. Test the SSH access using the private key
+   ```sh
+   ssh -i <sshKeyName> <user>@<ip>
+   ```
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ## Installation and Usage on Windows and Mac
 1. Clone the repo
    ```sh
