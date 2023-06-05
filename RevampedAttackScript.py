@@ -1236,6 +1236,17 @@ def kep_server_start():
         print("Something went wrong!")
         return False
 
+#Getting status for GUI
+def gui_get_kep_status():
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    ssh.connect("172.16.2.223", username="Student", password="Student12345@")
+    ssh_stdin, ssh_stdout, ssh_stderr = ssh.exec_command(r'powershell -command "Get-Service KEPServerEXV6 | Select-Object -Property Status"')
+    for lines in ssh_stdout.readlines():
+        if "Running" in lines:
+                print("KEPSERVER Running")
+                break
+
 # TODO: kep_server_start()
 
 ########
