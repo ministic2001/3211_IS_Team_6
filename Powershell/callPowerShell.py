@@ -57,19 +57,29 @@ def callPowershellScript(script_path):
 
     ps_executable = getPowershellPath()
 
-    # Construct the PowerShell execution command
-    invoked_command = [
-        ps_executable,
-        '-NoProfile',
-        '-ExecutionPolicy',
-        'Bypass',
-        '-File',
-        script_path,
-        '-Verb',
-        'RunAs'
-    ]
+    # Construct the PowerShell execution command based on the OS
+    if platform.system() == "Windows":
+        invoked_command = [
+            ps_executable,
+            '-NoProfile',
+            '-ExecutionPolicy',
+            'Bypass',
+            '-File',
+            script_path,
+            '-Verb',
+            'RunAs'
+        ]
+    else:
+        invoked_command = [
+            ps_executable,
+            '-NoProfile',
+            '-ExecutionPolicy',
+            'Bypass',
+            '-File',
+            script_path
+        ]
 
     # Run the PowerShell script
-    subprocess.run(invoked_command, shell=True)
+    subprocess.run(invoked_command)
 
 callPowershellScript("Powershell\\baseScriptElevated.ps1")
