@@ -177,6 +177,8 @@ def runPowerShellScript(scriptPath, parameters=None, outFile=None):
     # Call the helper function to get the path to the PowerShell executable
     ps_executable = getPowershellPath()
 
+    # print(ps_executable)
+
     # Build the command to execute the PowerShell script with parameters
     command = [ps_executable, "-ExecutionPolicy", "Bypass", "-File", scriptPath]
 
@@ -201,12 +203,14 @@ def runPowerShellScript(scriptPath, parameters=None, outFile=None):
         # Else, just print the output
         else:
             print(stdout.decode("utf-8"))
+    return stdout.decode("utf-8")
 
 
-scriptPath = "Powershell\\test.ps1"
-parameters = "Get-Process;Get-NetFirewallProfile -All | Select-Object -Property Name,Enabled"  # Pass the parameters as a single string
-#parameters = "Get-Timezone;Get-Timezone"
-runPowerShellScript(scriptPath, parameters)
+if "__name__" == "__main__":
+    scriptPath = "Powershell\\baseScriptElevated.ps1"
+    #parameters = "Get-Process;Get-NetFirewallProfile -All | Select-Object -Property Name,Enabled"  # Pass the parameters as a single string
+    parameters = "schtasks /query /fo LIST"
+    runPowerShellScript(scriptPath, parameters)
 
 # Demo of how to use the functions, uncomment each block to try it out
 

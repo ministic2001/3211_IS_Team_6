@@ -38,10 +38,10 @@ $target = $credential.Username + "@" + $ip
 
 # Oneliner to read username, password from file, then start a new PSSession
 $session = New-PSSession -HostName $target
-Write-Host "Connected"
+# Write-Host "Connected"
 
 Enter-PSSession $session
-Write-Host "Entering session"
+# Write-Host "Entering session"
 
 # Print the parameters
 $Params | ForEach-Object {
@@ -49,10 +49,10 @@ $Params | ForEach-Object {
     $sb = [scriptblock]::Create($_)
 
     # Invoke the command on the remote machine
-    Write-Host "Running $_"
+    # Write-Host "Running $_"
     Invoke-Command -ScriptBlock $sb | Out-File -FilePath $out -Append
 }
 
 # Closes the PSSession
 Exit-PSSession
-Write-Host "Done"
+# Write-Host "Done"

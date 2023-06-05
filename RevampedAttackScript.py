@@ -19,6 +19,8 @@ import pkgutil
 from kepconfig import connection, admin, connectivity
 import json
 import sys
+from Powershell.callPowerShell import runPowerShellScript
+
 
 
 #############
@@ -32,6 +34,8 @@ COPIED_PATH = "C:\\Windows\\temp\\Smartmeter"
 SMARTMETER_PATH = "C:\\Users\\Student\\Documents\\AttackFolder"
 
 WINDOWS_SERVER_IP = "172.16.2.77"
+
+POWERSHELL_SCRIPT_PATH = r"Powershell\baseScriptElevated.ps1"
 
 
 ###########
@@ -136,7 +140,9 @@ def create_shared_folder():
 
 # Disable the firewall
 def disable_firewall():
-    cp = run('netsh advfirewall set allprofiles state off',stdout=PIPE , shell=True)
+    #cp = run('netsh advfirewall set allprofiles state off',stdout=PIPE , shell=True)
+    cp = runPowerShellScript(POWERSHELL_SCRIPT_PATH, "netsh advfirewall set allprofiles state off")
+    print(cp)
     if cp.stdout.decode('utf-8').strip() == "Ok.":
         print("Firewall disabled successfully\nOk.\n")
     else:
@@ -187,7 +193,9 @@ def disable_ssh():
 # Stop the KEPServerEXV6 service
 def disable_kepserver():
     service_name = "KEPServerEXV6"
-    cp = run(["sc", "stop", service_name],stdout=PIPE , check=False)
+    cp = runPowerShellScript(POWERSHELL_SCRIPT_PATH, "sc stop KEPServerEXV6")
+    #cp = run(["sc", "stop", service_name],stdout=PIPE , check=False)
+    print(cp)
     output = cp.stdout.decode('utf-8').strip().split()
     if "FAILED" in cp.stdout.decode('utf-8'):
             print("FAILED: " + " ".join(output[4:]) + "\nFail.\n")
@@ -1137,6 +1145,20 @@ def disable_running_schedules() -> None:
         print("Ok.")
     
 
+def kep_server_stop():
+    netshare = run(['sc', 'query', 'KEPServerEXV6'], stdout=PIPE, stderr=PIPE, text=True)
+    if "RUNNING" in netshare.stdout:
+        print("Kepserver is running, Stopping now.")
+        service_name = "KEPServerEXV6"
+        cp = run(["sc", "stop", service_name],stdout=PIPE , check=False)
+        output = cp.stdout.decode('utf-8').strip().split()
+        if "FAILED" in cp.stdout.decode('utf-8'):
+            print("FAILED: " + " ".join(output[4:]) + "\nFail.\n")
+        else:
+            print("The " + output[1] + " service is " + output[9])
+            sleep(15)
+
+# TODO: kep_server_start()
 
 ########
 # MAIN #
