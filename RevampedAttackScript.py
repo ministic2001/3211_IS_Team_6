@@ -1124,7 +1124,7 @@ def kep_get_single_user(user):
     print(json.dumps(admin.users.get_user(server, user),indent=4),file=sys.stdout)
 
 def kep_get_all_channel(ip):
-    server = kep_connect("172.16.2.77")
+    server = kep_connect(ip)
     print(json.dumps(connectivity.channel.get_all_channels(server), indent=4))
 
 def kep_get_all_device():

@@ -1,5 +1,6 @@
 import PySimpleGUI as sg
 import ipaddress
+import threading
 import time
 import RevampedAttackScript as attack
 import sys
@@ -23,12 +24,11 @@ def is_valid_ip(address):
     except ValueError:
         return False
 
-def launch_kep_exploit(exploit,ip,window):
+def launch_kep_exploit(exploit,ip,window,var1=None, var2=None):
     if is_valid_ip(ip):
         status = f"The selected attack to run is {exploit} on IP: {ip}"
         update_status(status,"-KEP_STATUS_BOX-",window)
         attack.kep_get_all_channel(ip)
-        time.sleep(2)
     else:
         print("error")
 
@@ -42,7 +42,19 @@ def update_status(text, status_box, window):
 
 def main():
     # Variables
-    kep_exploit_dict = {"Exploit 1":"Exploit 1 description", "Exploit 2":"Exploit 2 description SDAFLKJASDKFJLSKDF  test est estesjiofja io;ssjf dasif j tehso ijasdfkl jsadlfkj sdf f iou opiud  ", "Exploit 3":"Exploit 3 description"} # Stores all the options for exploits for KEP server attacks
+    # Store all the options for exploits for KEP server attacks and their descriptions
+    kep_exploit_dict = {"Get server information":"Get the information of the KEP server", 
+                        "Get all users":"Get all the users of the KEP server",
+                        "Enable user":"Enables the user specified",
+                        "Disable user":"Disable the user specified",
+                        "Get single user":"Get the information of a particular user",
+                        "Get all channels":"Get all channels of the KEP server",
+                        "Get all devices":"Get all devices of a channel",
+                        "Get single device":"Get the information of a particular device",
+                        "Add device":"Add a spoofed device to the KEP server under the channel specified",
+                        "Delete device":"Delete the specified device in the channel of the KEP server",
+                        "Bruteforce KEP credentials":"Run a bruteforce attack on the KEP server to get the admin credentials"
+                        } 
     modbus_exploit_dict = {"Exploit 1":"Exploit 1 description", "Exploit 2":"Exploit 2 description", "Exploit 3":"Exploit 3 description"} # Stores all the options for exploits for Modbus related attacks
     kep_exploit_list = list(kep_exploit_dict.keys())
     modbus_exploit_list = list(modbus_exploit_dict.keys())
@@ -65,10 +77,11 @@ def main():
     kep_layout = [
         [sg.Text("KEP server exploits",font=("Helvetica", 20, "bold"))],
         [sg.Text("Select IP address:", key="-SELECT_IP-"), sg.Radio("Level 6 (172.16.2.223)", "ip", key="-IP_LVL6-", enable_events=True, default=True), sg.Radio("Level 7 (172.16.2.77)" , "ip", key="-IP_LVL7-", enable_events=True), sg.Radio("Custom IP", "ip", key="-IP_CUSTOM-", enable_events=True)],
-        [sg.Text("Please enter IP", key="-IP_TEXT-",visible=False), sg.Input("172.16.2.223", key="-IP_INPUT-",visible=False)],
-        [sg.Text("Exploit:"), sg.Combo(kep_exploit_list, default_value=kep_exploit_list[0], key='-KEP_EXPLOIT-', enable_events=True, readonly=True)],
+        [sg.Text("Please enter IP", key="-IP_TEXT-",visible=False), sg.Input("172.16.2.223", key="-IP_INPUT-",visible=False,text_color="black",background_color="white", size=(25,1))],
+        [sg.Text("Exploit:"), sg.Combo(kep_exploit_list, default_value=kep_exploit_list[0], key='-KEP_EXPLOIT-', enable_events=True, readonly=True ,text_color="black", background_color="white")],
         [sg.Text("Description:", key="-DESCRIPTION-"), sg.Text(kep_exploit_dict[kep_exploit_list[0]],key="-DESCRIPTION_TEXT-")],
-        [sg.Button("Launch Exploit", key="-LAUNCH_KEP_EXPLOIT-", disabled_button_color="pink"), sg.Image("./images/loading.gif",visible=False, enable_events=True, key="-SPINNER-")],
+        [sg.Text("Variable 1:", key="-VAR1_TEXT-", visible=False), sg.Input("",key="-VAR1_INPUT-", visible=False, background_color="white",text_color="black", size=(22,1)), sg.Text("Variable 2:",visible=False, key="-VAR2_TEXT-"), sg.Input("",key="-VAR2_INPUT-", visible=False ,background_color="white",text_color="black", size=(22,1))],
+        [sg.Button("Launch Exploit", key="-LAUNCH_KEP_EXPLOIT-"), sg.Image("./images/loading.gif",visible=False, enable_events=True, key="-SPINNER-")],
         [sg.Multiline(background_color="gray",text_color="black", expand_x=True, size=(1,15),no_scrollbar=True, disabled=True, key="-KEP_STATUS_BOX-")],
         [sg.Button("Back")]
     ]
@@ -101,7 +114,7 @@ def main():
     # Event loop to handle events and button clicks
     while True:
         event, values = window.read(timeout=timeout)
-        # print(f'event=> {event}\n values=> {values}')
+        # print(f'event=> {event}\n values=> {values}', file=sys.__stdout__)
         if event in (None, 'Exit'):
             break
         if event == 'KEP Exploits':
@@ -131,7 +144,26 @@ def main():
             window["-IP_TEXT-"].update(visible=False)
             window["-IP_INPUT-"].update("172.16.2.77",visible=False)
         elif event == "-KEP_EXPLOIT-":
-            window["-DESCRIPTION_TEXT-"].update(kep_exploit_dict[values["-KEP_EXPLOIT-"]])
+            selected_exploit = values["-KEP_EXPLOIT-"]
+            window["-DESCRIPTION_TEXT-"].update(kep_exploit_dict[selected_exploit])
+            print(f"selected exploit == {selected_exploit}", file=sys.__stdout__)
+            if selected_exploit == "Enable user" or selected_exploit == "Disable user" or selected_exploit == "Get single user":
+                print("hiii", file=sys.__stdout__)
+                window["-VAR1_TEXT-"].update("User:", visible=True)
+                window["-VAR1_INPUT-"].update("", visible=True)
+            elif selected_exploit == "Get all devices":
+                window["-VAR1_TEXT-"].update("Channel:", visible=True)
+                window["-VAR1_INPUT-"].update("", visible=True)
+            elif selected_exploit == "Get single device" or selected_exploit == "Add device" or selected_exploit == "Delete device":
+                window["-VAR1_TEXT-"].update("Channel:", visible=True)
+                window["-VAR1_INPUT-"].update("", visible=True)
+                window["-VAR2_TEXT-"].update("Device:", visible=True)
+                window["-VAR2_INPUT-"].update("", visible=True)
+            else:
+                window["-VAR1_TEXT-"].update("Variable 1:", visible=False)
+                window["-VAR1_INPUT-"].update("", visible=False)
+                window["-VAR2_TEXT-"].update("Variable 2:", visible=False)
+                window["-VAR2_INPUT-"].update("", visible=False)
         window['-SPINNER-'].update_animation("./images/loading.gif",  time_between_frames=25)
     # Close the main window
     window.close()
