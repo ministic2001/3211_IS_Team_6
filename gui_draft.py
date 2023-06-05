@@ -1,6 +1,20 @@
 import PySimpleGUI as sg
 import ipaddress
 import time
+import RevampedAttackScript as attack
+import sys
+
+class IORedirector(object):
+    def __init__(self, multiline_element):
+        self.multiline_element = multiline_element
+
+class StdoutRedirector(IORedirector):
+    def write(self, msg):
+        self.multiline_element.update(msg, append=True)
+
+class StderrRedirector(IORedirector):
+    def write(self, msg):
+        self.multiline_element.update(msg, append=True)
 
 def is_valid_ip(address):
     try:
@@ -13,6 +27,7 @@ def launch_kep_exploit(exploit,ip,window):
     if is_valid_ip(ip):
         status = f"The selected attack to run is {exploit} on IP: {ip}"
         update_status(status,"-KEP_STATUS_BOX-",window)
+        attack.kep_get_all_channel(ip)
         time.sleep(2)
     else:
         print("error")
@@ -26,7 +41,7 @@ def update_status(text, status_box, window):
     window[status_box].update(f"{text}\n", append=True)
 
 def main():
-    #Variables
+    # Variables
     kep_exploit_dict = {"Exploit 1":"Exploit 1 description", "Exploit 2":"Exploit 2 description SDAFLKJASDKFJLSKDF  test est estesjiofja io;ssjf dasif j tehso ijasdfkl jsadlfkj sdf f iou opiud  ", "Exploit 3":"Exploit 3 description"} # Stores all the options for exploits for KEP server attacks
     modbus_exploit_dict = {"Exploit 1":"Exploit 1 description", "Exploit 2":"Exploit 2 description", "Exploit 3":"Exploit 3 description"} # Stores all the options for exploits for Modbus related attacks
     kep_exploit_list = list(kep_exploit_dict.keys())
@@ -54,7 +69,7 @@ def main():
         [sg.Text("Exploit:"), sg.Combo(kep_exploit_list, default_value=kep_exploit_list[0], key='-KEP_EXPLOIT-', enable_events=True, readonly=True)],
         [sg.Text("Description:", key="-DESCRIPTION-"), sg.Text(kep_exploit_dict[kep_exploit_list[0]],key="-DESCRIPTION_TEXT-")],
         [sg.Button("Launch Exploit", key="-LAUNCH_KEP_EXPLOIT-", disabled_button_color="pink"), sg.Image("./images/loading.gif",visible=False, enable_events=True, key="-SPINNER-")],
-        [sg.Multiline(background_color="gray", expand_x=True, size=(1,15),no_scrollbar=True, disabled=True, key="-KEP_STATUS_BOX-")],
+        [sg.Multiline(background_color="gray",text_color="black", expand_x=True, size=(1,15),no_scrollbar=True, disabled=True, key="-KEP_STATUS_BOX-")],
         [sg.Button("Back")]
     ]
 
@@ -75,6 +90,10 @@ def main():
     # Create the main window
     window = sg.Window('Attack Dashboard', main_layout)
 
+    # Here we set the stdout to the text area
+    sys.stdout = StdoutRedirector(window['-KEP_STATUS_BOX-'])
+    sys.stderr = StderrRedirector(window['-KEP_STATUS_BOX-'])
+
     # Variable to maintain which layout the user is on, default would be the home layout
     layout = '-HOME-'
     timeout = 10000
@@ -82,7 +101,7 @@ def main():
     # Event loop to handle events and button clicks
     while True:
         event, values = window.read(timeout=timeout)
-        print(f'event=> {event}\n values=> {values}')
+        # print(f'event=> {event}\n values=> {values}')
         if event in (None, 'Exit'):
             break
         if event == 'KEP Exploits':
@@ -97,9 +116,9 @@ def main():
                 window["-SPINNER-"].update(visible=True)
                 window["-LAUNCH_KEP_EXPLOIT-"].update(disabled=True)
                 launch_kep_exploit(values['-KEP_EXPLOIT-'], values["-IP_INPUT-"], window)
-                timeout=10000
-                window["-SPINNER-"].update(visible=False)
-                window["-LAUNCH_KEP_EXPLOIT-"].update(disabled=False)
+                # timeout=10000
+                # window["-SPINNER-"].update(visible=False)
+                # window["-LAUNCH_KEP_EXPLOIT-"].update(disabled=False)
             elif layout == '-MODBUS-':
                 print(f"The selected attack to run is {values['-MODBUS_EXPLOIT-']}")
         elif event == "-IP_CUSTOM-":
