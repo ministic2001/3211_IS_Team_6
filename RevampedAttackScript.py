@@ -1087,11 +1087,7 @@ zS4k0XE7GMLQRiQ8pLpFWLAF+t7xU/081wvKpWnmr0iQqPxSUc90qFs=
 def kep_connect(ip):
     # 172.16.2.77 if at lv 7
     # 172.16.2.223 if at lv 6
-<<<<<<< Updated upstream
-    server = connection.server(host = '172.16.2.223', port = 57412, user = 'Administrator', pw = 'administrator2022')
-=======
     server = connection.server(host = ip, port = 57412, user = 'Administrator', pw = 'administrator2022')
->>>>>>> Stashed changes
     print("Connected to KEP server.")
     return server
 
@@ -1115,8 +1111,6 @@ def kep_get_single_user(user):
     server = kep_connect("172.16.2.77")
     print(json.dumps(admin.users.get_user(server, user),indent=4),file=sys.stdout)
 
-<<<<<<< Updated upstream
-=======
 def kep_get_all_channel(ip):
     server = kep_connect("172.16.2.77")
     print(json.dumps(connectivity.channel.get_all_channels(server), indent=4))
@@ -1138,7 +1132,6 @@ def kep_delete_spoofed_device():
     server = kep_connect("172.16.2.77")
     print("DELETE DEVICE: " + json.dumps(connectivity.device.del_device(server, "SmartMeter.Device69"), indent=4))
 
->>>>>>> Stashed changes
 def disable_running_schedules() -> None:
     cp = run(["schtasks", "/change", "/TN", "\MoveFiles", "/disable"], stdout=PIPE, check=False)
     output = cp.stdout.decode('utf-8').strip().split()
