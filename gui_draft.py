@@ -13,6 +13,7 @@ def launch_kep_exploit(exploit,ip,window):
     if is_valid_ip(ip):
         status = f"The selected attack to run is {exploit} on IP: {ip}"
         update_status(status,"-KEP_STATUS_BOX-",window)
+        time.sleep(2)
     else:
         print("error")
 
@@ -52,7 +53,7 @@ def main():
         [sg.Text("Please enter IP", key="-IP_TEXT-",visible=False), sg.Input("172.16.2.223", key="-IP_INPUT-",visible=False)],
         [sg.Text("Exploit:"), sg.Combo(kep_exploit_list, default_value=kep_exploit_list[0], key='-KEP_EXPLOIT-', enable_events=True, readonly=True)],
         [sg.Text("Description:", key="-DESCRIPTION-"), sg.Text(kep_exploit_dict[kep_exploit_list[0]],key="-DESCRIPTION_TEXT-")],
-        [sg.Button("Launch Exploit"), sg.Image("loading.gif", enable_events=True, key="-SPINNER-")],
+        [sg.Button("Launch Exploit", key="-LAUNCH_KEP_EXPLOIT-", disabled_button_color="pink"), sg.Image("./images/loading.gif",visible=False, enable_events=True, key="-SPINNER-")],
         [sg.Multiline(background_color="gray", expand_x=True, size=(1,15),no_scrollbar=True, disabled=True, key="-KEP_STATUS_BOX-")],
         [sg.Button("Back")]
     ]
@@ -76,10 +77,11 @@ def main():
 
     # Variable to maintain which layout the user is on, default would be the home layout
     layout = '-HOME-'
+    timeout = 10000
 
     # Event loop to handle events and button clicks
     while True:
-        event, values = window.read()
+        event, values = window.read(timeout=timeout)
         print(f'event=> {event}\n values=> {values}')
         if event in (None, 'Exit'):
             break
@@ -89,9 +91,15 @@ def main():
             layout = update_layout(layout, "-MODBUS-", window)
         elif event in ('Back', 'Back1'):
             layout = update_layout(layout, "-HOME-", window)
-        elif event in ('Launch Exploit', 'Launch Exploit0'):
+        elif event in ('-LAUNCH_KEP_EXPLOIT-', 'Launch Exploit0'):
             if layout == '-KEP-':
+                timeout=25
+                window["-SPINNER-"].update(visible=True)
+                window["-LAUNCH_KEP_EXPLOIT-"].update(disabled=True)
                 launch_kep_exploit(values['-KEP_EXPLOIT-'], values["-IP_INPUT-"], window)
+                timeout=10000
+                window["-SPINNER-"].update(visible=False)
+                window["-LAUNCH_KEP_EXPLOIT-"].update(disabled=False)
             elif layout == '-MODBUS-':
                 print(f"The selected attack to run is {values['-MODBUS_EXPLOIT-']}")
         elif event == "-IP_CUSTOM-":
@@ -105,7 +113,7 @@ def main():
             window["-IP_INPUT-"].update("172.16.2.77",visible=False)
         elif event == "-KEP_EXPLOIT-":
             window["-DESCRIPTION_TEXT-"].update(kep_exploit_dict[values["-KEP_EXPLOIT-"]])
-        window['-SPINNER-'].update_animation("loading.gif",  time_between_frames=100)
+        window['-SPINNER-'].update_animation("./images/loading.gif",  time_between_frames=25)
     # Close the main window
     window.close()
 
