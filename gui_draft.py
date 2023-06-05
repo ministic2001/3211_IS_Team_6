@@ -23,12 +23,18 @@ def is_valid_ip(address):
         return True
     except ValueError:
         return False
+    
+def sleepyboi(duration):
+    time.sleep(duration)
 
 def launch_kep_exploit(exploit,ip,window,var1=None, var2=None):
     if is_valid_ip(ip):
         status = f"The selected attack to run is {exploit} on IP: {ip}"
         update_status(status,"-KEP_STATUS_BOX-",window)
-        attack.kep_get_all_channel(ip)
+        sleepyboi(3)
+        window.write_event_value("-KEP_ATTACK_COMPLETE-", None)
+        print("attack completed")
+
     else:
         print("error")
 
@@ -128,12 +134,14 @@ def main():
                 timeout=25
                 window["-SPINNER-"].update(visible=True)
                 window["-LAUNCH_KEP_EXPLOIT-"].update(disabled=True)
-                launch_kep_exploit(values['-KEP_EXPLOIT-'], values["-IP_INPUT-"], window)
-                # timeout=10000
-                # window["-SPINNER-"].update(visible=False)
-                # window["-LAUNCH_KEP_EXPLOIT-"].update(disabled=False)
+                thread = threading.Thread(target=launch_kep_exploit, args=(values['-KEP_EXPLOIT-'], values["-IP_INPUT-"], window))
+                thread.start()
             elif layout == '-MODBUS-':
                 print(f"The selected attack to run is {values['-MODBUS_EXPLOIT-']}")
+        elif event == "-KEP_ATTACK_COMPLETE-":
+            timeout=10000
+            window["-SPINNER-"].update(visible=False)
+            window["-LAUNCH_KEP_EXPLOIT-"].update(disabled=False)
         elif event == "-IP_CUSTOM-":
             window["-IP_TEXT-"].update(visible=True)
             window["-IP_INPUT-"].update(visible=True)
