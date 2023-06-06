@@ -2,3 +2,4 @@ kepconfig==1.2.1
 psutil==5.9.5
 pycryptodome==3.17
 pywin32==306
+PySimpleGUI==4.60.5
