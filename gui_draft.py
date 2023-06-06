@@ -24,14 +24,14 @@ def is_valid_ip(address):
     except ValueError:
         return False
     
-def sleepyboi(duration):
+def pause_execution(duration):
     time.sleep(duration)
 
 def launch_kep_exploit(exploit,ip,window,var1=None, var2=None):
     if is_valid_ip(ip):
         status = f"The selected attack to run is {exploit} on IP: {ip}"
         update_status(status,"-KEP_STATUS_BOX-",window)
-        sleepyboi(3)
+        pause_execution(3)
         window.write_event_value("-KEP_ATTACK_COMPLETE-", None)
         print("attack completed")
 
