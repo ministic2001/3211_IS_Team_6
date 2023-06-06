@@ -1,12 +1,4 @@
-click==8.1.3
-colorama==0.4.6
-Flask==2.2.2
-itsdangerous==2.1.2
-Jinja2==3.1.2
 kepconfig==1.2.1
-MarkupSafe==2.1.2
 psutil==5.9.5
 pycryptodome==3.17
-PySimpleGUI==4.60.5
 pywin32==306
-Werkzeug==2.2.2
