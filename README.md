@@ -45,10 +45,10 @@ Please note that Python 3.10 is required for this to work properly, and the spec
 
 <div>
   
-The credentials.csv should only have the headers (Username,Password) at the start
-Run bruteforceWindowsOS.ps1 to get the credentials and write it to the credentials.csv
-Afterwards, the credentials.csv will contain the credentials in the format (user1,pass1)
-You can then run baseScriptElevated.ps1
+The credentials.csv should only have the headers (Username,Password) at the start.
+Run bruteforceWindowsOS.ps1 to get the credentials and write it to the credentials.csv.
+Afterwards, the credentials.csv will contain the credentials in the format (user1,pass1).
+You can then run baseScriptElevated.ps1.
 You can also run callPowerShell.py to call baseScriptElevated.ps1.
 </div>
 <p align="right">(<a href="#readme-top">Back to top</a>)</p>
