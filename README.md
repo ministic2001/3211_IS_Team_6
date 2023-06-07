@@ -66,7 +66,7 @@ LONG DESCRIPTION OF PROJ
 ### Built With
 
 * [![Python][Python-logo]][Python-url]
-* [![PowerShell][PowerShell-logo]][PowerShell-url]
+* [![Powershell][Powershell-logo]][Powershell-url]
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
