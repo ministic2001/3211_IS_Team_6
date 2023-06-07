@@ -74,14 +74,7 @@ LONG DESCRIPTION OF PROJ
 ### Built With
 
 * [![Python][Python-logo]][Python-url]
-* [![JavaScript][JavaScript-logo]][JavaScript-url]
-* [![Node.js][Node-logo]][Node-url]
-* [![npm][npm-logo]][npm-url]
-* [![Django][Django-logo]][Django-url]
-* [![PyTorch][PyTorch-logo]][PyTorch-url]
-* [![spaCy][spaCy-logo]][spaCy-url]
-* [![NLTK][NLTK-logo]][NLTK-url]
-* [![Hugging Face Transformers][Transformers-logo]][Transformers-url]
+* [![PowerShell][PowerShell-logo]][PowerShell-url]
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
