@@ -26,18 +26,10 @@ SHORT PROJ DESCRIPTION
 # 3211_IS_Team_6
 
 
-<div>
-To ensure compatibility and install the required packages, please follow the steps below:
+## Requirements
 
-Make sure you have Python 3.10 installed on your system. If not, please install it first.
-Open your terminal or command prompt.
-Navigate to the directory where the requirements.txt file is located.
-Install the packages using the following command:
-```sh
-pip install -r requirements.txt
-```
-If you don't have PowerShell 7 installed, please install it before proceeding.
-Please note that Python 3.10 is required for this to work properly, and the specified packages will be installed based on the requirements.txt file.
+<div>
+Python 3.10 and Powershell 7
 </div>
 <p align="right">(<a href="#readme-top">Back to top</a>)</p>
 
