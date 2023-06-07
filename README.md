@@ -33,7 +33,7 @@ Make sure you have Python 3.10 installed on your system. If not, please install 
 Open your terminal or command prompt.
 Navigate to the directory where the requirements.txt file is located.
 Install the packages using the following command:
-```
+```sh
 pip install -r requirements.txt
 ```
 If you don't have PowerShell 7 installed, please install it before proceeding.
