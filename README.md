@@ -26,7 +26,7 @@ SHORT PROJ DESCRIPTION
 # 3211_IS_Team_6
 
 
-<div align="center">
+<div>
 To ensure compatibility and install the required packages, please follow the steps below:
 
 Make sure you have Python 3.10 installed on your system. If not, please install it first.
@@ -43,7 +43,7 @@ Please note that Python 3.10 is required for this to work properly, and the spec
 
 ## Gaining Access to Windows
 
-<div align="center">
+<div>
   
 The credentials.csv should only have the headers (Username,Password) at the start
 Run bruteforceWindowsOS.ps1 to get the credentials and write it to the credentials.csv
