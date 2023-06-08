@@ -83,7 +83,7 @@ To get a local copy up and running follow these simple example steps.
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 # Prerequisites
-List of things you need, to use the software and how to install them.
+You will need to install the following to use the software.
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ## Windows (Install Winget via Microsoft Store)
