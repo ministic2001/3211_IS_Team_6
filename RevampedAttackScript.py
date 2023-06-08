@@ -1195,7 +1195,7 @@ if __name__ == '__main__':
         case "25": kep_add_spoofed_device()
         case "26": capturefilechangedatavalueandsendback()
         case "27": capturefileandsendtodiffdest()
-        case "28": kep_modify_user()
+        case "28": kep_modify_user("User1")
         case "-h":
             print("\nChoose \n1 Delete file, \n2 Copy file, \n3 Disable firewall, \n4 Disable ssh through firewall, \n5 Disable Kepserver, \n6 Interrupt modbus reading, \n7 Disable COMPORT, \n8 Encrypt files, \n9 Change Meter25 Id to 26, \n10 Clear Energy Reading, \n11 Revert with options, \n12 Bruteforce KEPServer Password, \n13 Disable sshd Service, \n14 Get hardware info, \n15 Obtain KEPServer info, \n16 Get all KEPServer Users, \n17 Enable KEP Users, \n18 Disable KEP Users, \n19 Obtain KEP User Info.")
         case _: print("Invalid Option! Use option \"-h\" for help!")
