@@ -1031,6 +1031,10 @@ def kep_disable_user(user):
     server = kep_connect("172.16.2.77")
     print(admin.users.disable_user(server, user),file=sys.stdout)
 
+def kep_modify_user(user):
+    server = kep_connect("172.16.2.77")
+    print(admin.users.modify_user(server, user),file=sys.stdout)
+
 def kep_get_single_user(user):
     server = kep_connect("172.16.2.77")
     print(json.dumps(admin.users.get_user(server, user),indent=4),file=sys.stdout)
