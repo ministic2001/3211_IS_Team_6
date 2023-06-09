@@ -61,7 +61,7 @@ def launch_kep_exploit(exploit,ip,window,var1=None, var2=None):
             update_status("Attack success","-KEP_STATUS_BOX-",window)
             window.write_event_value("-KEP_ATTACK_COMPLETE-", None)
         except Exception as e:
-            print("wubabbo")
+            print(e)
             update_status("Attack failed","-KEP_STATUS_BOX-",window)
             window.write_event_value("-KEP_ATTACK_FAILED-", None)
 
@@ -120,13 +120,14 @@ def main():
         [sg.Column([
             [sg.Button('Get Service Status', key="-GET_STATUS_BUTTON-", expand_x=True),sg.Image("./images/loading.gif",visible=False, key="-SERVICE_SPINNER-")],
         ], justification="center", expand_x=True)],
+        [sg.Text("Error getting service status, please try again.", visible=False, key="-SERVICE_ERROR_TEXT-", text_color="red", justification="center", expand_x=True)],
         [sg.Text("Please select exploits you want to run",expand_x=True,justification="center")],
         [sg.Column([
-            [sg.Button('KEP Exploits'),sg.Button('Modbus Exploits')],
-        ], justification="center")],  # Corrected the placement of 'justification'
+            [sg.Button('KEP Exploits', expand_x=True),sg.Button('Modbus Exploits', expand_x=True)],
+        ], justification="center", expand_x=True)],  # Corrected the placement of 'justification'
         [sg.Column([
-            [sg.Button('Exit')],
-        ], justification="center")]  
+            [sg.Button('Exit', expand_x=True)],
+        ], justification="center", expand_x=True)]  
     ]
 
     # Layout for the kep server exploits
@@ -157,10 +158,6 @@ def main():
     # Create the main window
     window = sg.Window('Attack Dashboard', main_layout, resizable=True)
 
-    # Here we set the stdout to the text area
-    # sys.stdout = StdoutRedirector(window['-KEP_STATUS_BOX-'])
-    # sys.stderr = StderrRedirector(window['-KEP_STATUS_BOX-'])
-
     # Variable to maintain which layout the user is on, default would be the home layout
     layout = '-HOME-'
     timeout = None
@@ -171,18 +168,34 @@ def main():
         # print(f'event=> {event}\n values=> {values}', file=sys.__stdout__)
         if event in (None, 'Exit'):
             break
+
         if event == 'KEP Exploits':
+            # Here we set the stdout to the text area
+            sys.stdout = StdoutRedirector(window['-KEP_STATUS_BOX-'])
+            sys.stderr = StderrRedirector(window['-KEP_STATUS_BOX-'])
             layout = update_layout(layout, "-KEP-", window)
+
         elif event == "-GET_STATUS_BUTTON-":
             timeout=25
             window["-SERVICE_SPINNER-"].update(visible=True)
             window["-GET_STATUS_BUTTON-"].update(disabled=True)
+            window["-SERVICE_ERROR_TEXT-"].update(visible=False)
             thread = threading.Thread(target=get_service_statuses, args=(values["-IP_INPUT-"],window))
             thread.start()
+
         elif event == 'Modbus Exploits':
+            ##TODO: implement modbus status box and redirect stdout and stderr
+            # Here we set the stdout to the text area
+            # sys.stdout = StdoutRedirector(window['-MB_STATUS_BOX-'])
+            # sys.stderr = StderrRedirector(window['-MB_STATUS_BOX-'])
             layout = update_layout(layout, "-MODBUS-", window)
-        elif event in ('Back', 'Back1'):
+
+        elif event in ('Back', 'Back0'):
+            # Here we set the stdout to the text area
+            sys.stdout = sys.__stdout__
+            sys.stderr = sys.__stderr__
             layout = update_layout(layout, "-HOME-", window)
+
         elif event in ('-LAUNCH_KEP_EXPLOIT-', 'Launch Exploit0'):
             if layout == '-KEP-':
                 timeout=25
@@ -194,6 +207,7 @@ def main():
                 thread.start()
             elif layout == '-MODBUS-':
                 print(f"The selected attack to run is {values['-MODBUS_EXPLOIT-']}")
+
         elif event == "-SERVICE_STATUS_SUCCESS-":
             timeout=None
             window["-SERVICE_SPINNER-"].update(visible=False)
@@ -207,45 +221,57 @@ def main():
             timeout=None
             window["-SERVICE_SPINNER-"].update(visible=False)
             window["-GET_STATUS_BUTTON-"].update(disabled=False)
+            window["-SERVICE_ERROR_TEXT-"].update(visible=True)
+
         elif event == "-KEP_ATTACK_COMPLETE-":
             timeout=None
             window["-KEP_SPINNER-"].update(visible=False)
             window["-SUCCESS-"].update(visible=True)
             window["-LAUNCH_KEP_EXPLOIT-"].update(disabled=False)
+
         elif event == "-KEP_ATTACK_FAILED-":
             timeout=None
             window["-KEP_SPINNER-"].update(visible=False)
             window["-ERROR-"].update(visible=True)
             window["-LAUNCH_KEP_EXPLOIT-"].update(disabled=False)
+
         elif event == "-IP_CUSTOM-":
             window["-IP_TEXT-"].update(visible=True)
             window["-IP_INPUT-"].update(visible=True)
+
         elif event == "-IP_LVL6-":
             window["-IP_TEXT-"].update(visible=False)
             window["-IP_INPUT-"].update("172.16.2.223",visible=False)
+
         elif event == "-IP_LVL7-":
             window["-IP_TEXT-"].update(visible=False)
             window["-IP_INPUT-"].update("172.16.2.77",visible=False)
+
         elif event == "-KEP_EXPLOIT-":
             selected_exploit = values["-KEP_EXPLOIT-"]
             window["-DESCRIPTION_TEXT-"].update(kep_exploit_dict[selected_exploit])
-            print(f"selected exploit == {selected_exploit}", file=sys.__stdout__)
+            # print(f"selected exploit == {selected_exploit}", file=sys.__stdout__)
+
             if selected_exploit == "Enable user" or selected_exploit == "Disable user" or selected_exploit == "Get single user":
                 window["-VAR1_TEXT-"].update("User:", visible=True)
                 window["-VAR1_INPUT-"].update("", visible=True)
+
             elif selected_exploit == "Get all devices":
                 window["-VAR1_TEXT-"].update("Channel:", visible=True)
                 window["-VAR1_INPUT-"].update("", visible=True)
+
             elif selected_exploit == "Get single device" or selected_exploit == "Add device" or selected_exploit == "Delete device":
                 window["-VAR1_TEXT-"].update("Channel:", visible=True)
                 window["-VAR1_INPUT-"].update("", visible=True)
                 window["-VAR2_TEXT-"].update("Device:", visible=True)
                 window["-VAR2_INPUT-"].update("", visible=True)
+
             else:
                 window["-VAR1_TEXT-"].update("Variable 1:", visible=False)
                 window["-VAR1_INPUT-"].update("", visible=False)
                 window["-VAR2_TEXT-"].update("Variable 2:", visible=False)
                 window["-VAR2_INPUT-"].update("", visible=False)
+                
         window['-KEP_SPINNER-'].update_animation("./images/loading.gif",  time_between_frames=25)
         window['-SERVICE_SPINNER-'].update_animation("./images/loading.gif",  time_between_frames=25)
     # Close the main window
