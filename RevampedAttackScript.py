@@ -33,6 +33,9 @@ class AttackScript:
         self.PASSWORD = password
         self.WINDOWS_SERVER_IP = ip
 
+        # Set the path for the private SSH key
+        self.PRIVATE_KEY_PATH = "resources\\accessKey"
+
         # Set the path for the shared directory
         self.COPIED_PATH = "C:\\Windows\\temp\\Smartmeter"
 
@@ -63,34 +66,64 @@ class AttackScript:
     def ssh_run_command(self, command: str) -> str:
         """
         Runs a SINGLE command through ssh remotely and grab the output.
-        
+
         Note that the command will run through whichever shell upon ssh. Typically, for windows, it's command prompt and for linux, it's bash. The default values are specified at the top of the file
 
+        Either a password OR a private key MUST be provided. If both are provided, the private key will be used.
+
         Args:
-            command (str): Command to run.
-            host (str): IP Address of the remote device.
-            username (str): Username of the remote device.
-            password (str): Password of the remote device.
-        
+            command (str): The command to run on the remote server.
+            host (str): The hostname or IP address of the remote server.
+            username (str): The username to use for the SSH connection.
+            password (str): The password to use for the SSH connection.
+            private_key_path (str): The path to the private key file.
+
         Returns:
-            str: The output of the command ran
-
+            str: The output of the command.
         """
-        ssh_output: str = "" # Declare as string to prevent error proning
-        
-        if self.password is None:
-            print("Using Hostkey? This is not implemented")
-            return
 
+        ssh_output: str = "" # Declare as string to prevent error proning
+
+        # Create an SSH client
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        ssh.connect(self.WINDOWS_SERVER_IP, self.USERNAME, self.PASSWORD)
-        ssh_stdin, ssh_stdout, ssh_stderr = ssh.exec_command(command)
-        ssh_output_list = ssh_stdout.readlines()
-        for line_no, line in enumerate(ssh_output_list):
-            ssh_output_list[line_no] = line.replace("\r\n", "\n")
-        ssh_output = "".join(ssh_output_list)
 
+        try:
+            # Connect to the remote server, prioritizing private key over password
+            if self.PRIVATE_KEY_PATH is not None:
+                # Note that Ed25519 was used for the generation. If it is RSA, use "paramiko.RSAKey.from_private_key_file()" instead
+                private_key = paramiko.Ed25519Key.from_private_key_file(self.PRIVATE_KEY_PATH)
+                # Connect using the private key
+                ssh.connect(host=self.WINDOWS_SERVER_IP, username=self.USERNAME, pkey=private_key)
+            elif self.PASSWORD is not None:
+                # Connect using password
+                ssh.connect(host=self.WINDOWS_SERVER_IP, username=self.USERNAME, password=self.PASSWORD)
+            else:
+                # Handle case when neither password nor private key is provided
+                print("Please provide either a password or a private key.")
+                return None
+
+            # Placeholder for other code to run after successful connection
+            print("Connected to the remote server.")
+            # Run the command
+            ssh_stdin, ssh_stdout, ssh_stderr = ssh.exec_command(command)
+            ssh_output_list = ssh_stdout.readlines()
+            for line_no, line in enumerate(ssh_output_list):
+                ssh_output_list[line_no] = line.replace("\r\n", "\n")
+            ssh_output = "".join(ssh_output_list)
+
+        except paramiko.AuthenticationException:
+            print("Authentication failed. Please check your credentials.")
+            return None
+        except paramiko.SSHException as e:
+            print(f"An SSH error occurred: {e}")
+            return None
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            return None
+
+        ssh.close()
+        # Return the output
         return ssh_output
 
     # Delete files in a specific folder

