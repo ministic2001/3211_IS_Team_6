@@ -27,7 +27,6 @@ class AttackScript:
         #############
         # CONSTANTS #
         #############
-        print(f"init boiess {ip}")
         # Default credentials for windows server. 
         self.USERNAME = username
         self.PASSWORD = password

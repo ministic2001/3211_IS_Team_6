@@ -147,7 +147,7 @@ def main():
     ]
 
     # Create the main window
-    window = sg.Window('Attack Dashboard', main_layout)
+    window = sg.Window('Attack Dashboard', main_layout, resizable=True)
 
     # Here we set the stdout to the text area
     sys.stdout = StdoutRedirector(window['-KEP_STATUS_BOX-'])
