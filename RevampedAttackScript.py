@@ -43,9 +43,10 @@ class AttackScript:
         # TODO: Either a modpoll path finder or make a modpoll unpacker
         self.MODPOLL_PATH = r"C:\Windows\Temp\SmartMetertest"
 
-    ###########
-    # ATTACKS #
-    ###########
+
+###########
+# ATTACKS #
+###########
 
     # Check if the script is running with administrator privileges, if not, restart with elevated privileges
     # def check_admin() -> None:
