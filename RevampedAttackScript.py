@@ -1184,6 +1184,8 @@ def kep_get_service_status() -> bool:
         return True
     return False
 
+def dummy_function():
+    print("cool")
 ########
 # MAIN #
 ########
@@ -1194,6 +1196,7 @@ def main():
     #     check_admin()
 
     match attack_option:
+        case "cool": dummy_function()
         case "1":  create_scheduled_task() # TODO: Determine if this function is depricated or can be modified
         #case "2":  create_shared_folder(), copy_file(SMARTMETER_PATH) # TODO: Determine if this function is depricated
         case "3":  disable_firewall()
