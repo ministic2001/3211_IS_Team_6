@@ -1018,7 +1018,6 @@ zS4k0XE7GMLQRiQ8pLpFWLAF+t7xU/081wvKpWnmr0iQqPxSUc90qFs=
     else:
         print ("Invalid Option! Use option \"-h\" for help!")
 
-def kep_connect(ip):
 def kep_connect(host: str=WINDOWS_SERVER_IP, port: int=57412) -> connection.server:
     """
     Connects to the KEPServer.
@@ -1040,8 +1039,8 @@ def kep_connect(host: str=WINDOWS_SERVER_IP, port: int=57412) -> connection.serv
     print("Connected to KEP server.")
     return server
 
-def kep_server_info(ip):
-    server = kep_connect(ip)
+def kep_server_info():
+    server = kep_connect()
     print(json.dumps(server.get_info(), indent=4),file=sys.stdout)
 
 def kep_get_all_users():
@@ -1060,26 +1059,29 @@ def kep_get_single_user(user):
     server = kep_connect()
     print(json.dumps(admin.users.get_user(server, user),indent=4),file=sys.stdout)
 
-def kep_get_all_channel():
+def kep_get_all_channels():
     server = kep_connect()
     print(json.dumps(connectivity.channel.get_all_channels(server), indent=4))
 
-def kep_get_all_device():
+def kep_get_all_devices(channel): # Example of a channel name is "SmartMeter"
     server = kep_connect()
-    print(json.dumps(connectivity.device.get_all_devices(server, "SmartMeter"), indent=4))
+    print(json.dumps(connectivity.device.get_all_devices(server, channel), indent=4))
 
-def kep_get_single_device():
+def kep_get_single_device(channel,device): # Example of a single device is "SmartMeter.ministicHACKED"
     server = kep_connect()
-    print(json.dumps(connectivity.device.get_device(server, "SmartMeter.ministicHACKED"), indent=4))
+    device_to_get = ".".join([channel, device])
+    print(json.dumps(connectivity.device.get_device(server, device_to_get), indent=4))
 
-def kep_add_spoofed_device():
-    server = kep_connect("172.16.2.77")
-    print("ADD DEVICE: " + json.dumps(connectivity.device.add_device(server, "SmartMeter", {"common.ALLTYPES_NAME": "Device69", "servermain.MULTIPLE_TYPES_DEVICE_DRIVER": "Modbus RTU Serial", "servermain.DEVICE_SCAN_MODE_RATE_MS": 8888888}), indent=4))
-    print("\n" + json.dumps(connectivity.device.get_device(server, "SmartMeter.Device69"), indent=4))
+def kep_add_spoofed_device(channel,device):
+    server = kep_connect()
+    device_to_get = ".".join([channel, device])
+    print("ADD DEVICE: " + json.dumps(connectivity.device.add_device(server, channel, {"common.ALLTYPES_NAME": device, "servermain.MULTIPLE_TYPES_DEVICE_DRIVER": "Modbus RTU Serial", "servermain.DEVICE_SCAN_MODE_RATE_MS": 8888888}), indent=4))
+    print("\n" + json.dumps(connectivity.device.get_device(server, device_to_get), indent=4))
 
-def kep_delete_spoofed_device():
-    server = kep_connect("172.16.2.77")
-    print("DELETE DEVICE: " + json.dumps(connectivity.device.del_device(server, "SmartMeter.Device69"), indent=4))
+def kep_delete_spoofed_device(channel, device):
+    server = kep_connect()
+    device_to_del = ".".join([channel, device])
+    print("DELETE DEVICE: " + json.dumps(connectivity.device.del_device(server, device_to_del), indent=4))
 
 def disable_running_schedules() -> None:
     """

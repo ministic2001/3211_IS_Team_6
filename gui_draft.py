@@ -31,12 +31,32 @@ def launch_kep_exploit(exploit,ip,window,var1=None, var2=None):
     if is_valid_ip(ip):
         status = f"The selected attack to run is {exploit} on IP: {ip}"
         update_status(status,"-KEP_STATUS_BOX-",window)
-        sleepyboi(3)
+        ## Logic for attack selection here
+        attack.WINDOWS_SERVER_IP=ip
+        match exploit:
+            case "Start KEP server": attack.kep_server_start()
+            case "Stop KEP server": attack.kep_server_stop()
+            case "Get server information": attack.kep_server_info()
+            case "Get all users": attack.kep_get_all_users()
+            case "Enable user": attack.kep_enable_user(var1) # var1=user
+            case "Disable user": attack.kep_disable_user(var1) # var1=user
+            case "Get single user": attack.kep_get_single_user(var1) # var1=user
+            case "Get all channels": attack.kep_get_all_channels()
+            case "Get all devices": attack.kep_get_all_devices(var1) # var1=channel
+            case "Get single device": attack.kep_get_single_device(var1,var2) # var1=channel, var2=device
+            case "Add device": attack.kep_add_spoofed_device(var1,var2) # var1=channel, var2=device_name
+            case "Delete device": attack.kep_delete_spoofed_device(var1,var2) # var1=channel, var2=device
+            case "Bruteforce KEP credentials": attack.kep_bruteforce()
+
         window.write_event_value("-KEP_ATTACK_COMPLETE-", None)
         print("attack completed")
 
     else:
         print("error")
+
+def remove_success_error(window):
+    window["-SUCCESS-"].update(visible=False)
+    window["-ERROR-"].update(visible=False)
 
 def update_layout(old_layout, new_layout, window):
     window[old_layout].update(visible=False)
@@ -49,7 +69,9 @@ def update_status(text, status_box, window):
 def main():
     # Variables
     # Store all the options for exploits for KEP server attacks and their descriptions
-    kep_exploit_dict = {"Get server information":"Get the information of the KEP server", 
+    kep_exploit_dict = {"Start KEP server":"Starts the KEP server",
+                        "Stop KEP server":"Stops the KEP server",
+                        "Get server information":"Get the information of the KEP server", 
                         "Get all users":"Get all the users of the KEP server",
                         "Enable user":"Enables the user specified",
                         "Disable user":"Disable the user specified",
@@ -87,7 +109,7 @@ def main():
         [sg.Text("Exploit:"), sg.Combo(kep_exploit_list, default_value=kep_exploit_list[0], key='-KEP_EXPLOIT-', enable_events=True, readonly=True ,text_color="black", background_color="white")],
         [sg.Text("Description:", key="-DESCRIPTION-"), sg.Text(kep_exploit_dict[kep_exploit_list[0]],key="-DESCRIPTION_TEXT-")],
         [sg.Text("Variable 1:", key="-VAR1_TEXT-", visible=False), sg.Input("",key="-VAR1_INPUT-", visible=False, background_color="white",text_color="black", size=(22,1)), sg.Text("Variable 2:",visible=False, key="-VAR2_TEXT-"), sg.Input("",key="-VAR2_INPUT-", visible=False ,background_color="white",text_color="black", size=(22,1))],
-        [sg.Button("Launch Exploit", key="-LAUNCH_KEP_EXPLOIT-"), sg.Image("./images/loading.gif",visible=False, enable_events=True, key="-SPINNER-")],
+        [sg.Button("Launch Exploit", key="-LAUNCH_KEP_EXPLOIT-"), sg.Image("./images/loading.gif",visible=False, key="-SPINNER-"),sg.Image("./images/success.png",visible=False, key="-SUCCESS-"),sg.Image("./images/error.png",visible=False, key="-ERROR-")],
         [sg.Multiline(background_color="gray",text_color="black", expand_x=True, size=(1,15),no_scrollbar=True, disabled=True, key="-KEP_STATUS_BOX-")],
         [sg.Button("Back")]
     ]
@@ -115,12 +137,12 @@ def main():
 
     # Variable to maintain which layout the user is on, default would be the home layout
     layout = '-HOME-'
-    timeout = 10000
+    timeout = None
 
     # Event loop to handle events and button clicks
     while True:
         event, values = window.read(timeout=timeout)
-        # print(f'event=> {event}\n values=> {values}', file=sys.__stdout__)
+        print(f'event=> {event}\n values=> {values}', file=sys.__stdout__)
         if event in (None, 'Exit'):
             break
         if event == 'KEP Exploits':
@@ -132,15 +154,18 @@ def main():
         elif event in ('-LAUNCH_KEP_EXPLOIT-', 'Launch Exploit0'):
             if layout == '-KEP-':
                 timeout=25
+                remove_success_error(window)
                 window["-SPINNER-"].update(visible=True)
                 window["-LAUNCH_KEP_EXPLOIT-"].update(disabled=True)
+                window["-KEP_STATUS_BOX-"].update("")
                 thread = threading.Thread(target=launch_kep_exploit, args=(values['-KEP_EXPLOIT-'], values["-IP_INPUT-"], window))
                 thread.start()
             elif layout == '-MODBUS-':
                 print(f"The selected attack to run is {values['-MODBUS_EXPLOIT-']}")
         elif event == "-KEP_ATTACK_COMPLETE-":
-            timeout=10000
+            timeout=None
             window["-SPINNER-"].update(visible=False)
+            window["-SUCCESS-"].update(visible=True)
             window["-LAUNCH_KEP_EXPLOIT-"].update(disabled=False)
         elif event == "-IP_CUSTOM-":
             window["-IP_TEXT-"].update(visible=True)
