@@ -78,13 +78,13 @@ class AttackScript:
         """
         ssh_output: str = "" # Declare as string to prevent error proning
         
-        if self.password is None:
+        if self.PASSWORD is None:
             print("Using Hostkey? This is not implemented")
             return
 
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        ssh.connect(self.WINDOWS_SERVER_IP, self.USERNAME, self.PASSWORD)
+        ssh.connect(self.WINDOWS_SERVER_IP, username=self.USERNAME, password=self.PASSWORD)
         ssh_stdin, ssh_stdout, ssh_stderr = ssh.exec_command(command)
         ssh_output_list = ssh_stdout.readlines()
         for line_no, line in enumerate(ssh_output_list):
@@ -420,7 +420,7 @@ class AttackScript:
         """
         self.kep_server_stop()
         
-        executable_path = MODPOLL_PATH + r"\modpoll.exe"
+        executable_path = self.MODPOLL_PATH + r"\modpoll.exe"
 
         parameters = ["-b", "9600", "-p", "none", "-m", "rtu", "-a", "25", "-r", "201", "COM1", "26"]
 
@@ -1158,16 +1158,7 @@ class AttackScript:
             print("Something went wrong!")
             return False
 
-    #Getting status for GUI
-    def gui_get_kep_status(self):
-        ssh = paramiko.SSHClient()
-        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        ssh.connect(self.WINDOWS_SERVER_IP, self.USERNAME, self.PASSWORD)
-        ssh_stdin, ssh_stdout, ssh_stderr = ssh.exec_command(r'powershell -command "Get-Service KEPServerEXV6 | Select-Object -Property Status"')
-        for lines in ssh_stdout.readlines():
-            if "Running" in lines:
-                    print("KEPSERVER Running")
-                    break
+    #Functions for getting status for GUI
 
     # TODO: kep_server_start()
     def kep_get_service_status(self) -> bool:
@@ -1182,6 +1173,38 @@ class AttackScript:
             print("KEPSERVER Running")
             return True
         return False
+    
+    def kep_get_windef_status(self) -> bool:
+        """
+        Get Windows Defender status
+
+        Returns:
+            bool: True/False based on whether Windows Defender is enabled or not.
+        """
+        command_output = self.ssh_run_command(r'powershell -command "Get-MpComputerStatus | select Antivirusenabled"')
+        if "True" in command_output:
+            print("Windows Defender Running")
+            return True
+        return False
+
+    def kep_get_firewall_status(self):
+        """
+        Get Windows Firewall status
+
+        Returns:
+            str,str,str: OFF/ON based on whether Windows Firewall is enabled or not.
+            List Order [Domain, Private, Public]
+        """
+        command_output = self.ssh_run_command(r'netsh advfirewall show allprofiles state')
+        results = []
+
+        results.append("OFF" if "OFF" in command_output.split()[5] else "ON")
+        results.append("OFF" if "OFF" in command_output.split()[11] else "ON")
+        results.append("OFF" if "OFF" in command_output.split()[17] else "ON")
+
+        print(results)
+        return results
+
 
     ########
     # MAIN #
