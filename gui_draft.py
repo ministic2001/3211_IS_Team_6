@@ -106,10 +106,25 @@ def main():
     modbus_exploit_list = list(modbus_exploit_dict.keys())
     # Set the theme of the GUI
     sg.theme('DarkGrey13')
-
+    headingrow = ['SERVICE', 'STATUS']
+    statusrow = [['Firewall Domain', 'HERE'],
+    ['Firewall Private Profile', 'HERE'], 
+    ['Firewall Public Profile', 'HERE' ], 
+    ['Windows Defender', 'HERE'], 
+    ['KEP Server', 'HERE']]
+    
     # Layout for the home window
-    home_layout = [
+    home_layout = [   
         [sg.Text("Attack Dashboard",font=("Helvetica", 20, "bold"),expand_x=True,justification="center")],
+        [sg.Table(values=statusrow, headings=headingrow, 
+                  auto_size_columns=True,
+                  display_row_numbers=False,
+                  justification='center', key='-TABLE-',
+                  selected_row_colors='red on yellow',
+                  enable_events=True,
+                  expand_x=True,
+                  expand_y=True,
+                  enable_click_events=True) ],
         [sg.Text("Please select exploits you want to run",expand_x=True,justification="center")],
         [sg.Column([
             [sg.Button('KEP Exploits'),sg.Button('Modbus Exploits')],
