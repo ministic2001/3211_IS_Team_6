@@ -105,7 +105,7 @@ def main():
 
     # Layout for the home window
     home_layout = [
-        [sg.Text("Attack Dashboard",font=("Helvetica", 20, "bold"),expand_x=True,justification="center")],
+        [sg.Text("Attack Dashboard",font=("Open Sans", 20, "bold"),expand_x=True,justification="center")],
         [sg.Text("Please select exploits you want to run",expand_x=True,justification="center")],
         [sg.Column([
             [sg.Button('KEP Exploits'),sg.Button('Modbus Exploits')],
