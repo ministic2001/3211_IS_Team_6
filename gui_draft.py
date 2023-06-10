@@ -4,6 +4,7 @@ import threading
 import time
 import RevampedAttackScript as attackscript
 import sys
+import os
 
 class IORedirector(object):
     def __init__(self, multiline_element):
@@ -41,7 +42,8 @@ def is_valid_ip(address):
 def sleepyboi(duration):
     time.sleep(duration)
 
-def launch_kep_exploit(exploit,ip,window,var1=None, var2=None):
+
+def launch_kep_exploit(exploit,ip,window,var1=None, var2=None,var3=None):
     if is_valid_ip(ip):
         status = f"The selected attack to run is {exploit} on IP: {ip}"
         update_status(status,"-KEP_STATUS_BOX-",window)
@@ -49,6 +51,7 @@ def launch_kep_exploit(exploit,ip,window,var1=None, var2=None):
         attack = attackscript.AttackScript(ip)
         try:
             match exploit:
+                case "Connect to Wi-fi Network": attack.connect_to_wifi(var1,var2,var3)
                 case "Start KEP server": attack.kep_server_start()
                 case "Stop KEP server": attack.kep_server_stop()
                 case "Get server information": attack.kep_server_info()
@@ -87,9 +90,11 @@ def update_status(text, status_box, window, color = "white"):
 def main():
     # Variables
     # Store all the options for exploits for KEP server attacks and their descriptions
-    kep_exploit_dict = {"Start KEP server":"Starts the KEP server",
+    kep_exploit_dict = {
+        "Connect to Wi-fi Network":"Connects to Wi-fi Network",
+        "Start KEP server":"Starts the KEP server",
                         "Stop KEP server":"Stops the KEP server",
-                        "Get server information":"Get the information of the KEP server", 
+                        "Get server information":"Get the information of the KEP server",
                         "Get all users":"Get all the users of the KEP server",
                         "Enable user":"Enables the user specified",
                         "Disable user":"Disable the user specified",
@@ -100,7 +105,24 @@ def main():
                         "Add device":"Add a spoofed device to the KEP server under the channel specified",
                         "Delete device":"Delete the specified device in the channel of the KEP server",
                         "Bruteforce KEP credentials":"Run a bruteforce attack on the KEP server to get the admin credentials"
-                        } 
+                        }
+    # kep_exploit_dict = {}
+    # scriptDirectory = './scripts/'
+    # for file in os.listdir(scriptDirectory):
+    # 
+    #     if file.endswith(".sh"):
+    #         filePath = scriptDirectory + file
+    #         f = open(filePath, "r")
+    #         Lines = f.readlines()
+    # 
+    #         kep_exploit_dict[file] = []
+    # 
+    #         for line in Lines:
+    #             line = line.strip()
+    #             line = line.lstrip('#')
+    #             if "Description:" in line:
+    #                 kep_exploit_dict[file].append(line)
+
     modbus_exploit_dict = {"Exploit 1":"Exploit 1 description", "Exploit 2":"Exploit 2 description", "Exploit 3":"Exploit 3 description"} # Stores all the options for exploits for Modbus related attacks
     kep_exploit_list = list(kep_exploit_dict.keys())
     modbus_exploit_list = list(modbus_exploit_dict.keys())
@@ -140,7 +162,7 @@ def main():
         [sg.Text("Select IP address:", key="-SELECT_IP-"), sg.Radio("Level 6 (172.16.2.223)", "ip", key="-IP_LVL6-", enable_events=True, default=True), sg.Radio("Level 7 (172.16.2.77)" , "ip", key="-IP_LVL7-", enable_events=True), sg.Radio("Custom IP", "ip", key="-IP_CUSTOM-", enable_events=True)],
         [sg.Text("Please enter IP", key="-IP_TEXT-",visible=False), sg.Input("172.16.2.223", key="-IP_INPUT-",visible=False, size=(25,1))],
         [sg.Text("Exploit:"), sg.Combo(kep_exploit_list, default_value=kep_exploit_list[0], key='-KEP_EXPLOIT-', enable_events=True, readonly=True)],
-        [sg.Text("Description:", key="-DESCRIPTION-"), sg.Text(kep_exploit_dict[kep_exploit_list[0]],key="-DESCRIPTION_TEXT-")],
+        [sg.Text(kep_exploit_dict[kep_exploit_list[0]][0],key="-DESCRIPTION_TEXT-")],
         [sg.Text("Variable 1:", key="-VAR1_TEXT-", visible=False), sg.Input("",key="-VAR1_INPUT-", visible=False, size=(22,1)), sg.Text("Variable 2:",visible=False, key="-VAR2_TEXT-"), sg.Input("",key="-VAR2_INPUT-", visible=False, size=(22,1))],
         [sg.Button("Launch Exploit", key="-LAUNCH_KEP_EXPLOIT-"), sg.Image("./images/loading.gif",visible=False, key="-SPINNER-"),sg.Image("./images/success.png",visible=False, key="-SUCCESS-"),sg.Image("./images/error.png",visible=False, key="-ERROR-")],
         [sg.Multiline(background_color="#363636",text_color="black", expand_x=True, size=(1,15),no_scrollbar=True, disabled=True, key="-KEP_STATUS_BOX-")],

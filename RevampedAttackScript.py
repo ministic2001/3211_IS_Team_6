@@ -21,6 +21,7 @@ import json
 import sys
 # from Powershell.callPowerShell import runPowerShellScript
 import paramiko
+import subprocess
 
 class AttackScript:
     def __init__(self, ip, username = "Student", password = "Student12345@"):
@@ -1182,6 +1183,18 @@ class AttackScript:
         print(results)
         return results
 
+    def connect_to_wifi(self, ssid="HF2211A_ACSL_RPT", profile_name="HF2211A_ACSL_RPT", interface="Wi-Fi"):
+        try:
+            # Prepare the command to connect to the Wi-Fi network
+            command = f'netsh wlan connect ssid="{ssid}" name="{profile_name}" interface="{interface}"'
+
+            # Execute the command using subprocess
+            subprocess.run(command, check=True, capture_output=True, shell=True)
+
+            print(f"Successfully connected to Wi-Fi network: {ssid}")
+        except subprocess.CalledProcessError as e:
+            print(f"Failed to connect to Wi-Fi network: {ssid}")
+            print(e.stderr.decode())
 
     ########
     # MAIN #
