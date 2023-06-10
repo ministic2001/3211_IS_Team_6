@@ -32,7 +32,7 @@ foreach ($password in $passwords) {
         #Write-Host "New-PSSession succeeded"
         Exit-PSSession
         # Print the password and that it succeeded
-        Write-Host "Suceeded: $password"
+        Write-Host "Succeeded: $password"
         # Append the username and successful password on a new line in credentials.csv
         Add-Content -Path $out -Value "`r`n$username,$password"
         Write-Host "Added credentials to credentials.csv."
