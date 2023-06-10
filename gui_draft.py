@@ -44,7 +44,7 @@ def pause_execution(duration):
     time.sleep(duration)
 
 
-def launch_kep_exploit(exploit,ip,window,var1=None, var2=None,var3=None):
+def launch_kep_exploit(exploit,ip,window,var1=None, var2=None):
     if is_valid_ip(ip):
         status = f"The selected attack to run is {exploit} on IP: {ip}"
         update_status(status,"-KEP_STATUS_BOX-",window)
