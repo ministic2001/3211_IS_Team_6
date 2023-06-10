@@ -5,6 +5,7 @@ import time
 import RevampedAttackScript as attackscript
 import sys
 import os
+import socket
 
 class IORedirector(object):
     def __init__(self, multiline_element):
@@ -39,7 +40,7 @@ def is_valid_ip(address):
     except ValueError:
         return False
     
-def sleepyboi(duration):
+def pause_execution(duration):
     time.sleep(duration)
 
 
@@ -49,9 +50,10 @@ def launch_kep_exploit(exploit,ip,window,var1=None, var2=None,var3=None):
         update_status(status,"-KEP_STATUS_BOX-",window)
         ## Logic for attack selection here
         attack = attackscript.AttackScript(ip)
+        connection = attackscript.AttackScript(socket.gethostbyname(socket.gethostname()))
         try:
             match exploit:
-                case "Connect to Wi-fi Network": attack.connect_to_wifi(var1,var2,var3)
+                case "Connect to Wi-fi Network": connection.connect_to_wifi()
                 case "Start KEP server": attack.kep_server_start()
                 case "Stop KEP server": attack.kep_server_stop()
                 case "Get server information": attack.kep_server_info()
@@ -123,7 +125,7 @@ def main():
     #             if "Description:" in line:
     #                 kep_exploit_dict[file].append(line)
 
-    modbus_exploit_dict = {"Exploit 1":"Exploit 1 description", "Exploit 2":"Exploit 2 description", "Exploit 3":"Exploit 3 description"} # Stores all the options for exploits for Modbus related attacks
+    modbus_exploit_dict = {"Connect to Wi-Fi network":"Connects to Wi-Fi network", "Exploit 2":"Exploit 2 description", "Exploit 3":"Exploit 3 description"} # Stores all the options for exploits for Modbus related attacks
     kep_exploit_list = list(kep_exploit_dict.keys())
     modbus_exploit_list = list(modbus_exploit_dict.keys())
     # Set the theme of the GUI
