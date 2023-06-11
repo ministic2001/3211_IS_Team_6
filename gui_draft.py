@@ -18,8 +18,6 @@ class StdoutRedirector(IORedirector):
 class StderrRedirector(IORedirector):
     def write(self, msg):
         self.multiline_element.update(msg, append=True)
-import RevampedAttackScript as attack
-import sys
 
 class IORedirector(object):
     def __init__(self, multiline_element):
