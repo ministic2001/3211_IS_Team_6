@@ -48,10 +48,8 @@ def launch_kep_exploit(exploit,ip,window,var1=None, var2=None):
         update_status(status,"-KEP_STATUS_BOX-",window)
         ## Logic for attack selection here
         attack = attackscript.AttackScript(ip)
-        connection = attackscript.AttackScript(socket.gethostbyname(socket.gethostname()))
         try:
             match exploit:
-                case "Connect to Wi-fi Network": connection.connect_to_wifi()
                 case "Start KEP server": attack.kep_server_start()
                 case "Stop KEP server": attack.kep_server_stop()
                 case "Get server information": attack.kep_server_info()
@@ -88,10 +86,10 @@ def update_status(text, status_box, window, color = "white"):
     window[status_box].update(f"{text}\n", append=True, text_color = color)
 
 def main():
+    attackscript.AttackScript(socket.gethostbyname(socket.gethostname())).connect_to_wifi()
     # Variables
     # Store all the options for exploits for KEP server attacks and their descriptions
     kep_exploit_dict = {
-        "Connect to Wi-fi Network":"Connects to Wi-fi Network",
         "Start KEP server":"Starts the KEP server",
                         "Stop KEP server":"Stops the KEP server",
                         "Get server information":"Get the information of the KEP server",
