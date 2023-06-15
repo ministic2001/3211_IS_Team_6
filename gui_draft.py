@@ -4,7 +4,6 @@ import threading
 import time
 import RevampedAttackScript as attackscript
 import sys
-import os
 import socket
 
 class IORedirector(object):
