@@ -7,7 +7,6 @@ import sys
 import os
 import socket
 
-
 class IORedirector(object):
     def __init__(self, multiline_element):
         self.multiline_element = multiline_element
@@ -21,22 +20,6 @@ class StdoutRedirector(IORedirector):
 class StderrRedirector(IORedirector):
     def write(self, msg):
         self.multiline_element.update(msg, append=True)
-
-
-class IORedirector(object):
-    def __init__(self, multiline_element):
-        self.multiline_element = multiline_element
-
-
-class StdoutRedirector(IORedirector):
-    def write(self, msg):
-        self.multiline_element.update(msg, append=True)
-
-
-class StderrRedirector(IORedirector):
-    def write(self, msg):
-        self.multiline_element.update(msg, append=True)
-
 
 def is_valid_ip(address):
     try:
