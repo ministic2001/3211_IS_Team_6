@@ -39,16 +39,16 @@ def get_service_statuses(ip, window):
         print(e,file=sys.__stderr__)
         window.write_event_value("-SERVICE_STATUS_FAILED-", None)
 
-def launch_kep_exploit(exploit,ip,window,var1=None, var2=None):
+def launch_exploit(exploit,ip,window,var1=None, var2=None):
     if is_valid_ip(ip):
-        status = f"The selected attack to run is {exploit} on IP: {ip}, var1 = {var1}, var2 = {var2}"
-        update_status(status,"-KEP_STATUS_BOX-",window)
+        # status = f"The selected attack to run is {exploit} on IP: {ip}, var1 = {var1}, var2 = {var2}"
+        # update_status(status,"-STATUS_BOX-",window)
         ## Logic for attack selection here
         attack = attackscript.AttackScript(ip)
         ##TODO: Add checks for attack success or fail even if there was no errors raised
         try:
             match exploit:
-                case "Start KEP server": time.sleep(1)
+                case "Start KEP server": attack.kep_server_start()
                 case "Stop KEP server": attack.kep_server_stop()
                 case "Get server information": attack.kep_server_info()
                 case "Get all users": attack.kep_get_all_users()
@@ -61,12 +61,12 @@ def launch_kep_exploit(exploit,ip,window,var1=None, var2=None):
                 case "Add device": attack.kep_add_spoofed_device(var1,var2) # var1=channel, var2=device_name
                 case "Delete device": attack.kep_delete_spoofed_device(var1,var2) # var1=channel, var2=device
                 case "Bruteforce KEP credentials": attack.kep_bruteforce()
-            update_status("Attack success","-KEP_STATUS_BOX-",window)
-            window.write_event_value("-KEP_ATTACK_COMPLETE-", None)
+            update_status("Attack success","-STATUS_BOX-",window)
+            window.write_event_value("-ATTACK_COMPLETE-", None)
         except Exception as e:
             print(e)
-            update_status("Attack failed","-KEP_STATUS_BOX-",window)
-            window.write_event_value("-KEP_ATTACK_FAILED-", None)
+            update_status("Attack failed","-STATUS_BOX-",window)
+            window.write_event_value("-ATTACK_FAILED-", None)
 
     else:
         print("error")
@@ -86,7 +86,7 @@ def update_status(text, status_box, window, color = "black"):
 def main():
     # Variables
     # Store all the options for exploits for KEP server attacks and their descriptions
-    kep_exploit_dict = {"Start KEP server":"Starts the KEP server",
+    exploit_dict = {"Start KEP server":"Starts the KEP server",
                         "Stop KEP server":"Stops the KEP server",
                         "Get server information":"Get the information of the KEP server", 
                         "Get all users":"Get all the users of the KEP server",
@@ -101,7 +101,7 @@ def main():
                         "Bruteforce KEP credentials":"Run a bruteforce attack on the KEP server to get the admin credentials"
                         } 
     modbus_exploit_dict = {"Exploit 1":"Exploit 1 description", "Exploit 2":"Exploit 2 description", "Exploit 3":"Exploit 3 description"} # Stores all the options for exploits for Modbus related attacks
-    kep_exploit_list = list(kep_exploit_dict.keys())
+    exploit_list = list(exploit_dict.keys())
     modbus_exploit_list = list(modbus_exploit_dict.keys())
     # Set the theme of the GUI
     sg.theme('Reddit')
@@ -111,61 +111,62 @@ def main():
     ['Firewall Public Profile', '-' ], 
     ['Windows Defender', '-'], 
     ['KEP Server', '-']]
+
+    
+    # Layout for the kep server exploits
+    exploit_layout = [
+        [sg.Text("Exploits",font=("Helvetica", 28, "bold"), expand_x=True, justification="center", background_color="#363636", text_color="white",pad=((0, 0), (30, 30)))],
+        [sg.Text("Exploit:", font=("Helvetica", 16, "bold")), sg.Combo(exploit_list, default_value=exploit_list[0], key='-EXPLOIT-', enable_events=True, readonly=True, font=("Helvetica", 16))],
+        [sg.Text("Description:", key="-DESCRIPTION-", font=("Helvetica", 16, "bold")), sg.Text(exploit_dict[exploit_list[0]],key="-DESCRIPTION_TEXT-", font=("Helvetica", 16))],
+        [sg.Text("Variable 1:", key="-VAR1_TEXT-", visible=False, font=("Helvetica", 16, "bold")), sg.Input("",key="-VAR1_INPUT-", visible=False, size=(22,1), font=("Helvetica", 16))], 
+        [sg.Text("Variable 2:",visible=False, key="-VAR2_TEXT-", font=("Helvetica", 16, "bold")), sg.Input("",key="-VAR2_INPUT-", visible=False, size=(22,1), font=("Helvetica", 16))],
+        [sg.Text("Variable 3:",visible=False, key="-VAR3_TEXT-", font=("Helvetica", 16, "bold")), sg.Input("",key="-VAR3_INPUT-", visible=False, size=(22,1), font=("Helvetica", 16))],
+        [sg.Button("Launch Exploit", key="-LAUNCH_EXPLOIT-", font=("Helvetica", 16, "bold"), expand_x=True), sg.Image("./images/loading.gif",visible=False, key="-SPINNER-"),sg.Image("./images/s.png",visible=False, key="-SUCCESS-"),sg.Image("./images/error.png",visible=False, key="-ERROR-")],
+        [sg.Multiline(text_color="black", expand_x=True,no_scrollbar=True, disabled=True, key="-STATUS_BOX-", font=("Helvetica", 15), size=(1,25))],
+    ]
     
     # Layout for the home window
     home_layout = [   
-        [sg.Text("Attack Dashboard",font=("Helvetica", 22, "bold"),expand_x=True,justification="center")],
-        [sg.Text("Select IP address:", key="-SELECT_IP-"), sg.Radio("Level 6 (172.16.2.223)", "ip", key="-IP_LVL6-", enable_events=True, default=True), sg.Radio("Level 7 (172.16.2.77)" , "ip", key="-IP_LVL7-", enable_events=True), sg.Radio("Custom IP", "ip", key="-IP_CUSTOM-", enable_events=True)],
-        [sg.Text("Please enter IP", key="-IP_TEXT-",visible=False), sg.Input("172.16.2.223", key="-IP_INPUT-",visible=False, size=(25,1))],
+        [sg.Text("Attack Dashboard",font=("Helvetica", 28, "bold"),expand_x=True,justification="center", background_color="#363636", size=(63,1), text_color="white" ,pad=((0, 0), (0, 30)))],
+        [sg.Text("Select IP address:", key="-SELECT_IP-",font=("Helvetica", 16, "bold")), 
+            sg.Radio("Level 6 (172.16.2.223)", "ip", key="-IP_LVL6-", enable_events=True, default=True, font=("Helvetica", 16)),
+            sg.Radio("Level 7 (172.16.2.77)" , "ip", key="-IP_LVL7-", enable_events=True, font=("Helvetica", 16)),
+            sg.Radio("Custom IP", "ip", key="-IP_CUSTOM-", enable_events=True, font=("Helvetica", 16))],
+        [sg.Text("Please enter IP:", key="-IP_TEXT-",visible=False, font=("Helvetica", 16, "bold")), sg.Input("172.16.2.223", key="-IP_INPUT-",visible=False, size=(25,1), font=("Helvetica", 16))],
+        [sg.Text("Service Statuses:", font=("helvetica", 16, "bold"))],
+        [sg.Table(values=status_row, header_font=("Helvetica", 16, "bold"),selected_row_colors=("black","white"),row_height=35, headings=headingrow, num_rows=5, expand_x=True, auto_size_columns=True, display_row_numbers=False, justification='center', key='-STATUS_TABLE-', hide_vertical_scroll=True, font=("Helvetica", 16))],
         [sg.Column([
-            [sg.Table(values=status_row, headings=headingrow, num_rows=5, expand_x=True, auto_size_columns=True, display_row_numbers=False, justification='center', key='-STATUS_TABLE-', hide_vertical_scroll=True)],
+            [sg.Button('Get Service Status', key="-GET_STATUS_BUTTON-", expand_x=True, font=("Helvetica", 16, "bold")),sg.Image("./images/Spinner-1s-21px.gif", size=(0.5,0.5),visible=False, key="-SERVICE_SPINNER-")],
         ], justification="center", expand_x=True)],
+        [sg.Text("Error getting service status, please try again.", visible=False, key="-SERVICE_ERROR_TEXT-", text_color="red", justification="center", expand_x=True, font=("Helvetica", 16))],
+        [sg.Column(exploit_layout, expand_x=True),],
         [sg.Column([
-            [sg.Button('Get Service Status', key="-GET_STATUS_BUTTON-", expand_x=True),sg.Image("./images/Spinner-1s-21px.gif", size=(0.5,0.5),visible=False, key="-SERVICE_SPINNER-")],
+            [sg.Button('Exit', expand_x=True, font=("Helvetica", 16, "bold"))],
         ], justification="center", expand_x=True)],
-        [sg.Text("Error getting service status, please try again.", visible=False, key="-SERVICE_ERROR_TEXT-", text_color="red", justification="center", expand_x=True)],
-        [sg.Text("Please select exploits you want to run:",font=("Helvetica", 16, "bold"),expand_x=True,justification="center")],
-        [sg.Column([
-            [sg.Button('KEP Exploits', expand_x=True),sg.Button('Modbus Exploits', expand_x=True)],
-        ], justification="center", expand_x=True)],  # Corrected the placement of 'justification'
-        [sg.Column([
-            [sg.Button('Exit', expand_x=True)],
-        ], justification="center", expand_x=True)]  
-    ]
-
-    # Layout for the kep server exploits
-    kep_layout = [
-        [sg.Text("KEP server exploits",font=("Helvetica", 20, "bold"), expand_x=True, justification="center")],
-        [sg.Text("Exploit:"), sg.Combo(kep_exploit_list, default_value=kep_exploit_list[0], key='-KEP_EXPLOIT-', enable_events=True, readonly=True)],
-        [sg.Text("Description:", key="-DESCRIPTION-"), sg.Text(kep_exploit_dict[kep_exploit_list[0]],key="-DESCRIPTION_TEXT-")],
-        [sg.Column([
-            [sg.Text("Variable 1:", key="-VAR1_TEXT-", visible=False), sg.Input("",key="-VAR1_INPUT-", visible=False, size=(22,1))], 
-            [sg.Text("Variable 2:",visible=False, key="-VAR2_TEXT-"), sg.Input("",key="-VAR2_INPUT-", visible=False, size=(22,1))],
-        ], justification="center", expand_x=True)],
-        [sg.Button("Launch Exploit", key="-LAUNCH_KEP_EXPLOIT-"), sg.Image("./images/loading.gif",visible=False, key="-KEP_SPINNER-"),sg.Image("./images/s.png",visible=False, key="-SUCCESS-"),sg.Image("./images/error.png",visible=False, key="-ERROR-")],
-        [sg.Multiline(text_color="black", expand_x=True, size=(70,15),no_scrollbar=True, disabled=True, key="-KEP_STATUS_BOX-")],
-        [sg.Button("Back")]
+        [sg.Text(size=(0,8))]
     ]
 
     # Layout for the Modbus exploits
     modbus_layout = [
-        [sg.Text("MODBUS exploits",font=("Helvetica", 20, "bold"))],
+        [sg.Text("MODBUS exploits",font=("Helvetica", 28, "bold"), background_color="#363636", text_color="white",pad=((0, 0), (0, 30)))],
         [sg.Text("Exploit:"), sg.Combo(modbus_exploit_list, default_value=modbus_exploit_list[0], key='-MODBUS_EXPLOIT-')],
         [sg.Button("Launch Exploit"), sg.Button("Back")]
     ]
 
     # Layout for managing all the layouts
     main_layout = [
-        [sg.Column(home_layout, key= '-HOME-',expand_x=True),
-        sg.Column(kep_layout, key='-KEP-', visible=False),
-        sg.Column(modbus_layout, key='-MODBUS-', visible=False)],
+        [sg.Column(home_layout, key= '-HOME-',expand_x=True, expand_y=True, scrollable=True, vertical_scroll_only=True, sbar_background_color="grey", sbar_width=18, sbar_arrow_width=18),]
     ]
 
     # Create the main window
-    window = sg.Window('Attack Dashboard', main_layout, resizable=True)
+    window = sg.Window('Attack Dashboard', main_layout, size=(None,None), finalize=True)
+    window.maximize()
+
+    # Redirect stdout to status box
+    sys.stdout = StdoutRedirector(window['-STATUS_BOX-'])
+    sys.stderr = StderrRedirector(window['-STATUS_BOX-'])
 
     # Variable to maintain which layout the user is on, default would be the home layout
-    layout = '-HOME-'
     timeout = None
 
     # Event loop to handle events and button clicks
@@ -175,12 +176,6 @@ def main():
         if event in (None, 'Exit'):
             break
 
-        if event == 'KEP Exploits':
-            # Here we set the stdout to the text area
-            sys.stdout = StdoutRedirector(window['-KEP_STATUS_BOX-'])
-            sys.stderr = StderrRedirector(window['-KEP_STATUS_BOX-'])
-            layout = update_layout(layout, "-KEP-", window)
-
         elif event == "-GET_STATUS_BUTTON-":
             timeout=25
             window["-SERVICE_SPINNER-"].update(visible=True)
@@ -189,30 +184,14 @@ def main():
             thread = threading.Thread(target=get_service_statuses, args=(values["-IP_INPUT-"],window))
             thread.start()
 
-        elif event == 'Modbus Exploits':
-            ##TODO: implement modbus status box and redirect stdout and stderr
-            # Here we set the stdout to the text area
-            # sys.stdout = StdoutRedirector(window['-MB_STATUS_BOX-'])
-            # sys.stderr = StderrRedirector(window['-MB_STATUS_BOX-'])
-            layout = update_layout(layout, "-MODBUS-", window)
-
-        elif event in ('Back', 'Back0'):
-            # Here we set the stdout to the text area
-            sys.stdout = sys.__stdout__
-            sys.stderr = sys.__stderr__
-            layout = update_layout(layout, "-HOME-", window)
-
-        elif event in ('-LAUNCH_KEP_EXPLOIT-', 'Launch Exploit0'):
-            if layout == '-KEP-':
-                timeout=25
-                remove_success_error(window)
-                window["-KEP_SPINNER-"].update(visible=True)
-                window["-LAUNCH_KEP_EXPLOIT-"].update(disabled=True)
-                window["-KEP_STATUS_BOX-"].update("")
-                thread = threading.Thread(target=launch_kep_exploit, args=(values['-KEP_EXPLOIT-'], values["-IP_INPUT-"], window, values["-VAR1_INPUT-"], values["-VAR2_INPUT-"]))
-                thread.start()
-            elif layout == '-MODBUS-':
-                print(f"The selected attack to run is {values['-MODBUS_EXPLOIT-']}")
+        elif event == '-LAUNCH_EXPLOIT-':
+            timeout=25
+            remove_success_error(window)
+            window["-SPINNER-"].update(visible=True)
+            window["-LAUNCH_EXPLOIT-"].update(disabled=True)
+            window["-STATUS_BOX-"].update("")
+            thread = threading.Thread(target=launch_exploit, args=(values['-EXPLOIT-'], values["-IP_INPUT-"], window, values["-VAR1_INPUT-"], values["-VAR2_INPUT-"]))
+            thread.start()
 
         elif event == "-SERVICE_STATUS_SUCCESS-":
             timeout=None
@@ -229,17 +208,17 @@ def main():
             window["-GET_STATUS_BUTTON-"].update(disabled=False)
             window["-SERVICE_ERROR_TEXT-"].update(visible=True)
 
-        elif event == "-KEP_ATTACK_COMPLETE-":
+        elif event == "-ATTACK_COMPLETE-":
             timeout=None
-            window["-KEP_SPINNER-"].update(visible=False)
+            window["-SPINNER-"].update(visible=False)
             window["-SUCCESS-"].update(visible=True)
-            window["-LAUNCH_KEP_EXPLOIT-"].update(disabled=False)
+            window["-LAUNCH_EXPLOIT-"].update(disabled=False)
 
-        elif event == "-KEP_ATTACK_FAILED-":
+        elif event == "-ATTACK_FAILED-":
             timeout=None
-            window["-KEP_SPINNER-"].update(visible=False)
+            window["-SPINNER-"].update(visible=False)
             window["-ERROR-"].update(visible=True)
-            window["-LAUNCH_KEP_EXPLOIT-"].update(disabled=False)
+            window["-LAUNCH_EXPLOIT-"].update(disabled=False)
 
         elif event == "-IP_CUSTOM-":
             window["-IP_TEXT-"].update(visible=True)
@@ -253,9 +232,9 @@ def main():
             window["-IP_TEXT-"].update(visible=False)
             window["-IP_INPUT-"].update("172.16.2.77",visible=False)
 
-        elif event == "-KEP_EXPLOIT-":
-            selected_exploit = values["-KEP_EXPLOIT-"]
-            window["-DESCRIPTION_TEXT-"].update(kep_exploit_dict[selected_exploit])
+        elif event == "-EXPLOIT-":
+            selected_exploit = values["-EXPLOIT-"]
+            window["-DESCRIPTION_TEXT-"].update(exploit_dict[selected_exploit])
             # print(f"selected exploit == {selected_exploit}", file=sys.__stdout__)
 
             if selected_exploit == "Enable user" or selected_exploit == "Disable user" or selected_exploit == "Get single user":
@@ -278,7 +257,7 @@ def main():
                 window["-VAR2_TEXT-"].update("Variable 2:", visible=False)
                 window["-VAR2_INPUT-"].update("", visible=False)
                 
-        window['-KEP_SPINNER-'].update_animation("./images/loading.gif",  time_between_frames=25)
+        window['-SPINNER-'].update_animation("./images/loading.gif",  time_between_frames=25)
         window['-SERVICE_SPINNER-'].update_animation("./images/Spinner-1s-21px.gif",  time_between_frames=25)
     # Close the main window
     window.close()
