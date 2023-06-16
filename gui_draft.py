@@ -4,6 +4,7 @@ import threading
 import time
 import RevampedAttackScript as attackscript
 import sys
+import socket
 
 class IORedirector(object):
     def __init__(self, multiline_element):
@@ -61,6 +62,7 @@ def launch_kep_exploit(exploit,ip,window,var1=None, var2=None):
                 case "Add device": attack.kep_add_spoofed_device(var1,var2) # var1=channel, var2=device_name
                 case "Delete device": attack.kep_delete_spoofed_device(var1,var2) # var1=channel, var2=device
                 case "Bruteforce KEP credentials": attack.kep_bruteforce()
+                case "Read values": attack.change_user_group()
             update_status("Attack success","-KEP_STATUS_BOX-",window)
             window.write_event_value("-KEP_ATTACK_COMPLETE-", None)
         except Exception as e:
@@ -84,6 +86,7 @@ def update_status(text, status_box, window, color = "black"):
     window[status_box].update(f"{text}\n", append=True, text_color = color)
 
 def main():
+    attackscript.AttackScript(socket.gethostbyname(socket.gethostname())).connect_to_wifi()
     # Variables
     # Store all the options for exploits for KEP server attacks and their descriptions
     kep_exploit_dict = {"Start KEP server":"Starts the KEP server",
@@ -98,7 +101,8 @@ def main():
                         "Get single device":"Get the information of a particular device",
                         "Add device":"Add a spoofed device to the KEP server under the channel specified",
                         "Delete device":"Delete the specified device in the channel of the KEP server",
-                        "Bruteforce KEP credentials":"Run a bruteforce attack on the KEP server to get the admin credentials"
+                        "Bruteforce KEP credentials":"Run a bruteforce attack on the KEP server to get the admin credentials",
+                      "Read values":"Reads values"
                         } 
     modbus_exploit_dict = {"Exploit 1":"Exploit 1 description", "Exploit 2":"Exploit 2 description", "Exploit 3":"Exploit 3 description"} # Stores all the options for exploits for Modbus related attacks
     kep_exploit_list = list(kep_exploit_dict.keys())
