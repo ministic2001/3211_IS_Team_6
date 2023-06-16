@@ -437,7 +437,7 @@ class AttackScript:
         Bruteforces the usernames and passwords of the KEP Server.
         """
 
-        self.kep_server_start(self)
+        self.kep_server_start()
 
         usernames = ["Admin", "Administrator"]
         passwords = ["michael", "superman" , "7777777", "administrator2022" , "johnsnow"]
