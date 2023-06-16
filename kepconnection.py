@@ -27,6 +27,10 @@ print(server.get_info())
 ### Get single user group
 #print(json.dumps(admin.user_groups.get_user_group(server, "readtesting"), indent=4))
 
+print(json.dumps(admin.users.modify_user(server, {"common.ALLTYPES_DESCRIPTION": "TEST UPDATE", "libadminsettings.USERMANAGER_USER_GROUPNAME": "readtesting"}, "bigboi" ), indent=4))
+print(admin.users.get_user(server, "bigboi"))
+
+
 ### Modify user group permissions
 # print(json.dumps(admin.user_groups.modify_user_group(server, {"common.ALLTYPES_DESCRIPTION": "Built-in group for bigboi", "libadminsettings.USERMANAGER_IO_TAG_READ": "Enable" 
 #         # "libadminsettings.USERMANAGER_GROUP_ENABLED": "true",
@@ -66,6 +70,8 @@ print(server.get_info())
 #print(json.dumps(connectivity.tag.get_full_tag_structure(server,"SmartMeter.ministicHACKED"), indent=4))
 
 print(json.dumps(connectivity.tag.get_all_tags(server, "SmartMeter.ministicHACKED"), indent=4))
+
+
 
 #print(json.dumps(connectivity.tag.add_tag(server, "SmartMeter.ministicHACKED", {"common.ALLTYPES_NAME": "TEST", "servermain.TAG_ADDRESS": "40003"}), indent=4))
 
