@@ -28,6 +28,9 @@ def get_service_statuses(ip, window):
     attack = attackscript.AttackScript(ip)
     try:
         status_list = attack.kep_get_firewall_status()
+        ## TO TEST: Test if the below two commands work
+        status_list.append("ON") if attack.kep_get_windef_status() else status_list.append("OFF")
+        status_list.append("ON") if attack.kep_get_service_status() else status_list.append("OFF")
         print(f"status_list is : {status_list}",file=sys.__stdout__)
         if status_list != None:
             window.write_event_value("-SERVICE_STATUS_SUCCESS-", status_list)
@@ -45,7 +48,7 @@ def launch_kep_exploit(exploit,ip,window,var1=None, var2=None):
         ##TODO: Add checks for attack success or fail even if there was no errors raised
         try:
             match exploit:
-                case "Start KEP server": attack.kep_server_start()
+                case "Start KEP server": time.sleep(1)
                 case "Stop KEP server": attack.kep_server_stop()
                 case "Get server information": attack.kep_server_info()
                 case "Get all users": attack.kep_get_all_users()
@@ -77,7 +80,7 @@ def update_layout(old_layout, new_layout, window):
     window[new_layout].update(visible=True)
     return new_layout
 
-def update_status(text, status_box, window, color = "white"):
+def update_status(text, status_box, window, color = "black"):
     window[status_box].update(f"{text}\n", append=True, text_color = color)
 
 def main():
@@ -101,7 +104,7 @@ def main():
     kep_exploit_list = list(kep_exploit_dict.keys())
     modbus_exploit_list = list(modbus_exploit_dict.keys())
     # Set the theme of the GUI
-    sg.theme('DarkGrey13')
+    sg.theme('Reddit')
     headingrow = ['SERVICE', 'STATUS']
     status_row = [['Firewall Domain Profile', '-'],
     ['Firewall Private Profile', '-'],
@@ -111,17 +114,17 @@ def main():
     
     # Layout for the home window
     home_layout = [   
-        [sg.Text("Attack Dashboard",font=("Helvetica", 20, "bold"),expand_x=True,justification="center")],
+        [sg.Text("Attack Dashboard",font=("Helvetica", 22, "bold"),expand_x=True,justification="center")],
         [sg.Text("Select IP address:", key="-SELECT_IP-"), sg.Radio("Level 6 (172.16.2.223)", "ip", key="-IP_LVL6-", enable_events=True, default=True), sg.Radio("Level 7 (172.16.2.77)" , "ip", key="-IP_LVL7-", enable_events=True), sg.Radio("Custom IP", "ip", key="-IP_CUSTOM-", enable_events=True)],
         [sg.Text("Please enter IP", key="-IP_TEXT-",visible=False), sg.Input("172.16.2.223", key="-IP_INPUT-",visible=False, size=(25,1))],
         [sg.Column([
             [sg.Table(values=status_row, headings=headingrow, num_rows=5, expand_x=True, auto_size_columns=True, display_row_numbers=False, justification='center', key='-STATUS_TABLE-', hide_vertical_scroll=True)],
         ], justification="center", expand_x=True)],
         [sg.Column([
-            [sg.Button('Get Service Status', key="-GET_STATUS_BUTTON-", expand_x=True),sg.Image("./images/loading.gif",visible=False, key="-SERVICE_SPINNER-")],
+            [sg.Button('Get Service Status', key="-GET_STATUS_BUTTON-", expand_x=True),sg.Image("./images/Spinner-1s-21px.gif", size=(0.5,0.5),visible=False, key="-SERVICE_SPINNER-")],
         ], justification="center", expand_x=True)],
         [sg.Text("Error getting service status, please try again.", visible=False, key="-SERVICE_ERROR_TEXT-", text_color="red", justification="center", expand_x=True)],
-        [sg.Text("Please select exploits you want to run",expand_x=True,justification="center")],
+        [sg.Text("Please select exploits you want to run:",font=("Helvetica", 16, "bold"),expand_x=True,justification="center")],
         [sg.Column([
             [sg.Button('KEP Exploits', expand_x=True),sg.Button('Modbus Exploits', expand_x=True)],
         ], justification="center", expand_x=True)],  # Corrected the placement of 'justification'
@@ -132,12 +135,15 @@ def main():
 
     # Layout for the kep server exploits
     kep_layout = [
-        [sg.Text("KEP server exploits",font=("Helvetica", 20, "bold"))],
+        [sg.Text("KEP server exploits",font=("Helvetica", 20, "bold"), expand_x=True, justification="center")],
         [sg.Text("Exploit:"), sg.Combo(kep_exploit_list, default_value=kep_exploit_list[0], key='-KEP_EXPLOIT-', enable_events=True, readonly=True)],
         [sg.Text("Description:", key="-DESCRIPTION-"), sg.Text(kep_exploit_dict[kep_exploit_list[0]],key="-DESCRIPTION_TEXT-")],
-        [sg.Text("Variable 1:", key="-VAR1_TEXT-", visible=False), sg.Input("",key="-VAR1_INPUT-", visible=False, size=(22,1)), sg.Text("Variable 2:",visible=False, key="-VAR2_TEXT-"), sg.Input("",key="-VAR2_INPUT-", visible=False, size=(22,1))],
-        [sg.Button("Launch Exploit", key="-LAUNCH_KEP_EXPLOIT-"), sg.Image("./images/loading.gif",visible=False, key="-KEP_SPINNER-"),sg.Image("./images/success.png",visible=False, key="-SUCCESS-"),sg.Image("./images/error.png",visible=False, key="-ERROR-")],
-        [sg.Multiline(background_color="#363636",text_color="black", expand_x=True, size=(1,15),no_scrollbar=True, disabled=True, key="-KEP_STATUS_BOX-")],
+        [sg.Column([
+            [sg.Text("Variable 1:", key="-VAR1_TEXT-", visible=False), sg.Input("",key="-VAR1_INPUT-", visible=False, size=(22,1))], 
+            [sg.Text("Variable 2:",visible=False, key="-VAR2_TEXT-"), sg.Input("",key="-VAR2_INPUT-", visible=False, size=(22,1))],
+        ], justification="center", expand_x=True)],
+        [sg.Button("Launch Exploit", key="-LAUNCH_KEP_EXPLOIT-"), sg.Image("./images/loading.gif",visible=False, key="-KEP_SPINNER-"),sg.Image("./images/s.png",visible=False, key="-SUCCESS-"),sg.Image("./images/error.png",visible=False, key="-ERROR-")],
+        [sg.Multiline(text_color="black", expand_x=True, size=(70,15),no_scrollbar=True, disabled=True, key="-KEP_STATUS_BOX-")],
         [sg.Button("Back")]
     ]
 
@@ -273,7 +279,7 @@ def main():
                 window["-VAR2_INPUT-"].update("", visible=False)
                 
         window['-KEP_SPINNER-'].update_animation("./images/loading.gif",  time_between_frames=25)
-        window['-SERVICE_SPINNER-'].update_animation("./images/loading.gif",  time_between_frames=25)
+        window['-SERVICE_SPINNER-'].update_animation("./images/Spinner-1s-21px.gif",  time_between_frames=25)
     # Close the main window
     window.close()
 
