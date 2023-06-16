@@ -34,7 +34,6 @@ def get_service_statuses(ip, window):
         print(f"status_list is : {status_list}",file=sys.__stdout__)
         if status_list != None:
             window.write_event_value("-SERVICE_STATUS_SUCCESS-", status_list)
-        window.write_event_value("-SERVICE_STATUS_FAILED-", None)
     except Exception as e:
         print(e,file=sys.__stderr__)
         window.write_event_value("-SERVICE_STATUS_FAILED-", None)
@@ -200,6 +199,8 @@ def main():
             status_row[0][1] = values["-SERVICE_STATUS_SUCCESS-"][0]
             status_row[1][1] = values["-SERVICE_STATUS_SUCCESS-"][1]
             status_row[2][1] = values["-SERVICE_STATUS_SUCCESS-"][2]
+            status_row[3][1] = values["-SERVICE_STATUS_SUCCESS-"][3]
+            status_row[4][1] = values["-SERVICE_STATUS_SUCCESS-"][4]
             window["-STATUS_TABLE-"].update(status_row)
 
         elif event == "-SERVICE_STATUS_FAILED-":
