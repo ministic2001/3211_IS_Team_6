@@ -1069,10 +1069,10 @@ class AttackScript:
         device_to_modify = ".".join([channel, device])
         print("MODIFY DEVICE: " + json.dumps(connectivity.device.modify_device(server,device_to_modify,{"common.ALLTYPES_NAME": device, "servermain.MULTIPLE_TYPES_DEVICE_DRIVER": "Modbus RTU Serial", "servermain.DEVICE_SCAN_MODE_RATE_MS": 8888888},False), indent=4))
 
-    def add_tag(self, server, tag_path, data):
-        # Create a client instance
+    def add_tag(self, tag_path):
+        # Add tag
         server = self.kep_connect()
-        # print(json.dumps(connectivity.tag.add_tag(server,tag_path,)
+        print(json.dumps(connectivity.tag.add_tag(server,tag_path,{'tags': [{'name': 'Tag1', 'description': 'Description', 'data_type': 'Int32', 'value': 12345}]})))
 
     def disable_running_schedules(self) -> None:
         """
@@ -1199,26 +1199,26 @@ class AttackScript:
 
 
 
-    def change_user_group(self) -> bool:
-        server = self.kep_connect()
-        data = {
-            'common.ALLTYPES_NAME': 'Data Client',  # Replace with the actual user group name
-        # Add other properties to be modified
-        "common.ALLTYPES_DESCRIPTION": "Built-in default user account",
-        "libadminsettings.USERMANAGER_USER_GROUPNAME": "Server Users",
-        "libadminsettings.USERMANAGER_USER_ENABLED": "true",
-        "libadminsettings.USERMANAGER_USER_PASSWORD": "",
-        "libadminsettings.USERMANAGER_USER_TYPE": 0
-    }
-        try:
-            # Call the modify_user_group function
-            result = modify_user_group(server, data)
-            if result:
-                print("User group modified successfully.")
-            else:
-                print("Failed to modify user group.")
-        except Exception as e:
-            print("An error occurred:", str(e))
+    # def change_user_group(self) -> bool:
+    #     server = self.kep_connect()
+    #     data = {
+    #         'common.ALLTYPES_NAME': 'Data Client',  # Replace with the actual user group name
+    #     # Add other properties to be modified
+    #     "common.ALLTYPES_DESCRIPTION": "Built-in default user account",
+    #     "libadminsettings.USERMANAGER_USER_GROUPNAME": "Server Users",
+    #     "libadminsettings.USERMANAGER_USER_ENABLED": "true",
+    #     "libadminsettings.USERMANAGER_USER_PASSWORD": "",
+    #     "libadminsettings.USERMANAGER_USER_TYPE": 0
+    # }
+    #     try:
+    #         # Call the modify_user_group function
+    #         result = modify_user_group(server, data)
+    #         if result:
+    #             print("User group modified successfully.")
+    #         else:
+    #             print("Failed to modify user group.")
+    #     except Exception as e:
+    #         print("An error occurred:", str(e))
 
     def connect_to_wifi(self, ssid="HF2211A_ACSL", profile_name="HF2211A_ACSL", interface="Wi-Fi"):
         try:
