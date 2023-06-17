@@ -1104,7 +1104,7 @@ class AttackScript:
     def kep_get_spoofed_device_structure(self, channel, device):
         server = self.kep_connect()
         device_info = ".".join([channel, device])
-        print("DEVICE STRUCTURE: " + json.dumps(connectivity.device.get_device_structure(server, device_info)))
+        print("DEVICE STRUCTURE: " + json.dumps(connectivity.device.get_device_structure(server, device_info)), indent=4)
 
     def kep_add_log_item(self, log_group):
         server = self.kep_connect()
