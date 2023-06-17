@@ -1049,6 +1049,18 @@ class AttackScript:
         server = self.kep_connect()
         print(json.dumps(connectivity.channel.get_all_channels(server), indent=4))
 
+    def kep_get_channel_structure(self,channel):
+        server = self.kep_connect()
+        print(json.dumps(connectivity.channel.get_channel_structure(server, channel), indent=4))
+
+    def kep_modify_channel(self):
+        server = self.kep_connect()
+        print(json.dumps(connectivity.channel.modify_channel(server, {"PROJECT_ID": 6543937651,  "common.ALLTYPES_NAME": "ATTACK TIME"}), indent=4))
+
+    def kep_delete_channel(self,channel):
+        server = self.kep_connect()
+        print(json.dumps(connectivity.channel.del_channel(server, channel)))
+
     def kep_get_all_devices(self,channel): # Example of a channel name is "SmartMeter"
         server = self.kep_connect()
         print(json.dumps(connectivity.device.get_all_devices(server, channel), indent=4))
