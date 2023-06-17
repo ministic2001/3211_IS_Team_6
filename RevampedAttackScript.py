@@ -1106,11 +1106,6 @@ class AttackScript:
         device_info = ".".join([channel, device])
         print("DEVICE STRUCTURE: " + json.dumps(connectivity.device.get_device_structure(server, device_info)))
 
-    def kep_add_tag(self, tag_path):
-        # Add tag
-        server = self.kep_connect()
-        print(json.dumps(connectivity.tag.add_tag(server,tag_path,{'tags': [{'name': 'Tag1', 'description': 'Description', 'data_type': 'Int32', 'value': 12345}]})))
-
     def kep_add_log_item(self, log_group):
         server = self.kep_connect()
         print(json.dumps(datalogger.log_items.add_log_item(server,log_group,{'ABC':123})))
