@@ -1120,11 +1120,24 @@ class AttackScript:
     def kep_get_spoofed_device_structure(self, channel, device):
         server = self.kep_connect()
         device_info = ".".join([channel, device])
-        print("DEVICE STRUCTURE: " + json.dumps(connectivity.device.get_device_structure(server, device_info)), indent=4)
+        print("DEVICE STRUCTURE: " + json.dumps(connectivity.device.get_device_structure(server, device_info), indent=4))
 
     def kep_add_log_item(self, log_group):
         server = self.kep_connect()
         print(json.dumps(datalogger.log_items.add_log_item(server,log_group,{'ABC':123})))
+
+    def kep_add_exchange(self, channel, device):
+        server = self.kep_connect()
+        device_info = ".".join([channel, device])
+        print(json.dumps(connectivity.egd.exchange.add_exchange(server, channel, device_info, {}), indent=4))
+
+    def kep_add_udd_profile(self):
+        server = self.kep_connect()
+        print(json.dumps(connectivity.udd.profile.add_profile(server, {}), indent=4))
+
+    def kep_delete_udd_profile(self, profile_name):
+        server = self.kep_connect()
+        print(json.dumps(connectivity.udd.profile.del_profile(server, profile_name), indent=4))
 
     def disable_running_schedules(self) -> None:
         """
