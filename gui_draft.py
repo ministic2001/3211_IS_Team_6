@@ -62,7 +62,7 @@ def launch_kep_exploit(exploit,ip,window,var1=None, var2=None):
                 case "Add device": attack.kep_add_spoofed_device(var1,var2) # var1=channel, var2=device_name
                 case "Delete device": attack.kep_delete_spoofed_device(var1,var2) # var1=channel, var2=device
                 case "Bruteforce KEP credentials": attack.kep_bruteforce()
-                case "Read values": attack.change_user_group()
+                case "Add log item": attack.add_log_item(var1)
             update_status("Attack success","-KEP_STATUS_BOX-",window)
             window.write_event_value("-KEP_ATTACK_COMPLETE-", None)
         except Exception as e:
@@ -102,7 +102,7 @@ def main():
                         "Add device":"Add a spoofed device to the KEP server under the channel specified",
                         "Delete device":"Delete the specified device in the channel of the KEP server",
                         "Bruteforce KEP credentials":"Run a bruteforce attack on the KEP server to get the admin credentials",
-                      "Read values":"Reads values"
+                      "Add log item":"Adds log item to the KEP server"
                         } 
     modbus_exploit_dict = {"Exploit 1":"Exploit 1 description", "Exploit 2":"Exploit 2 description", "Exploit 3":"Exploit 3 description"} # Stores all the options for exploits for Modbus related attacks
     kep_exploit_list = list(kep_exploit_dict.keys())
