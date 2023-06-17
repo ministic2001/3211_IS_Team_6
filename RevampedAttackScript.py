@@ -1237,29 +1237,7 @@ class AttackScript:
 
         print(results)
         return results
-    
 
-
-    # def change_user_group(self) -> bool:
-    #     server = self.kep_connect()
-    #     data = {
-    #         'common.ALLTYPES_NAME': 'Data Client',  # Replace with the actual user group name
-    #     # Add other properties to be modified
-    #     "common.ALLTYPES_DESCRIPTION": "Built-in default user account",
-    #     "libadminsettings.USERMANAGER_USER_GROUPNAME": "Server Users",
-    #     "libadminsettings.USERMANAGER_USER_ENABLED": "true",
-    #     "libadminsettings.USERMANAGER_USER_PASSWORD": "",
-    #     "libadminsettings.USERMANAGER_USER_TYPE": 0
-    # }
-    #     try:
-    #         # Call the modify_user_group function
-    #         result = modify_user_group(server, data)
-    #         if result:
-    #             print("User group modified successfully.")
-    #         else:
-    #             print("Failed to modify user group.")
-    #     except Exception as e:
-    #         print("An error occurred:", str(e))
 
     def connect_to_wifi(self, ssid="HF2211A_ACSL", profile_name="HF2211A_ACSL", interface="Wi-Fi"):
         try:
