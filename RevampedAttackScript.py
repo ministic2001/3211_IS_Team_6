@@ -1067,7 +1067,7 @@ class AttackScript:
     def kep_modify_spoofed_device(self,channel, device):
         server = self.kep_connect()
         device_to_modify = ".".join([channel, device])
-        print("DELETE DEVICE: " + json.dumps(connectivity.device.modify_device(server,device_to_modify,{"common.ALLTYPES_NAME": device, "servermain.MULTIPLE_TYPES_DEVICE_DRIVER": "Modbus RTU Serial", "servermain.DEVICE_SCAN_MODE_RATE_MS": 8888888},False), indent=4))
+        print("MODIFY DEVICE: " + json.dumps(connectivity.device.modify_device(server,device_to_modify,{"common.ALLTYPES_NAME": device, "servermain.MULTIPLE_TYPES_DEVICE_DRIVER": "Modbus RTU Serial", "servermain.DEVICE_SCAN_MODE_RATE_MS": 8888888},False), indent=4))
 
     def add_tag(self, server, tag_path, data):
         # Create a client instance
