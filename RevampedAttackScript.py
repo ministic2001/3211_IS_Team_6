@@ -1059,7 +1059,7 @@ class AttackScript:
 
     def kep_delete_channel(self,channel):
         server = self.kep_connect()
-        print(json.dumps(connectivity.channel.del_channel(server, channel)))
+        print(json.dumps(connectivity.channel.del_channel(server, channel), indent=4))
 
     def kep_get_all_devices(self,channel): # Example of a channel name is "SmartMeter"
         server = self.kep_connect()
