@@ -1139,6 +1139,10 @@ class AttackScript:
         server = self.kep_connect()
         print(json.dumps(connectivity.udd.profile.del_profile(server, profile_name), indent=4))
 
+    def kep_get_all_udd_profiles(self):
+        server = self.kep_connect()
+        print(json.dumps(connectivity.udd.profile.get_all_profiles(server), indent=4))
+
     def disable_running_schedules(self) -> None:
         """
         Disables MoveFiles and KEPServerEX 6.12 running schedules in task scheduler
