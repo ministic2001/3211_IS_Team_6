@@ -62,7 +62,7 @@ def launch_kep_exploit(exploit,ip,window,var1=None, var2=None):
                 case "Add device": attack.kep_add_spoofed_device(var1,var2) # var1=channel, var2=device_name
                 case "Delete device": attack.kep_delete_spoofed_device(var1,var2) # var1=channel, var2=device
                 case "Bruteforce KEP credentials": attack.kep_bruteforce()
-                case "Add log item": attack.add_log_item(var1)
+                case "Add log item": attack.kep_add_log_item(var1)
             update_status("Attack success","-KEP_STATUS_BOX-",window)
             window.write_event_value("-KEP_ATTACK_COMPLETE-", None)
         except Exception as e:

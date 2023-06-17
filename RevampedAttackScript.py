@@ -1069,12 +1069,17 @@ class AttackScript:
         device_to_modify = ".".join([channel, device])
         print("MODIFY DEVICE: " + json.dumps(connectivity.device.modify_device(server, device_to_modify, {"common.ALLTYPES_NAME": device, "servermain.MULTIPLE_TYPES_DEVICE_DRIVER": "Modbus RTU Serial", "servermain.DEVICE_SCAN_MODE_RATE_MS": 8888888}), indent=4))
 
-    def add_tag(self, tag_path):
+    def kep_get_spoofed_device_structure(self, channel, device):
+        server = self.kep_connect()
+        device_info = ".".join([channel, device])
+        print("DEVICE STRUCTURE: " + json.dumps(connectivity.device.get_device_structure(server, device_info)))
+
+    def kep_add_tag(self, tag_path):
         # Add tag
         server = self.kep_connect()
         print(json.dumps(connectivity.tag.add_tag(server,tag_path,{'tags': [{'name': 'Tag1', 'description': 'Description', 'data_type': 'Int32', 'value': 12345}]})))
 
-    def add_log_item(self,log_group):
+    def kep_add_log_item(self, log_group):
         server = self.kep_connect()
         print(json.dumps(datalogger.log_items.add_log_item(server,log_group,{'ABC':123})))
 
