@@ -1133,7 +1133,7 @@ class AttackScript:
 
     def kep_add_udd_profile(self):
         server = self.kep_connect()
-        print(json.dumps(connectivity.udd.profile.add_profile(server, {}), indent=4))
+        print(json.dumps(connectivity.udd.profile.add_profile(server, {"common.ALLTYPES_NAME": "ModbusProfile", "common.ALLTYPES_DESCRIPTION": "a short description"}), indent=4))
 
     def kep_delete_udd_profile(self, profile_name):
         server = self.kep_connect()
