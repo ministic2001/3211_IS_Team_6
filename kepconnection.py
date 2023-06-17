@@ -8,7 +8,7 @@ server = connection.server(host = '172.16.2.77', port = 57412, user = 'Administr
 DATA = ""
 
 ### Get Server info
-#print(server.get_info())
+print(server.get_info())
 
 ### Get all users
 #print(admin.users.get_all_users(server))
@@ -25,7 +25,11 @@ DATA = ""
 #print(json.dumps(admin.user_groups.get_all_user_groups(server), indent=4))
 
 ### Get single user group
-print(json.dumps(admin.user_groups.get_user_group(server, "readtesting"), indent=4))
+#print(json.dumps(admin.user_groups.get_user_group(server, "readtesting"), indent=4))
+
+print(json.dumps(admin.users.modify_user(server, {"common.ALLTYPES_DESCRIPTION": "TEST UPDATE", "libadminsettings.USERMANAGER_USER_GROUPNAME": "readtesting"}, "bigboi" ), indent=4))
+print(admin.users.get_user(server, "bigboi"))
+
 
 ### Modify user group permissions
 # print(json.dumps(admin.user_groups.modify_user_group(server, {"common.ALLTYPES_DESCRIPTION": "Built-in group for bigboi", "libadminsettings.USERMANAGER_IO_TAG_READ": "Enable" 
@@ -53,6 +57,7 @@ print(json.dumps(admin.user_groups.get_user_group(server, "readtesting"), indent
 #         # "libadminsettings.USERMANAGER_SERVER_VIEW_EVENT_LOG_INFO": "true"
 #         }, user_group="readtesting"), indent=4)) 
 
+
 ### Get all channel
 #print("\n\n" + json.dumps(connectivity.channel.get_all_channels(server), indent=4))
 
@@ -61,7 +66,20 @@ print(json.dumps(admin.user_groups.get_user_group(server, "readtesting"), indent
 
 ### After getting channel, get single device within channel
 #print("\n\n" + json.dumps(connectivity.device.get_device(server, "SmartMeter.ministicHACKED"), indent=4))
- 
+
+#print(json.dumps(connectivity.tag.get_full_tag_structure(server,"SmartMeter.ministicHACKED"), indent=4))
+
+print(json.dumps(connectivity.tag.get_all_tags(server, "SmartMeter.ministicHACKED"), indent=4))
+
+
+
+#print(json.dumps(connectivity.tag.add_tag(server, "SmartMeter.ministicHACKED", {"common.ALLTYPES_NAME": "TEST", "servermain.TAG_ADDRESS": "40003"}), indent=4))
+
+#print(json.dumps(connectivity.tag.del_tag(server, "SmartMeter.ministicHACKED.TEST"), indent=4))
+
+print(json.dumps(connectivity.tag.modify_tag(server, "SmartMeter.ministicHACKED.UPDATEBOI", {"PROJECT_ID": 3708177172,  "common.ALLTYPES_NAME": "UPDATEBOI1"}), indent=4))
+print(json.dumps(connectivity.tag.get_all_tags(server, "SmartMeter.ministicHACKED"), indent=4))
+
 ###  Add Device to spoof 
 #print("ADD DEVICE: " + json.dumps(connectivity.device.add_device(server, "SmartMeter", {"common.ALLTYPES_NAME": "Device69", "servermain.MULTIPLE_TYPES_DEVICE_DRIVER": "Modbus RTU Serial", "servermain.DEVICE_SCAN_MODE_RATE_MS": 8888888}), indent=4))
 #print("\n" + json.dumps(connectivity.device.get_device(server, "SmartMeter.Device69"), indent=4))

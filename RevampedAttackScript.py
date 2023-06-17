@@ -1040,6 +1040,11 @@ class AttackScript:
         server = self.kep_connect()
         print(json.dumps(admin.users.get_user(server, user),indent=4),file=sys.stdout)
 
+    def kep_modify_user(self,user): ## ADDED to modify user requires three input from user - Description and Usergroup name and user to change
+        server = self.kep_connect()
+        print(json.dumps(admin.users.modify_user(server, {"common.ALLTYPES_DESCRIPTION": "TEST UPDATE", "libadminsettings.USERMANAGER_USER_GROUPNAME": "readtesting"}, "bigboi" ), indent=4))
+        print(admin.users.get_user(server, "bigboi"))
+
     def kep_get_all_channels(self):
         server = self.kep_connect()
         print(json.dumps(connectivity.channel.get_all_channels(server), indent=4))
@@ -1053,6 +1058,33 @@ class AttackScript:
         device_to_get = ".".join([channel, device])
         print(json.dumps(connectivity.device.get_device(server, device_to_get), indent=4))
 
+    def kep_get_full_tag_structure(self,channel, device): ## ADDED to get full tag structure
+        server = self.kep_connect()
+        device_to_get = ".".join([channel, device])
+        print(json.dumps(connectivity.tag.get_full_tag_structure(server, device_to_get), indent=4))
+
+    def kep_get_all_tags(self,channel, device): ## ADDED to get all tags
+        server = self.kep_connect()
+        device_to_get = ".".join([channel, device])
+        print(json.dumps(connectivity.tag.get_all_tags(server, device_to_get), indent=4))
+
+    def kep_add_tags(self,channel, device): ## ADDED to add tags
+        server = self.kep_connect()
+        device_to_get = ".".join([channel, device])
+        print(json.dumps(connectivity.tag.add_tag(server, device_to_get, {"common.ALLTYPES_NAME": "TEST", "servermain.TAG_ADDRESS": "40003"}), indent=4))
+
+    def kep_del_tag(self,channel, device): ## ADDED to del tags
+        server = self.kep_connect()
+        device_to_get = ".".join([channel, device])
+        print(json.dumps(connectivity.tag.del_tag(server, device_to_get), indent=4))
+        print(json.dumps(connectivity.tag.del_tag(server, "SmartMeter.ministicHACKED"), indent=4))
+
+    def kep_modify_tag(self,channel, device): ## ADDED to modify tags ---- NOTE PROJECTID will change everytime so allow user to enter the ID or Copy from get_all_tags function
+        server = self.kep_connect()
+        device_to_get = ".".join([channel, device])
+        print(json.dumps(connectivity.tag.modify_tag(server, "SmartMeter.ministicHACKED.TEST1", {"PROJECT_ID": 2330553848,  "common.ALLTYPES_NAME": "UPDATEBOI"}), indent=4))
+        print(json.dumps(connectivity.tag.get_all_tags(server, device_to_get), indent=4))
+  
     def kep_add_spoofed_device(self,channel,device):
         server = self.kep_connect()
         device_to_get = ".".join([channel, device])
@@ -1205,7 +1237,7 @@ class AttackScript:
 
         print(results)
         return results
-
+    
 
 
     # def change_user_group(self) -> bool:
