@@ -1124,12 +1124,12 @@ class AttackScript:
 
     def kep_add_log_item(self, log_group):
         server = self.kep_connect()
-        print(json.dumps(datalogger.log_items.add_log_item(server,log_group,{'ABC':123})))
+        print(json.dumps(datalogger.log_items.add_log_item(server,log_group,{"common.ALL_TYPES_NAME": "Log Item"})))
 
     def kep_add_exchange(self, channel, device):
         server = self.kep_connect()
         device_info = ".".join([channel, device])
-        print(json.dumps(connectivity.egd.exchange.add_exchange(server, channel, device_info, {}), indent=4))
+        print(json.dumps(connectivity.egd.exchange.add_exchange(server, channel, device_info, {"common.ALL_TYPES_NAME": "New Exchange"}), indent=4))
 
     def kep_add_udd_profile(self):
         server = self.kep_connect()
