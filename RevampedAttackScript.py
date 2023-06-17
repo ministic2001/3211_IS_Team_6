@@ -1040,10 +1040,14 @@ class AttackScript:
         server = self.kep_connect()
         print(json.dumps(admin.users.get_user(server, user),indent=4),file=sys.stdout)
 
-    def kep_modify_user(self,user): ## ADDED to modify user requires three input from user - Description and Usergroup name and user to change
+    def kep_modify_user(self): ## ADDED to modify user requires three input from user - Description and Usergroup name and user to change
         server = self.kep_connect()
-        print(json.dumps(admin.users.modify_user(server, {"common.ALLTYPES_DESCRIPTION": "TEST UPDATE", "libadminsettings.USERMANAGER_USER_GROUPNAME": "readtesting"}, "bigboi" ), indent=4))
+        print(json.dumps(admin.users.modify_user(server, {"common.ALLTYPES_DESCRIPTION": "TEST UPDATE", "libadminsettings.USERMANAGER_USER_GROUPNAME": "readtesting"}), indent=4))
         print(admin.users.get_user(server, "bigboi"))
+
+    # def kep_add_channel(self):
+    #     server = self.kep_connect()
+    #     print(json.dumps(connectivity.channel.add_channel(server, {}), indent=4))
 
     def kep_get_all_channels(self):
         server = self.kep_connect()
@@ -1053,9 +1057,9 @@ class AttackScript:
         server = self.kep_connect()
         print(json.dumps(connectivity.channel.get_channel_structure(server, channel), indent=4))
 
-    def kep_modify_channel(self):
-        server = self.kep_connect()
-        print(json.dumps(connectivity.channel.modify_channel(server, {"PROJECT_ID": 6543937651,  "common.ALLTYPES_NAME": "ATTACK TIME"}), indent=4))
+    # def kep_modify_channel(self):
+    #     server = self.kep_connect()
+    #     print(json.dumps(connectivity.channel.modify_channel(server, {"PROJECT_ID": 6543937651,  "common.ALLTYPES_NAME": "ATTACK TIME"}), indent=4))
 
     def kep_delete_channel(self,channel):
         server = self.kep_connect()
