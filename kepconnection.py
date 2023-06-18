@@ -80,6 +80,10 @@ print(json.dumps(connectivity.tag.get_all_tags(server, "SmartMeter.ministicHACKE
 print(json.dumps(connectivity.tag.modify_tag(server, "SmartMeter.ministicHACKED.UPDATEBOI", {"PROJECT_ID": 3708177172,  "common.ALLTYPES_NAME": "UPDATEBOI1"}), indent=4))
 print(json.dumps(connectivity.tag.get_all_tags(server, "SmartMeter.ministicHACKED"), indent=4))
 
+print(json.dumps(connectivity.udd.profile.modify_profile(server, {"common.ALLTYPES_NAME": "ModbusProfile",
+                                                                  "common.ALLTYPES_DESCRIPTION": "a short description"}),
+                 indent=4))
+print(json.dumps(connectivity.udd.profile.get_profile(server, "Derrick"), indent=4))
 ###  Add Device to spoof 
 #print("ADD DEVICE: " + json.dumps(connectivity.device.add_device(server, "SmartMeter", {"common.ALLTYPES_NAME": "Device69", "servermain.MULTIPLE_TYPES_DEVICE_DRIVER": "Modbus RTU Serial", "servermain.DEVICE_SCAN_MODE_RATE_MS": 8888888}), indent=4))
 #print("\n" + json.dumps(connectivity.device.get_device(server, "SmartMeter.Device69"), indent=4))
@@ -87,5 +91,8 @@ print(json.dumps(connectivity.tag.get_all_tags(server, "SmartMeter.ministicHACKE
 ### Delete Device 
 #print("DELETE DEVICE: " + json.dumps(connectivity.device.del_device(server, "SmartMeter.Device69"), indent=4))
 
-
+print(json.dumps(connectivity.egd.name.modify_name_resolution(server, "SmartMeter.Device69", {
+    "ge_ethernet_global_data.NAME_RESOLUTION_ALIAS": "PLC1",
+    "ge_ethernet_global_data.NAME_RESOLUTION_IP_ADDRESS": "192.168.1.200"}), indent=4))
+print(json.dumps(connectivity.egd.name.get_name_resolution(server, "SmartMeter.Device69"), indent=4))
 
