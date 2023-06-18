@@ -1208,10 +1208,11 @@ class AttackScript:
         server = self.kep_connect()
         print(json.dumps(connectivity.udd.profile.get_all_profiles(server), indent=4))
 
-    def kep_modify_udd_profile(self):
+    def kep_modify_udd_profile(self, profile_name):
         server = self.kep_connect()
         print(json.dumps(connectivity.udd.profile.modify_profile(server,{"common.ALLTYPES_NAME": "ModbusProfile",
                                                                        "common.ALLTYPES_DESCRIPTION": "a short description"}), indent=4))
+        print(json.dumps(connectivity.udd.profile.get_profile(server, profile_name),indent=4))
 
     def kep_add_log_item(self, log_group="Derrick"):
         server = self.kep_connect()
