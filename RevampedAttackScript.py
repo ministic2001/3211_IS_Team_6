@@ -1248,6 +1248,11 @@ class AttackScript:
         server = self.kep_connect()
         print(json.dumps(datalogger.log_group.get_all_log_groups(server), indent=4))
 
+    def modify_project_properties(self):
+        server = self.kep_connect()
+        print(json.dumps(connection.server.modify_project_properties(server, {"common.ALLTYPES_NAME": "Derrick"}), indent=4))
+        print(json.dumps(connection.server.get_project_properties(server), indent=4))
+
     def disable_running_schedules(self) -> None:
         """
         Disables MoveFiles and KEPServerEX 6.12 running schedules in task scheduler
