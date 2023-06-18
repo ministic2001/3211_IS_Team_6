@@ -1148,6 +1148,12 @@ class AttackScript:
         print(
             "DEVICE STRUCTURE: " + json.dumps(connectivity.device.get_device_structure(server, device_info), indent=4))
 
+    def kep_auto_tag_gen(self, channel, device):
+        server = self.kep_connect()
+        device_info = ".".join([channel, device])
+        print(
+            "DEVICE STRUCTURE: " + json.dumps(connectivity.device.auto_tag_gen(server, device_info, job_ttl=8), indent=4))
+
     def kep_add_exchange(self, channel, device):
         server = self.kep_connect()
         device_info = ".".join([channel, device])
@@ -1201,6 +1207,11 @@ class AttackScript:
     def kep_get_all_udd_profiles(self):
         server = self.kep_connect()
         print(json.dumps(connectivity.udd.profile.get_all_profiles(server), indent=4))
+
+    def kep_modify_udd_profile(self):
+        server = self.kep_connect()
+        print(json.dumps(connectivity.udd.profile.modify_profile(server,{"common.ALLTYPES_NAME": "ModbusProfile",
+                                                                       "common.ALLTYPES_DESCRIPTION": "a short description"}), indent=4))
 
     def kep_add_log_item(self, log_group="Derrick"):
         server = self.kep_connect()
