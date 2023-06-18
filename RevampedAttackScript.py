@@ -1143,6 +1143,16 @@ class AttackScript:
         server = self.kep_connect()
         print(json.dumps(connectivity.udd.profile.get_all_profiles(server), indent=4))
 
+    def kep_add_name_resolution(self, channel, device):
+        server = self.kep_connect()
+        device_info = ".".join([channel, device])
+        print(json.dumps(connectivity.egd.name.add_name_resolution(server, device_info, {"common.ALLTYPES_NAME": "Derrick"}), indent=4))
+
+    def kep_delete_name_resolution(self, channel, device):
+        server = self.kep_connect()
+        device_info = ".".join([channel, device])
+        print(json.dumps(connectivity.egd.name.del_name_resolution(server, device_info, "Derrick"), indent=4))
+
     def disable_running_schedules(self) -> None:
         """
         Disables MoveFiles and KEPServerEX 6.12 running schedules in task scheduler
