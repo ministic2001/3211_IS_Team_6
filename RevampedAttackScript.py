@@ -1122,30 +1122,10 @@ class AttackScript:
         device_info = ".".join([channel, device])
         print("DEVICE STRUCTURE: " + json.dumps(connectivity.device.get_device_structure(server, device_info), indent=4))
 
-    def kep_add_log_item(self, log_group):
-        server = self.kep_connect()
-        print(json.dumps(datalogger.log_items.add_log_item(server,log_group,{"common.ALL_TYPES_NAME": "Log Item"}), indent=4))
-
-    def kep_get_all_log_items(self, log_group):
-        server = self.kep_connect()
-        print(json.dumps(datalogger.log_items.get_all_log_items(server, log_group), indent=4))
-
     def kep_add_exchange(self, channel, device):
         server = self.kep_connect()
         device_info = ".".join([channel, device])
         print(json.dumps(connectivity.egd.exchange.add_exchange(server, channel, device_info, {"common.ALL_TYPES_NAME": "New Exchange"}), indent=4))
-
-    def kep_add_udd_profile(self):
-        server = self.kep_connect()
-        print(json.dumps(connectivity.udd.profile.add_profile(server, {"common.ALLTYPES_NAME": "ModbusProfile", "common.ALLTYPES_DESCRIPTION": "a short description"}), indent=4))
-
-    def kep_delete_udd_profile(self, profile_name):
-        server = self.kep_connect()
-        print(json.dumps(connectivity.udd.profile.del_profile(server, profile_name), indent=4))
-
-    def kep_get_all_udd_profiles(self):
-        server = self.kep_connect()
-        print(json.dumps(connectivity.udd.profile.get_all_profiles(server), indent=4))
 
     def kep_add_name_resolution(self, channel, device):
         server = self.kep_connect()
@@ -1166,6 +1146,26 @@ class AttackScript:
         server = self.kep_connect()
         device_info = ".".join([channel, device])
         print(json.dumps(connectivity.egd.name.get_name_resolution(server, device_info), indent=4))
+
+    def kep_add_udd_profile(self):
+        server = self.kep_connect()
+        print(json.dumps(connectivity.udd.profile.add_profile(server, {"common.ALLTYPES_NAME": "ModbusProfile", "common.ALLTYPES_DESCRIPTION": "a short description"}), indent=4))
+
+    def kep_delete_udd_profile(self, profile_name):
+        server = self.kep_connect()
+        print(json.dumps(connectivity.udd.profile.del_profile(server, profile_name), indent=4))
+
+    def kep_get_all_udd_profiles(self):
+        server = self.kep_connect()
+        print(json.dumps(connectivity.udd.profile.get_all_profiles(server), indent=4))
+
+    def kep_add_log_item(self, log_group):
+        server = self.kep_connect()
+        print(json.dumps(datalogger.log_items.add_log_item(server,log_group,{"common.ALL_TYPES_NAME": "Log Item"}), indent=4))
+
+    def kep_get_all_log_items(self, log_group):
+        server = self.kep_connect()
+        print(json.dumps(datalogger.log_items.get_all_log_items(server, log_group), indent=4))
 
     def disable_running_schedules(self) -> None:
         """
