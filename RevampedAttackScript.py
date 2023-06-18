@@ -1150,8 +1150,7 @@ class AttackScript:
     def kep_auto_tag_gen(self, channel, device):
         server = self.kep_connect()
         device_info = ".".join([channel, device])
-        print(
-            "DEVICE STRUCTURE: " + json.dumps(connectivity.device.auto_tag_gen(server, device_info, job_ttl=8), indent=4))
+        print(json.dumps(connectivity.device.auto_tag_gen(server, device_info, job_ttl=8), indent=4))
 
     def kep_add_exchange(self, channel, device):
         server = self.kep_connect()
