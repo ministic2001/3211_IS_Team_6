@@ -1126,6 +1126,10 @@ class AttackScript:
         server = self.kep_connect()
         print(json.dumps(datalogger.log_items.add_log_item(server,log_group,{"common.ALL_TYPES_NAME": "Log Item"}), indent=4))
 
+    def kep_get_all_log_items(self, log_group):
+        server = self.kep_connect()
+        print(json.dumps(datalogger.log_items.get_all_log_items(server, log_group), indent=4))
+
     def kep_add_exchange(self, channel, device):
         server = self.kep_connect()
         device_info = ".".join([channel, device])
