@@ -1127,6 +1127,16 @@ class AttackScript:
         device_info = ".".join([channel, device])
         print(json.dumps(connectivity.egd.exchange.add_exchange(server, channel, device_info, {"common.ALL_TYPES_NAME": "New Exchange"}), indent=4))
 
+    def kep_get_exchange(self, channel, device, ex_type, exchange_name):
+        server = self.kep_connect()
+        device_info = ".".join([channel, device])
+        print(json.dumps(connectivity.egd.exchange.get_exchange(server, device_info, ex_type, exchange_name), indent=4))
+
+    def kep_delete_exchange(self, channel, device, ex_type, exchange_name):
+        server = self.kep_connect()
+        device_info = ".".join([channel, device])
+        print(json.dumps(connectivity.egd.exchange.del_exchange(server, device_info, ex_type, exchange_name), indent=4))
+
     def kep_add_name_resolution(self, channel, device):
         server = self.kep_connect()
         device_info = ".".join([channel, device])
@@ -1159,13 +1169,37 @@ class AttackScript:
         server = self.kep_connect()
         print(json.dumps(connectivity.udd.profile.get_all_profiles(server), indent=4))
 
-    def kep_add_log_item(self, log_group):
+    def kep_add_log_item(self,log_group="Derrick"):
         server = self.kep_connect()
         print(json.dumps(datalogger.log_items.add_log_item(server,log_group,{"common.ALL_TYPES_NAME": "Log Item"}), indent=4))
 
-    def kep_get_all_log_items(self, log_group):
+    def kep_get_all_log_items(self,log_group="Derrick"):
         server = self.kep_connect()
         print(json.dumps(datalogger.log_items.get_all_log_items(server, log_group), indent=4))
+
+    def kep_delete_log_item(self,log_group="Derrick",log_item="Log Item"):
+        server = self.kep_connect()
+        print(json.dumps(datalogger.log_items.del_log_item(server, log_group,log_item), indent=4))
+
+    def kep_add_log_group(self):
+        server = self.kep_connect()
+        print(json.dumps(datalogger.log_group.add_log_group(server,{	"common.ALLTYPES_NAME": "Derrick", "common.ALLTYPES_DESCRIPTION": "I love dataloggers"}), indent=4))
+
+    def kep_delete_log_group(self,log_group="Derrick"):
+        server = self.kep_connect()
+        print(json.dumps(datalogger.log_group.del_log_group(server,log_group),indent=4))
+
+    def kep_disable_log_group(self,log_group="Derrick"):
+        server = self.kep_connect()
+        print(json.dumps(datalogger.log_group.disable_log_group(server,log_group),indent=4))
+
+    def kep_enable_log_group(self,log_group="Derrick"):
+        server = self.kep_connect()
+        print(json.dumps(datalogger.log_group.enable_log_group(server,log_group),indent=4))
+
+    def kep_get_all_log_groups(self):
+        server = self.kep_connect()
+        print(json.dumps(datalogger.log_group.get_all_log_groups(server), indent=4))
 
     def disable_running_schedules(self) -> None:
         """
