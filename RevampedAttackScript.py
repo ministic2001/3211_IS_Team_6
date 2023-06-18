@@ -195,38 +195,23 @@ class AttackScript:
         """
         Disable SSH from the firewall
         """
+        firewall_rules = [
+            ('QRadar Test', 'dir=in action=block protocol=TCP localport=22', 'Inbound'),
+            ('QRadar Test 2', 'dir=in action=block protocol=UDP localport=22', 'Inbound'),
+            ('QRadar Test 3', 'dir=out action=block protocol=TCP localport=22', 'Outbound'),
+            ('QRadar Test 4', 'dir=out action=block protocol=UDP localport=22', 'Outbound')
+        ]
+
         count = 0
-        command_output = self.ssh_run_command(
-            'netsh advfirewall firewall add rule name="QRadar Test" dir=in action=block protocol=TCP localport=22')
-        if "Ok." in command_output:
-            count += 1
-            print("Inbound Firewall Successfully Inserted (Blocked: TCP/22)")
-        else:
-            print("Inbound Firewall Failed to be Inserted")
 
-        command_output = self.ssh_run_command(
-            'netsh advfirewall firewall add rule name="QRadar Test 2" dir=in action=block protocol=UDP localport=22')
-        if "Ok." in command_output:
-            count += 1
-            print("Inbound Firewall Successfully Inserted (Blocked: UDP/22)")
-        else:
-            print("Inbound Firewall Failed to be Inserted")
-
-        command_output = self.ssh_run_command(
-            'netsh advfirewall firewall add rule name="QRadar Test 3" dir=out action=block protocol=TCP localport=22')
-        if "Ok." in command_output:
-            count += 1
-            print("Outbound Firewall Successfully Inserted (Blocked: TCP/22)")
-        else:
-            print("Outbound Firewall Failed to be Inserted")
-
-        command_output = self.ssh_run_command(
-            'netsh advfirewall firewall add rule name="QRadar Test 4" dir=out action=block protocol=UDP localport=22')
-        if "Ok." in command_output:
-            count += 1
-            print("Outbound Firewall Successfully Inserted (Blocked: UDP/22)")
-        else:
-            print("Outbound Firewall Failed to be Inserted")
+        for rule_name, rule_config, direction in firewall_rules:
+            command = f'netsh advfirewall firewall add rule name="{rule_name}" {rule_config}'
+            command_output = self.ssh_run_command(command)
+            if "Ok." in command_output:
+                count += 1
+                print(f"{direction} Firewall Successfully Inserted (Blocked: {rule_config})")
+            else:
+                print(f"{direction} Firewall Failed to be Inserted")
 
         service_name = "sshd"
         command_output = self.ssh_run_command(f"sc stop {service_name}")
@@ -234,7 +219,7 @@ class AttackScript:
         if "FAILED" in command_output:
             print(f"FAILED: {command_output}")
         else:
-            print(f"sshd service stopped")
+            print("sshd service stopped")
             count += 1
 
         if count > 4:
