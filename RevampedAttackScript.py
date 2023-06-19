@@ -1069,7 +1069,7 @@ class AttackScript:
         device_to_get = ".".join([channel, device])
         print(json.dumps(connectivity.tag.get_all_tags(server, device_to_get), indent=4))
 
-    def kep_add_tags(self, channel, device):  ## ADDED to add tags
+    def kep_add_tags(self, channel, device, name, address):  ## ADDED to add tags
         server = self.kep_connect()
         device_to_get = ".".join([channel, device])
         print(json.dumps(connectivity.tag.add_tag(server, device_to_get,
