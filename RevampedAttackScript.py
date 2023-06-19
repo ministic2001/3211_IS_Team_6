@@ -1426,17 +1426,11 @@ class AttackScript:
                 self.kep_delete_spoofed_device("Channel1", "Device1")
             case "25":
                 self.kep_add_spoofed_device("SmartMeter", "Meter1")
-            case "26":
-                self.kep_add_udd_profile()
-            case "27":
-                self.kep_add_name_resolution("SmartMeter", "Meter1")
             case "28":
-                self.kep_add_exchange("SmartMeter", "Meter1")
+                self.kep_add_udd_profile()
             case "29":
                 self.kep_modify_user()
             case "30":
-                self.kep_auto_tag_gen("Channel1", "Device1")
-            case "31":
                 self.kep_add_channel()
             case "-h":
                 print(
