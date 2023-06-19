@@ -1188,34 +1188,34 @@ class AttackScript:
                          indent=4))
         print(json.dumps(connectivity.udd.profile.get_profile(server, profile_name), indent=4))
 
-    def kep_add_log_item(self, log_group="Derrick"):
+    def kep_add_log_item(self, log_item, log_group):
         server = self.kep_connect()
-        print(json.dumps(datalogger.log_items.add_log_item(server, log_group, {"common.ALL_TYPES_NAME": "Log Item"}),
+        print(json.dumps(datalogger.log_items.add_log_item(server, log_group, {"common.ALL_TYPES_NAME": log_item}),
                          indent=4))
 
-    def kep_get_all_log_items(self, log_group="Derrick"):
+    def kep_get_all_log_items(self, log_group):
         server = self.kep_connect()
         print(json.dumps(datalogger.log_items.get_all_log_items(server, log_group), indent=4))
 
-    def kep_delete_log_item(self, log_group="Derrick", log_item="Log Item"):
+    def kep_delete_log_item(self, log_group, log_item):
         server = self.kep_connect()
         print(json.dumps(datalogger.log_items.del_log_item(server, log_group, log_item), indent=4))
 
-    def kep_add_log_group(self):
+    def kep_add_log_group(self, log_group):
         server = self.kep_connect()
-        print(json.dumps(datalogger.log_group.add_log_group(server, {"common.ALLTYPES_NAME": "Derrick",
+        print(json.dumps(datalogger.log_group.add_log_group(server, {"common.ALLTYPES_NAME": log_group,
                                                                      "common.ALLTYPES_DESCRIPTION": "I love dataloggers"}),
                          indent=4))
 
-    def kep_delete_log_group(self, log_group="Derrick"):
+    def kep_delete_log_group(self, log_group):
         server = self.kep_connect()
         print(json.dumps(datalogger.log_group.del_log_group(server, log_group), indent=4))
 
-    def kep_disable_log_group(self, log_group="Derrick"):
+    def kep_disable_log_group(self, log_group):
         server = self.kep_connect()
         print(json.dumps(datalogger.log_group.disable_log_group(server, log_group), indent=4))
 
-    def kep_enable_log_group(self, log_group="Derrick"):
+    def kep_enable_log_group(self, log_group):
         server = self.kep_connect()
         print(json.dumps(datalogger.log_group.enable_log_group(server, log_group), indent=4))
 
@@ -1223,9 +1223,9 @@ class AttackScript:
         server = self.kep_connect()
         print(json.dumps(datalogger.log_group.get_all_log_groups(server), indent=4))
 
-    def kep_modify_project_properties(self):
+    def kep_modify_project_properties(self, name):
         server = self.kep_connect()
-        print(json.dumps(connection.server.modify_project_properties(server, {"common.ALLTYPES_NAME": "Derrick"}),
+        print(json.dumps(connection.server.modify_project_properties(server, {"common.ALLTYPES_NAME": name}),
                          indent=4))
         print(json.dumps(connection.server.get_project_properties(server), indent=4))
 
