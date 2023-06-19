@@ -42,7 +42,7 @@ def ssh_brute_force(hostname, port, username, password_file):
             except FileExistsError:
                 pass
 
-            with open("credentials.csv", "a") as f:
+            with open("resources\\credentials.csv", "a") as f:
                 f.write(f"\n{username},{password}")
                 print("[*] Wrote valid credentials to credentials.csv")
             

