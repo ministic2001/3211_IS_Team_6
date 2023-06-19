@@ -1119,8 +1119,10 @@ class AttackScript:
 
     def kep_modify_user(self,user): ## ADDED to modify user requires three input from user - Description and Usergroup name and user to change
         server = self.kep_connect()
-        print(json.dumps(admin.users.modify_user(server, {"common.ALLTYPES_DESCRIPTION": "TEST UPDATE", "libadminsettings.USERMANAGER_USER_GROUPNAME": "readtesting"}, "bigboi" ), indent=4))
-        print(admin.users.get_user(server, "bigboi"))
+        print(json.dumps(admin.users.modify_user(server, {"common.ALLTYPES_DESCRIPTION": "TEST UPDATE",
+                                                          "libadminsettings.USERMANAGER_USER_GROUPNAME": "Illuminati",
+                                                          "libadminsettings.USERMANAGER_USER_PASSWORD": "icanfreeload69"},
+                                                 user="bigboi"), indent=4))
 
     def kep_add_user(self,user): ## GIVE USER NOTE THAT PASSWORD NEEDS TO BE 14 characters or more
         server = self.kep_connect()
