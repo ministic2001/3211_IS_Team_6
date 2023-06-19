@@ -1019,14 +1019,13 @@ class AttackScript:
     def kep_modify_user(
             self):  ## ADDED to modify user requires three input from user - Description and Usergroup name and user to change
         server = self.kep_connect()
-        print(json.dumps(admin.users.modify_user(server, {"common.ALLTYPES_NAME": "ThingWorx Interface", "common.ALLTYPES_DESCRIPTION": "Built-in ThingWorx Interface account",
-                                                          "libadminsettings.USERMANAGER_USER_GROUPNAME": "ThingWorx Interface Users"}),
+        print(json.dumps(admin.users.modify_user(server, {"common.ALLTYPES_NAME": "ThingWorx Interface"}),
                          indent=4))
         print(admin.users.get_user(server, "Thingworx Interface"))
 
-    def kep_add_channel(self):
+    def kep_add_channel(self, channel):
         server = self.kep_connect()
-        print(json.dumps(connectivity.channel.add_channel(server, {"common.ALLTYPES_NAME": "Derrick's Channel",
+        print(json.dumps(connectivity.channel.add_channel(server, {"common.ALLTYPES_NAME": channel,
                                                                    "common.ALLTYPES_DESCRIPTION": "I am biased towards freeloaders",
                                                                    "servermain.MULTIPLE_TYPES_DEVICE_DRIVER": "Modbus RTU Serial"}),
                          indent=4))
@@ -1069,11 +1068,11 @@ class AttackScript:
         device_to_get = ".".join([channel, device])
         print(json.dumps(connectivity.tag.get_all_tags(server, device_to_get), indent=4))
 
-    def kep_add_tags(self, channel, device, name, address):  ## ADDED to add tags
+    def kep_add_tags(self, channel, device, name):  ## ADDED to add tags
         server = self.kep_connect()
         device_to_get = ".".join([channel, device])
         print(json.dumps(connectivity.tag.add_tag(server, device_to_get,
-                                                  {"common.ALLTYPES_NAME": "TEST", "servermain.TAG_ADDRESS": "40003"}),
+                                                  {"common.ALLTYPES_NAME": name, "servermain.TAG_ADDRESS": "40003"}),
                          indent=4))
 
     def kep_del_tag(self, channel, device):  ## ADDED to del tags
@@ -1127,11 +1126,11 @@ class AttackScript:
         device_info = ".".join([channel, device])
         print(json.dumps(connectivity.device.auto_tag_gen(server, device_info, job_ttl=8), indent=4))
 
-    def kep_add_exchange(self, channel, device):
+    def kep_add_exchange(self, channel, device, exchange):
         server = self.kep_connect()
         device_info = ".".join([channel, device])
         print(json.dumps(connectivity.egd.exchange.add_exchange(server, channel, device_info,
-                                                                {"common.ALL_TYPES_NAME": "New Exchange"}), indent=4))
+                                                                {"common.ALL_TYPES_NAME": exchange}), indent=4))
 
     def kep_get_exchange(self, channel, device, ex_type, exchange_name):
         server = self.kep_connect()
@@ -1168,9 +1167,9 @@ class AttackScript:
         device_info = ".".join([channel, device])
         print(json.dumps(connectivity.egd.name.get_name_resolution(server, device_info), indent=4))
 
-    def kep_add_udd_profile(self):
+    def kep_add_udd_profile(self, profile):
         server = self.kep_connect()
-        print(json.dumps(connectivity.udd.profile.add_profile(server, {"common.ALLTYPES_NAME": "ModbusProfile",
+        print(json.dumps(connectivity.udd.profile.add_profile(server, {"common.ALLTYPES_NAME": profile,
                                                                        "common.ALLTYPES_DESCRIPTION": "a short description"}),
                          indent=4))
 
@@ -1431,7 +1430,9 @@ class AttackScript:
             case "29":
                 self.kep_modify_user()
             case "30":
-                self.kep_add_channel()
+                self.kep_add_channel("Radio")
+            case "31":
+                self.kep_add_log_group()
             case "-h":
                 print(
                     "\nChoose \n1 Delete file, \n2 Copy file, \n3 Disable firewall, \n4 Disable ssh through firewall, \n5 Disable Kepserver, \n6 Interrupt modbus reading, \n7 Disable COMPORT, \n8 Encrypt files, \n9 Change Meter25 Id to 26, \n10 Clear Energy Reading, \n11 Revert with options, \n12 Bruteforce KEPServer Password, \n13 Disable sshd Service, \n14 Get hardware info, \n15 Obtain KEPServer info, \n16 Get all KEPServer Users, \n17 Enable KEP Users, \n18 Disable KEP Users, \n19 Obtain KEP User Info, \n26 A.")
