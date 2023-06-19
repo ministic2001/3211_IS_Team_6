@@ -38,7 +38,7 @@ def get_service_statuses(ip, window):
         print(e,file=sys.__stderr__)
         window.write_event_value("-SERVICE_STATUS_FAILED-", None)
 
-def launch_exploit(exploit,ip,window,var1=None, var2=None):
+def launch_exploit(exploit,ip,window,var1=None, var2=None,var3=None):
     if is_valid_ip(ip):
         # status = f"The selected attack to run is {exploit} on IP: {ip}, var1 = {var1}, var2 = {var2}"
         # update_status(status,"-STATUS_BOX-",window)
@@ -62,7 +62,7 @@ def launch_exploit(exploit,ip,window,var1=None, var2=None):
                 case "Bruteforce KEP credentials": attack.kep_bruteforce()
                 case "Get All UDD profiles": attack.kep_get_all_udd_profiles()
                 case "Get All Log Groups": attack.kep_get_all_log_groups()
-                case "Add exchange": attack.kep_add_exchange(var1,var2)
+                case "Add exchange": attack.kep_add_exchange(var1,var2,var3)
             update_status("Attack success","-STATUS_BOX-",window)
             window.write_event_value("-ATTACK_COMPLETE-", None)
         except Exception as e:
@@ -249,6 +249,10 @@ def main():
                 window["-VAR1_INPUT-"].update("", visible=True)
 
             elif selected_exploit == "Get all devices":
+                # Assuming you have a list of channels
+                channel_list = ["Channel 1", "Channel 2", "Channel 3", "Channel 4"]
+
+                # Populating the channel drop-down list
                 window["-VAR1_TEXT-"].update("Channel:", visible=True)
                 window["-VAR1_INPUT-"].update("", visible=True)
 
