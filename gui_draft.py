@@ -28,7 +28,6 @@ def get_service_statuses(ip, window):
     attack = attackscript.AttackScript(ip)
     try:
         status_list = attack.kep_get_firewall_status()
-        ## TO TEST: Test if the below two commands work
         status_list.append("ON") if attack.kep_get_windef_status() else status_list.append("OFF")
         status_list.append("ON") if attack.kep_get_service_status() else status_list.append("OFF")
         print(f"status_list is : {status_list}",file=sys.__stdout__)
@@ -132,7 +131,7 @@ def main():
     
     # Layout for the home window
     home_layout = [   
-        [sg.Text("Attack Dashboard",font=("Helvetica", 28, "bold"),expand_x=True,justification="center", background_color="#363636", size=(63,1), text_color="white" ,pad=((0, 0), (0, 30)))],
+        [sg.Text("Attack Dashboard",font=("Helvetica", 28, "bold"),expand_x=True,justification="center", background_color="#363636", size=(63,2), text_color="white" ,pad=((0, 0), (0, 30)))],
         [sg.Text("Select IP address:", key="-SELECT_IP-",font=("Helvetica", 16, "bold")), 
             sg.Radio("Level 6 (172.16.2.223)", "ip", key="-IP_LVL6-", enable_events=True, default=True, font=("Helvetica", 16)),
             sg.Radio("Level 7 (172.16.2.77)" , "ip", key="-IP_LVL7-", enable_events=True, font=("Helvetica", 16)),
@@ -149,13 +148,6 @@ def main():
             [sg.Button('Exit', expand_x=True, font=("Helvetica", 16, "bold"))],
         ], justification="center", expand_x=True)],
         [sg.Text(size=(0,8))]
-    ]
-
-    # Layout for the Modbus exploits
-    modbus_layout = [
-        [sg.Text("MODBUS exploits",font=("Helvetica", 28, "bold"), background_color="#363636", text_color="white",pad=((0, 0), (0, 30)))],
-        [sg.Text("Exploit:"), sg.Combo(modbus_exploit_list, default_value=modbus_exploit_list[0], key='-MODBUS_EXPLOIT-')],
-        [sg.Button("Launch Exploit"), sg.Button("Back")]
     ]
 
     # Layout for managing all the layouts

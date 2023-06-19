@@ -8,7 +8,7 @@ server = connection.server(host = '172.16.2.77', port = 57412, user = 'Administr
 DATA = ""
 
 ### Get Server info
-print(server.get_info())
+#print(server.get_info())
 
 ### Get all users
 #print(admin.users.get_all_users(server))
@@ -21,55 +21,77 @@ print(server.get_info())
 #print(admin.users.get_user(server, "administrator"))
 #print(admin.users.get_user(server, "bigboi"))
 
-### Get all user groups
-#print(json.dumps(admin.user_groups.get_all_user_groups(server), indent=4))
+
 
 ### Get single user group
 #print(json.dumps(admin.user_groups.get_user_group(server, "readtesting"), indent=4))
 
-print(json.dumps(admin.users.modify_user(server, {"common.ALLTYPES_DESCRIPTION": "TEST UPDATE", "libadminsettings.USERMANAGER_USER_GROUPNAME": "readtesting"}, "bigboi" ), indent=4))
-print(admin.users.get_user(server, "bigboi"))
+#print(admin.user_groups.add_user_group(server, {"common.ALLTYPES_NAME": "Illuminati"} ))
+
+#print(admin.user_groups.del_user_group(server, "Illuminati"))
+
+# print(admin.user_groups.modify_user_group(server, {"common.ALLTYPES_DESCRIPTION": "VERY SPECIAL GROUP", 
+#                                                    "libadminsettings.USERMANAGER_IO_TAG_READ": "Enable", 
+#                                                    "libadminsettings.USERMANAGER_GROUP_ENABLED": True,
+#                                                    "libadminsettings.USERMANAGER_IO_TAG_READ": True , 
+#                                                    "libadminsettings.USERMANAGER_IO_TAG_WRITE": True,
+#                                                    "libadminsettings.USERMANAGER_IO_TAG_DYNAMIC_ADDRESSING": True,
+#                                                    "libadminsettings.USERMANAGER_SYSTEM_TAG_READ": True,
+#                                                    "libadminsettings.USERMANAGER_SYSTEM_TAG_WRITE": True,
+#                                                    "libadminsettings.USERMANAGER_INTERNAL_TAG_READ": True,
+#                                                    "libadminsettings.USERMANAGER_INTERNAL_TAG_WRITE": True,
+#                                                    "libadminsettings.USERMANAGER_SERVER_MANAGE_LICENSES": True,
+#                                                    "libadminsettings.USERMANAGER_SERVER_RESET_OPC_DIAGS_LOG": True,
+#                                                    "libadminsettings.USERMANAGER_SERVER_RESET_COMM_DIAGS_LOG": True,
+#                                                    "libadminsettings.USERMANAGER_SERVER_MODIFY_SERVER_SETTINGS": True,
+#                                                    "libadminsettings.USERMANAGER_SERVER_DISCONNECT_CLIENTS": True,
+#                                                    "libadminsettings.USERMANAGER_SERVER_RESET_EVENT_LOG": True,
+#                                                    "libadminsettings.USERMANAGER_SERVER_OPCUA_DOTNET_CONFIGURATION": True,
+#                                                    "libadminsettings.USERMANAGER_SERVER_CONFIG_API_LOG_ACCESS": True,
+#                                                    "libadminsettings.USERMANAGER_SERVER_REPLACE_RUNTIME_PROJECT": True,
+#                                                    "libadminsettings.USERMANAGER_BROWSE_BROWSENAMESPACE": True,
+#                                                    "libadminsettings.USERMANAGER_SERVER_VIEW_EVENT_LOG_SECURITY": True,
+#                                                    "libadminsettings.USERMANAGER_SERVER_VIEW_EVENT_LOG_ERROR": True,
+#                                                    "libadminsettings.USERMANAGER_SERVER_VIEW_EVENT_LOG_WARNING": True,
+#                                                    "libadminsettings.USERMANAGER_SERVER_VIEW_EVENT_LOG_INFO": True}, user_group="Illuminati"))
+
+### Get all user groups
+print(json.dumps(admin.user_groups.get_all_user_groups(server), indent=4))
+
+#print(json.dumps(admin.users.modify_user(server, {"common.ALLTYPES_DESCRIPTION": "TEST UPDATE", "libadminsettings.USERMANAGER_USER_GROUPNAME": "readtesting"}, "bigboi" ), indent=4))
+#print(admin.users.get_user(server, "bigboi"))
 
 
-### Modify user group permissions
-# print(json.dumps(admin.user_groups.modify_user_group(server, {"common.ALLTYPES_DESCRIPTION": "Built-in group for bigboi", "libadminsettings.USERMANAGER_IO_TAG_READ": "Enable" 
-#         # "libadminsettings.USERMANAGER_GROUP_ENABLED": "true",
-#         # "libadminsettings.USERMANAGER_IO_TAG_READ": "true" , 
-#         # "libadminsettings.USERMANAGER_IO_TAG_WRITE": "true",
-#         # "libadminsettings.USERMANAGER_IO_TAG_DYNAMIC_ADDRESSING": "true",
-#         # "libadminsettings.USERMANAGER_SYSTEM_TAG_READ": "true",
-#         # "libadminsettings.USERMANAGER_SYSTEM_TAG_WRITE": "true",
-#         # "libadminsettings.USERMANAGER_INTERNAL_TAG_READ": "true",
-#         # "libadminsettings.USERMANAGER_INTERNAL_TAG_WRITE": "true",
-#         # "libadminsettings.USERMANAGER_SERVER_MANAGE_LICENSES": "true",
-#         # "libadminsettings.USERMANAGER_SERVER_RESET_OPC_DIAGS_LOG": "true",
-#         # "libadminsettings.USERMANAGER_SERVER_RESET_COMM_DIAGS_LOG": "true",
-#         # "libadminsettings.USERMANAGER_SERVER_MODIFY_SERVER_SETTINGS": "true",
-#         # "libadminsettings.USERMANAGER_SERVER_DISCONNECT_CLIENTS": "true",
-#         # "libadminsettings.USERMANAGER_SERVER_RESET_EVENT_LOG": "true",
-#         # "libadminsettings.USERMANAGER_SERVER_OPCUA_DOTNET_CONFIGURATION": "true",
-#         # "libadminsettings.USERMANAGER_SERVER_CONFIG_API_LOG_ACCESS": "true",
-#         # "libadminsettings.USERMANAGER_SERVER_REPLACE_RUNTIME_PROJECT": "true",
-#         # "libadminsettings.USERMANAGER_BROWSE_BROWSENAMESPACE": "true",
-#         # "libadminsettings.USERMANAGER_SERVER_VIEW_EVENT_LOG_SECURITY": "true",
-#         # "libadminsettings.USERMANAGER_SERVER_VIEW_EVENT_LOG_ERROR": "true",
-#         # "libadminsettings.USERMANAGER_SERVER_VIEW_EVENT_LOG_WARNING": "true",
-#         # "libadminsettings.USERMANAGER_SERVER_VIEW_EVENT_LOG_INFO": "true"
-#         }, user_group="readtesting"), indent=4)) 
+#print(admin.users.add_user(server, {"common.ALLTYPES_NAME": "bigboi", "libadminsettings.USERMANAGER_USER_GROUPNAME": "Administrators", "libadminsettings.USERMANAGER_USER_PASSWORD": "SmellyBoiBoiBoi"}))
 
 
-### Get all channel
-#print("\n\n" + json.dumps(connectivity.channel.get_all_channels(server), indent=4))
+#print(admin.users.del_user(server, "bigboi"))
+
+
+
+print(json.dumps(admin.user_groups.get_user_group(server, "Illuminati"), indent=4))
 
 ### After getting channel, get all device within channel
-#print("\n\n" + str(connectivity.device.get_all_devices(server, "SmartMeter")))
+#print(json.dumps(connectivity.device.get_all_devices(server, "SmartMeter"), indent=4))
+
+#print(connectivity.channel.add_channel(server, {"common.ALLTYPES_NAME": "NotSmartMeter", "servermain.MULTIPLE_TYPES_DEVICE_DRIVER": "Simulator"}))
+
+#print(connectivity.channel.del_channel(server, "NotSmartMeter"))
+
+#print(connectivity.channel.modify_channel(server, {"PROJECT_ID": 4064171838, "common.ALLTYPES_NAME": "NotSmartMeter1"}, channel="NotSmartMeter"))
+
+### Get all channel 
+#print(json.dumps(connectivity.channel.get_all_channels(server), indent=4))
 
 ### After getting channel, get single device within channel
-#print("\n\n" + json.dumps(connectivity.device.get_device(server, "SmartMeter.ministicHACKED"), indent=4))
+
+#print(json.dumps(connectivity.device.modify_device(server, "SmartMeter.ministicHACKED1", {"PROJECT_ID": 1459547795, "common.ALLTYPES_NAME": "Hijack"}), indent=4))
+
+#print("\n\n" + json.dumps(connectivity.device.get_device(server, "SmartMeter.HACKEDx2"), indent=4))
 
 #print(json.dumps(connectivity.tag.get_full_tag_structure(server,"SmartMeter.ministicHACKED"), indent=4))
 
-print(json.dumps(connectivity.tag.get_all_tags(server, "SmartMeter.ministicHACKED"), indent=4))
+#print(json.dumps(connectivity.tag.get_all_tags(server, "SmartMeter.ministicHACKED"), indent=4))
 
 
 
@@ -77,8 +99,8 @@ print(json.dumps(connectivity.tag.get_all_tags(server, "SmartMeter.ministicHACKE
 
 #print(json.dumps(connectivity.tag.del_tag(server, "SmartMeter.ministicHACKED.TEST"), indent=4))
 
-print(json.dumps(connectivity.tag.modify_tag(server, "SmartMeter.ministicHACKED.UPDATEBOI", {"PROJECT_ID": 3708177172,  "common.ALLTYPES_NAME": "UPDATEBOI1"}), indent=4))
-print(json.dumps(connectivity.tag.get_all_tags(server, "SmartMeter.ministicHACKED"), indent=4))
+#print(json.dumps(connectivity.tag.modify_tag(server, "SmartMeter.ministicHACKED.UPDATEBOI", {"PROJECT_ID": 3708177172,  "common.ALLTYPES_NAME": "UPDATEBOI1"}), indent=4))
+#print(json.dumps(connectivity.tag.get_all_tags(server, "SmartMeter.ministicHACKED"), indent=4))
 
 print(json.dumps(connectivity.udd.profile.modify_profile(server, {"common.ALLTYPES_NAME": "ModbusProfile",
                                                                   "common.ALLTYPES_DESCRIPTION": "a short description"}),
