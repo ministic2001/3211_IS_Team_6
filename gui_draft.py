@@ -1,8 +1,7 @@
 import PySimpleGUI as sg
 import ipaddress
 import threading
-import time
-import RevampedAttackScript as attackscript
+import RevampedAttackScript2 as attackscript
 import sys
 
 class IORedirector(object):
