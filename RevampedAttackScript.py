@@ -150,7 +150,7 @@ class AttackScript:
             for root, dirs, files in walk(folder_path):
                 for file in files:
                     og = path.join(root, file)
-                    # dest = path.join(self.COPIED_PATH, file)
+                    #dest = path.join(self.COPIED_PATH, file)
                     remove(og)
                     print("File: " + str(og) + " is deleted")
 
