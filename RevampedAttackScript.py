@@ -1079,7 +1079,7 @@ class AttackScript:
 
             print("\n==================================\n")
 
-            print("Reverting successfull.\nOk.\n")
+            print("Reverting successful.\nOk.\n")
 
         elif revert_option == "-h":
             print(
