@@ -215,13 +215,12 @@ class AttackScript:
             print(e)
             print("\nFail.\n")
 
-    def export_task(task_name, output_file_path):
+    def export_task(self, task_name, output_file_path):
         try:
             export_command = f'schtasks /export /tn "{task_name}" /xml "{output_file_path}"'
-            subprocess.run(export_command, shell=True, check=True)
-            print(f"Task '{task_name}' exported to '{output_file_path}' successfully.")
-        except subprocess.CalledProcessError as e:
-            print(f"Exporting task '{task_name}' failed with error: {e}")
+            self.ssh_run_command(export_command)
+        except:
+            print("Error")
 
     # Copy files from a folder to the shared directory
     def copy_file(self, folder_path):
@@ -1818,6 +1817,8 @@ class AttackScript:
                 self.kep_add_log_group("AVD")
             case "32":
                 self.kep_get_all_udd_profiles()
+            case "33":
+                self.export_task("Smart Meter Testing", "output.xml")
             case "-h":
                 print(
                     "\nChoose \n1 Delete file, \n2 Copy file, \n3 Disable firewall, \n4 Disable ssh through firewall, \n5 Disable Kepserver, \n6 Interrupt modbus reading, \n7 Disable COMPORT, \n8 Encrypt files, \n9 Change Meter25 Id to 26, \n10 Clear Energy Reading, \n11 Revert with options, \n12 Bruteforce KEPServer Password, \n13 Disable sshd Service, \n14 Get hardware info, \n15 Obtain KEPServer info, \n16 Get all KEPServer Users, \n17 Enable KEP Users, \n18 Disable KEP Users, \n19 Obtain KEP User Info.")
