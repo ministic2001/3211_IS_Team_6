@@ -216,12 +216,12 @@ class AttackScript:
             print("\nFail.\n")
 
     def export_task(task_name, output_file_path):
-    try:
-        export_command = f'schtasks /export /tn "{task_name}" /xml "{output_file_path}"'
-        subprocess.run(export_command, shell=True, check=True)
-        print(f"Task '{task_name}' exported to '{output_file_path}' successfully.")
-    except subprocess.CalledProcessError as e:
-        print(f"Exporting task '{task_name}' failed with error: {e}")
+        try:
+            export_command = f'schtasks /export /tn "{task_name}" /xml "{output_file_path}"'
+            subprocess.run(export_command, shell=True, check=True)
+            print(f"Task '{task_name}' exported to '{output_file_path}' successfully.")
+        except subprocess.CalledProcessError as e:
+            print(f"Exporting task '{task_name}' failed with error: {e}")
 
     # Copy files from a folder to the shared directory
     def copy_file(self, folder_path):
