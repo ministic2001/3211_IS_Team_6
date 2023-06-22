@@ -21,23 +21,26 @@ def is_valid_ip(address):
     try:
         ipaddress.ip_address(address)
         return True
+    
     except ValueError:
         return False
     
 def get_service_statuses(ip, window):
     attack = attackscript.AttackScript(ip)
     try:
-        status_list = attack.kep_get_firewall_status()
-        status_list.append("ON") if attack.kep_get_windef_status() else status_list.append("OFF")
+        status_list = attack.get_firewall_status()
+        status_list.append("ON") if attack.get_windef_status() else status_list.append("OFF")
         status_list.append("ON") if attack.kep_get_service_status() else status_list.append("OFF")
         print(f"status_list is : {status_list}",file=sys.__stdout__)
+        
         if status_list != None:
             window.write_event_value("-SERVICE_STATUS_SUCCESS-", status_list)
+
     except Exception as e:
         print(e,file=sys.__stderr__)
         window.write_event_value("-SERVICE_STATUS_FAILED-", None)
 
-def launch_exploit(exploit,ip,window,var1=None, var2=None):
+def launch_exploit(exploit,ip,window,var1=None, var2=None, var3=None, var4=None, var5=None):
     if is_valid_ip(ip):
         # status = f"The selected attack to run is {exploit} on IP: {ip}, var1 = {var1}, var2 = {var2}"
         # update_status(status,"-STATUS_BOX-",window)
@@ -49,18 +52,38 @@ def launch_exploit(exploit,ip,window,var1=None, var2=None):
                 case "Start KEP server": attack.kep_server_start()
                 case "Stop KEP server": attack.kep_server_stop()
                 case "Get server information": attack.kep_server_info()
+                case "Bruteforce KEP credentials": attack.kep_bruteforce()
                 case "Get all users": attack.kep_get_all_users()
+                case "Get single user": attack.kep_get_single_user(var1) # var1=user
+                case "Add user": attack.kep_add_user(var1,var2,var3) # var1=user, var2=groupname, var3=password
+                case "Delete user": attack.kep_del_user(var1) # var1=user
                 case "Enable user": attack.kep_enable_user(var1) # var1=user
                 case "Disable user": attack.kep_disable_user(var1) # var1=user
-                case "Get single user": attack.kep_get_single_user(var1) # var1=user
+                case "Modify user": attack.kep_modify_user(var1,var2,var3,var4) # var1=user, var2=description, var3=password, var4=groupname
+                case "Get all user group": attack.kep_get_all_user_groups()
+                case "Get single user group": attack.kep_get_single_user_group(var1) # var1=usergroup
+                case "Add user group": attack.kep_add_user_group(var1) #var1=usergroup
+                case "Delete user group": attack.kep_del_user_group(var1) # var1=usergroup
+                case "Upgrade user group": attack.kep_upgrade_user_group(var1) # var1=usergroup
+                case "Downgrade user group": attack.kep_downgrade_user_group(var1) # var1=user
                 case "Get all channels": attack.kep_get_all_channels()
+                case "Add spoofed channel": attack.kep_add_spoofed_channel(var1) # var1=channel_name
+                case "Delete channel": attack.kep_del_spoofed_channel(var1) # var1=channel_name
+                case "Modify channel": attack.kep_modify_channel(var1,var2) # var1=channel_name, var2=new_channel_name
                 case "Get all devices": attack.kep_get_all_devices(var1) # var1=channel
                 case "Get single device": attack.kep_get_single_device(var1,var2) # var1=channel, var2=device
                 case "Add device": attack.kep_add_spoofed_device(var1,var2) # var1=channel, var2=device_name
                 case "Delete device": attack.kep_delete_spoofed_device(var1,var2) # var1=channel, var2=device
-                case "Bruteforce KEP credentials": attack.kep_bruteforce()
+                case "Modify device": attack.kep_modify_device(var1,var2,var3,var4) # var1=channel, var2=device, var3=project_id, var4=new_device_name, var5=device_id 
+                case "Get full tag structure": attack.kep_get_full_tag_structure(var1,var2) # var1=channel, var2=device
+                case "Get single tag": attack.kep_get_single_tag(var1,var2,var3) # var1=channel, var2=device, var3=tag
+                case "Add tag": attack.kep_add_tag(var1,var2,var3,var4) # var1=channel, var2=device, var3=name, var4=tag_address
+                case "Delete tag": attack.kep_del_tag(var1,var2,var3) # var1=channel, var2=device, var3=name
+                case "Modify tag": attack.kep_modify_tag(var1,var2,var3,var4) # var1=channel, var2=device, var3=name, var4=projectID, var5=new_name
+            
             update_status("Attack success","-STATUS_BOX-",window)
             window.write_event_value("-ATTACK_COMPLETE-", None)
+
         except Exception as e:
             print(e)
             update_status("Attack failed","-STATUS_BOX-",window)
@@ -85,19 +108,37 @@ def main():
     # Variables
     # Store all the options for exploits for KEP server attacks and their descriptions
     exploit_dict = {"Start KEP server":"Starts the KEP server",
-                        "Stop KEP server":"Stops the KEP server",
-                        "Get server information":"Get the information of the KEP server", 
-                        "Get all users":"Get all the users of the KEP server",
-                        "Enable user":"Enables the user specified",
-                        "Disable user":"Disable the user specified",
-                        "Get single user":"Get the information of a particular user",
-                        "Get all channels":"Get all channels of the KEP server",
-                        "Get all devices":"Get all devices of a channel",
-                        "Get single device":"Get the information of a particular device",
-                        "Add device":"Add a spoofed device to the KEP server under the channel specified",
-                        "Delete device":"Delete the specified device in the channel of the KEP server",
-                        "Bruteforce KEP credentials":"Run a bruteforce attack on the KEP server to get the admin credentials"
-                        } 
+                    "Stop KEP server":"Stops the KEP server",
+                    "Get server information":"Get the information of the KEP server", 
+                    "Bruteforce KEP credentials":"Run a bruteforce attack on the KEP server to get the admin credentials",
+                    "Get all users":"Get all the users of the KEP server",
+                    "Get single user":"Get the information of a particular user",
+                    "Add user":"Add a user to the usergroup specified. (Note: password must be 14 characters or more)",
+                    "Delete user":"Delete the user specified",
+                    "Enable user":"Enables the user specified",
+                    "Disable user":"Disable the user specified",
+                    "Modify user":"Modify the description, groupname and password of the specified user",
+                    "Get all user group":"Get all user groups in the KEP server",
+                    "Get single user group":"Get the information of a particular user group",
+                    "Add user group":"Add a user group to the KEP server",
+                    "Delete user group":"Delete the user group specified",
+                    "Upgrade user group":"Upgrade the user group to have all permissions (superuser)",
+                    "Downgrade user group":"Downgrade the user group to have no permissions",
+                    "Get all channels":"Get all channels of the KEP server",
+                    "Add spoofed channel":"Add a spoofed channel to the KEP server",
+                    "Delete channel":"Delete the specified channel",
+                    "Modify channel":"Modify the channel specified to change the project id and channel name of the channel",
+                    "Get all devices":"Get all devices of a channel",
+                    "Get single device":"Get the information of a particular device",
+                    "Add device":"Add a spoofed device to the KEP server under the channel specified",
+                    "Delete device":"Delete the specified device in the channel of the KEP server",
+                    "Modify device":"Modify the device specified to change the device name and device ID of the device.",
+                    "Get full tag structure":"Get the full structure of the tag under the channel and device",
+                    "Get single tag":"Get the particular tag of the device and channel specified",
+                    "Add tag":"Add a spoofed tag to the KEP server under the channel and device specified",
+                    "Delete tag":"Delete the specified tag under the channel and device name provided",
+                    "Modify tag":"Modify the name of an existing tag",
+                    } 
     modbus_exploit_dict = {"Exploit 1":"Exploit 1 description", "Exploit 2":"Exploit 2 description", "Exploit 3":"Exploit 3 description"} # Stores all the options for exploits for Modbus related attacks
     exploit_list = list(exploit_dict.keys())
     modbus_exploit_list = list(modbus_exploit_dict.keys())
@@ -105,10 +146,10 @@ def main():
     sg.theme('Reddit')
     headingrow = ['SERVICE', 'STATUS']
     status_row = [['Firewall Domain Profile', '-'],
-    ['Firewall Private Profile', '-'],
-    ['Firewall Public Profile', '-' ], 
-    ['Windows Defender', '-'], 
-    ['KEP Server', '-']]
+                  ['Firewall Private Profile', '-'],
+                  ['Firewall Public Profile', '-' ], 
+                  ['Windows Defender', '-'], 
+                  ['KEP Server', '-']]
 
     
     # Layout for the kep server exploits
@@ -116,16 +157,19 @@ def main():
         [sg.Text("Exploits",font=("Helvetica", 28, "bold"), expand_x=True, justification="center", background_color="#363636", text_color="white",pad=((0, 0), (30, 30)))],
         [sg.Text("Exploit:", font=("Helvetica", 16, "bold")), sg.Combo(exploit_list, default_value=exploit_list[0], key='-EXPLOIT-', enable_events=True, readonly=True, font=("Helvetica", 16))],
         [sg.Text("Description:", key="-DESCRIPTION-", font=("Helvetica", 16, "bold")), sg.Text(exploit_dict[exploit_list[0]],key="-DESCRIPTION_TEXT-", font=("Helvetica", 16))],
-        [sg.Text("Variable 1:", key="-VAR1_TEXT-", visible=False, font=("Helvetica", 16, "bold")), sg.Input("",key="-VAR1_INPUT-", visible=False, size=(22,1), font=("Helvetica", 16))], 
-        [sg.Text("Variable 2:",visible=False, key="-VAR2_TEXT-", font=("Helvetica", 16, "bold")), sg.Input("",key="-VAR2_INPUT-", visible=False, size=(22,1), font=("Helvetica", 16))],
-        [sg.Text("Variable 3:",visible=False, key="-VAR3_TEXT-", font=("Helvetica", 16, "bold")), sg.Input("",key="-VAR3_INPUT-", visible=False, size=(22,1), font=("Helvetica", 16))],
+        [sg.Text("Variable 1:", key="-VAR1_TEXT-", visible=False, font=("Helvetica", 16, "bold")), sg.Input("1",key="-VAR1_INPUT-", visible=False, size=(22,1), font=("Helvetica", 16)), 
+         sg.Text("Variable 2:",visible=False, key="-VAR2_TEXT-", font=("Helvetica", 16, "bold")), sg.Input("2",key="-VAR2_INPUT-", visible=False, size=(22,1), font=("Helvetica", 16)),
+         sg.Text("Variable 3:",visible=False, key="-VAR3_TEXT-", font=("Helvetica", 16, "bold")), sg.Input("3",key="-VAR3_INPUT-", visible=False, size=(22,1), font=("Helvetica", 16))],
+        [sg.Text("Variable 4:",visible=False, key="-VAR4_TEXT-",font=("Helvetica", 16, "bold")), sg.Input("4",key="-VAR4_INPUT-", visible=False, size=(22,1), font=("Helvetica", 16)),
+         sg.Text("Variable 5:",visible=False, key="-VAR5_TEXT-",font=("Helvetica", 16, "bold")), sg.Input("5",key="-VAR5_INPUT-", visible=False, size=(22,1), font=("Helvetica", 16))],
+        [sg.Text("Please ensure that all fields are filled.", visible=False, key="-EXPLOIT_ERROR_TEXT-", text_color="red", justification="center", expand_x=True, font=("Helvetica", 16))],
         [sg.Button("Launch Exploit", key="-LAUNCH_EXPLOIT-", font=("Helvetica", 16, "bold"), expand_x=True), sg.Image("./images/loading.gif",visible=False, key="-SPINNER-"),sg.Image("./images/s.png",visible=False, key="-SUCCESS-"),sg.Image("./images/error.png",visible=False, key="-ERROR-")],
         [sg.Multiline(text_color="black", expand_x=True,no_scrollbar=True, disabled=True, key="-STATUS_BOX-", font=("Helvetica", 15), size=(1,25))],
     ]
     
     # Layout for the home window
     home_layout = [   
-        [sg.Text("Attack Dashboard",font=("Helvetica", 28, "bold"),expand_x=True,justification="center", background_color="#363636", size=(63,2), text_color="white" ,pad=((0, 0), (0, 30)))],
+        [sg.Text("Attack Dashboard",font=("Helvetica", 28, "bold"),expand_x=True,justification="center", background_color="#363636", size=(63,1), text_color="white" ,pad=((0, 0), (0, 30)))],
         [sg.Text("Select IP address:", key="-SELECT_IP-",font=("Helvetica", 16, "bold")), 
             sg.Radio("Level 6 (172.16.2.223)", "ip", key="-IP_LVL6-", enable_events=True, default=True, font=("Helvetica", 16)),
             sg.Radio("Level 7 (172.16.2.77)" , "ip", key="-IP_LVL7-", enable_events=True, font=("Helvetica", 16)),
@@ -178,11 +222,19 @@ def main():
         elif event == '-LAUNCH_EXPLOIT-':
             timeout=25
             remove_success_error(window)
-            window["-SPINNER-"].update(visible=True)
-            window["-LAUNCH_EXPLOIT-"].update(disabled=True)
-            window["-STATUS_BOX-"].update("")
-            thread = threading.Thread(target=launch_exploit, args=(values['-EXPLOIT-'], values["-IP_INPUT-"], window, values["-VAR1_INPUT-"], values["-VAR2_INPUT-"]))
-            thread.start()
+            if values["-VAR1_INPUT-"] == "" or values["-VAR2_INPUT-"] == "" or values["-VAR3_INPUT-"] == "" or values["-VAR4_INPUT-"] == "" or values["-VAR5_INPUT-"] == "":
+                    window["-EXPLOIT_ERROR_TEXT-"].update("Please ensure that all fields are filled.",visible=True)
+            
+            elif values["-EXPLOIT-"] == "Add user" and len(values["-VAR3_INPUT-"]) < 14:
+                window["-EXPLOIT_ERROR_TEXT-"].update("Password must be more than 14 characters",visible=True)
+                
+            else:
+                window["-EXPLOIT_ERROR_TEXT-"].update(visible=False)
+                window["-SPINNER-"].update(visible=True)
+                window["-LAUNCH_EXPLOIT-"].update(disabled=True)
+                window["-STATUS_BOX-"].update("")
+                thread = threading.Thread(target=launch_exploit, args=(values['-EXPLOIT-'], values["-IP_INPUT-"], window, values["-VAR1_INPUT-"], values["-VAR2_INPUT-"], values["-VAR3_INPUT-"], values["-VAR4_INPUT-"], values["-VAR5_INPUT-"]))
+                thread.start()
 
         elif event == "-SERVICE_STATUS_SUCCESS-":
             timeout=None
@@ -229,27 +281,94 @@ def main():
             selected_exploit = values["-EXPLOIT-"]
             window["-DESCRIPTION_TEXT-"].update(exploit_dict[selected_exploit])
             # print(f"selected exploit == {selected_exploit}", file=sys.__stdout__)
+            window["-EXPLOIT_ERROR_TEXT-"].update(visible=False)
+            window["-VAR1_TEXT-"].update("Variable 1:", visible=False)
+            window["-VAR1_INPUT-"].update("1", visible=False)
+            window["-VAR2_TEXT-"].update("Variable 2:", visible=False)
+            window["-VAR2_INPUT-"].update("2", visible=False)
+            window["-VAR3_TEXT-"].update("Variable 3:", visible=False)
+            window["-VAR3_INPUT-"].update("3", visible=False)
+            window["-VAR4_TEXT-"].update("Variable 4:", visible=False)
+            window["-VAR4_INPUT-"].update("4", visible=False)
+            window["-VAR5_TEXT-"].update("Variable 5:", visible=False)
+            window["-VAR5_INPUT-"].update("5", visible=False)
 
-            if selected_exploit == "Enable user" or selected_exploit == "Disable user" or selected_exploit == "Get single user":
+            if selected_exploit == "Enable user" or selected_exploit == "Disable user" or selected_exploit == "Get single user" or selected_exploit == "Delete user":
                 window["-VAR1_TEXT-"].update("User:", visible=True)
                 window["-VAR1_INPUT-"].update("", visible=True)
+            
+            elif selected_exploit == "Add user":
+                window["-VAR1_TEXT-"].update("User:", visible=True)
+                window["-VAR1_INPUT-"].update("", visible=True)
+                window["-VAR2_TEXT-"].update("Group name:", visible=True)
+                window["-VAR2_INPUT-"].update("", visible=True)
+                window["-VAR3_TEXT-"].update("Password:", visible=True)
+                window["-VAR3_INPUT-"].update("", visible=True)
+            
+            elif selected_exploit == "Modify user":
+                window["-VAR1_TEXT-"].update("User:", visible=True)
+                window["-VAR1_INPUT-"].update("", visible=True)
+                window["-VAR2_TEXT-"].update("New Description:", visible=True)
+                window["-VAR2_INPUT-"].update("", visible=True)
+                window["-VAR3_TEXT-"].update("New Password", visible=True)
+                window["-VAR3_INPUT-"].update("", visible=True)
+                window["-VAR4_TEXT-"].update("New Group Name:", visible=True)
+                window["-VAR4_INPUT-"].update("", visible=True)
+            
+            elif selected_exploit == "Get single user group" or selected_exploit == "Add user group" or selected_exploit == "Delete user group" or selected_exploit == "Upgrade user group" or selected_exploit == "Downgrade user group"  :
+                window["-VAR1_TEXT-"].update("User group:", visible=True)
+                window["-VAR1_INPUT-"].update("", visible=True)
 
+            elif selected_exploit == "Add spoofed channel" or selected_exploit == "Delete channel":
+                window["-VAR1_TEXT-"].update("Channel name:", visible=True)
+                window["-VAR1_INPUT-"].update("", visible=True)     
+
+            elif selected_exploit == "Modify channel":
+                window["-VAR1_TEXT-"].update("Channel name:", visible=True)
+                window["-VAR1_INPUT-"].update("", visible=True)
+                window["-VAR2_TEXT-"].update("New Channel name:", visible=True)
+                window["-VAR2_INPUT-"].update("", visible=True)
+            
             elif selected_exploit == "Get all devices":
                 window["-VAR1_TEXT-"].update("Channel:", visible=True)
                 window["-VAR1_INPUT-"].update("", visible=True)
 
-            elif selected_exploit == "Get single device" or selected_exploit == "Add device" or selected_exploit == "Delete device":
+            elif selected_exploit == "Get single device" or selected_exploit == "Add device" or selected_exploit == "Delete device" or selected_exploit == "Get full tag structure" or selected_exploit == "Get single tag":
                 window["-VAR1_TEXT-"].update("Channel:", visible=True)
                 window["-VAR1_INPUT-"].update("", visible=True)
                 window["-VAR2_TEXT-"].update("Device:", visible=True)
                 window["-VAR2_INPUT-"].update("", visible=True)
 
-            else:
-                window["-VAR1_TEXT-"].update("Variable 1:", visible=False)
-                window["-VAR1_INPUT-"].update("", visible=False)
-                window["-VAR2_TEXT-"].update("Variable 2:", visible=False)
-                window["-VAR2_INPUT-"].update("", visible=False)
-                
+                if selected_exploit == "Get single tag":
+                    window["-VAR3_TEXT-"].update("Tag Name:", visible=True)
+                    window["-VAR3_INPUT-"].update("", visible=True)
+
+            elif selected_exploit == "Modify device":
+                window["-VAR1_TEXT-"].update("Channel:", visible=True)
+                window["-VAR1_INPUT-"].update("", visible=True)
+                window["-VAR2_TEXT-"].update("Device:", visible=True)
+                window["-VAR2_INPUT-"].update("", visible=True)
+                window["-VAR3_TEXT-"].update("New device name:", visible=True)
+                window["-VAR3_INPUT-"].update("", visible=True)
+                window["-VAR4_TEXT-"].update("Device ID:", visible=True)
+                window["-VAR4_INPUT-"].update("", visible=True)
+
+            elif selected_exploit == "Add tag" or selected_exploit == "Delete tag" or selected_exploit == "Modify tag":
+                window["-VAR1_TEXT-"].update("Channel:", visible=True)
+                window["-VAR1_INPUT-"].update("", visible=True)
+                window["-VAR2_TEXT-"].update("Device:", visible=True)
+                window["-VAR2_INPUT-"].update("", visible=True)
+                window["-VAR3_TEXT-"].update("Tag Name:", visible=True)
+                window["-VAR3_INPUT-"].update("", visible=True)
+
+                if selected_exploit == "Add tag":
+                    window["-VAR4_TEXT-"].update("Tag Address:", visible=True)
+                    window["-VAR4_INPUT-"].update("", visible=True)
+
+                elif selected_exploit == "Modify tag":
+                    window["-VAR4_TEXT-"].update("New Name:",visible=True)
+                    window["-VAR4_INPUT-"].update("", visible=True)
+
         window['-SPINNER-'].update_animation("./images/loading.gif",  time_between_frames=25)
         window['-SERVICE_SPINNER-'].update_animation("./images/Spinner-1s-21px.gif",  time_between_frames=25)
     # Close the main window
