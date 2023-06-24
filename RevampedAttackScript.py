@@ -1339,16 +1339,16 @@ def kep_auto_tag_gen(self, channel, device):
                                                                        "common.ALLTYPES_DESCRIPTION": "a short description"}), indent=4))
         print(json.dumps(connectivity.udd.profile.get_profile(server, profile_name),indent=4))
 
-    def kep_add_log_item(self, log_group="Derrick"):
+    def kep_add_log_item(self, log_group):
         server = self.kep_connect()
         print(json.dumps(datalogger.log_items.add_log_item(server, log_group, {"common.ALL_TYPES_NAME": "Log Item"}),
                          indent=4))
 
-    def kep_get_all_log_items(self, log_group="Derrick"):
+    def kep_get_all_log_items(self, log_group):
         server = self.kep_connect()
         print(json.dumps(datalogger.log_items.get_all_log_items(server, log_group), indent=4))
 
-    def kep_delete_log_item(self, log_group="Derrick", log_item="Log Item"):
+    def kep_delete_log_item(self, log_group, log_item):
         server = self.kep_connect()
         print(json.dumps(datalogger.log_items.del_log_item(server, log_group, log_item), indent=4))
 
@@ -1358,15 +1358,15 @@ def kep_auto_tag_gen(self, channel, device):
                                                                      "common.ALLTYPES_DESCRIPTION": "I love dataloggers"}),
                          indent=4))
 
-    def kep_delete_log_group(self, log_group="Derrick"):
+    def kep_delete_log_group(self, log_group):
         server = self.kep_connect()
         print(json.dumps(datalogger.log_group.del_log_group(server, log_group), indent=4))
 
-    def kep_disable_log_group(self, log_group="Derrick"):
+    def kep_disable_log_group(self, log_group):
         server = self.kep_connect()
         print(json.dumps(datalogger.log_group.disable_log_group(server, log_group), indent=4))
 
-    def kep_enable_log_group(self, log_group="Derrick"):
+    def kep_enable_log_group(self, log_group):
         server = self.kep_connect()
         print(json.dumps(datalogger.log_group.enable_log_group(server, log_group), indent=4))
 
