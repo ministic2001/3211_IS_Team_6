@@ -14,10 +14,10 @@
     <img src="images/logo-color.png" alt="Logo" width="300" height="300">
   </a>
 
-<h3 align="center">PROJECTNAME</h3>
+<h3 align="center">NOTICE!</h3>
 
   <p align="center">
-SHORT PROJ DESCRIPTION
+  The most updated branch is the GUI Branch while this main branch should have the latest "stable" release, which might be a weeks ago from what we currently working on. Please switch to the GUI Branch while at it.
     <br />
     <br />
   </p>
