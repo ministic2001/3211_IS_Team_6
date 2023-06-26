@@ -10,26 +10,9 @@
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-  <a href="https://github.com/ministic2001/3211_IS_Team_6">
-    LOGO of PROJECT
-  </a>
 
 <h3 align="center">IS-2: Hacking A Smart Meter Network</h3>
 
-  <p align="center">
-The network setup includes a networked Building Management Smart Meter System, a server and a few laptops. 
-
-The project comprises 4 stages: 
-	  
-1) Analyzing the network for exploitable vulnerabilities. Vulnerabilities should focus on those specific to the Smart Meter network at SIT@NYP level 7 and, on a lower priority, the IT network at SIT@NYP level 6 (COTIS). 
-	  
-2) Developing and testing the exploits of the set of discovered vulnerabilities from stage 1.
-	  
-3) Developing a dashboard to launch successfully tested exploits from stage 2. 
-	  
-4) Monitor exploitation outcomes and propose suitable remediations for these vulnerabilities.
-    <br />
-  </p>
 </div>
 
 # 3211_IS_Team_6
@@ -43,7 +26,7 @@ Python 3.10 is required for this to work.
 To install the packages, type the command pip install -r requirements.txt. 
 
 </div>
-<p align="right">(<a href="#readme-top">Back to top</a>)</p>
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ## Gaining Access to Server
 
@@ -52,13 +35,13 @@ To install the packages, type the command pip install -r requirements.txt.
 Execute the bruteforce attack from the dashboard to gain SSH access for the program to work.
 
 </div>
-<p align="right">(<a href="#readme-top">Back to top</a>)</p>
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 <div align="center">
   
-<img alt="image" src="https://github.com/ministic2001/3211_IS_Team_6/assets/94297073/0408425c-6371-4a4f-a764-ccde4915ee0b">
+<img width= 60% height=50% alt="image" src="https://github.com/ministic2001/3211_IS_Team_6/assets/94297073/0408425c-6371-4a4f-a764-ccde4915ee0b">
 </div>
 
 <br />
