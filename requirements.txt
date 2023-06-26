@@ -1,5 +1,8 @@
 kepconfig==1.2.1
-psutil==5.9.5
-pycryptodome==3.17
-pywin32==306
+paramiko==3.0.0
+psutil==5.9.4
+pycryptodome==3.18.0
+pycryptodomex==3.18.0
 PySimpleGUI==4.60.5
+scp==0.14.5
+win32gui==221.6
