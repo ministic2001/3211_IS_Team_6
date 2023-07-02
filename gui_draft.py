@@ -107,7 +107,8 @@ def update_status(text, status_box, window, color = "black"):
 def main():
     # Variables
     # Store all the options for exploits for KEP server attacks and their descriptions
-    exploit_dict = {"Start KEP server":"Starts the KEP server",
+    exploit_dict = {"===== KEP SERVER EXPLOITS =====":"",
+                    "Start KEP server":"Starts the KEP server",
                     "Stop KEP server":"Stops the KEP server",
                     "Get server information":"Get the information of the KEP server", 
                     "Bruteforce KEP credentials":"Run a bruteforce attack on the KEP server to get the admin credentials",
@@ -138,6 +139,7 @@ def main():
                     "Add tag":"Add a spoofed tag to the KEP server under the channel and device specified",
                     "Delete tag":"Delete the specified tag under the channel and device name provided",
                     "Modify tag":"Modify the name of an existing tag",
+                    "===== MODBUS EXPLOITS =====":"",
                     } 
     modbus_exploit_dict = {"Exploit 1":"Exploit 1 description", "Exploit 2":"Exploit 2 description", "Exploit 3":"Exploit 3 description"} # Stores all the options for exploits for Modbus related attacks
     exploit_list = list(exploit_dict.keys())
@@ -155,8 +157,8 @@ def main():
     # Layout for the kep server exploits
     exploit_layout = [
         [sg.Text("Exploits",font=("Helvetica", 28, "bold"), expand_x=True, justification="center", background_color="#363636", text_color="white",pad=((0, 0), (30, 30)))],
-        [sg.Text("Exploit:", font=("Helvetica", 16, "bold")), sg.Combo(exploit_list, default_value=exploit_list[0], key='-EXPLOIT-', enable_events=True, readonly=True, font=("Helvetica", 16))],
-        [sg.Text("Description:", key="-DESCRIPTION-", font=("Helvetica", 16, "bold")), sg.Text(exploit_dict[exploit_list[0]],key="-DESCRIPTION_TEXT-", font=("Helvetica", 16))],
+        [sg.Text("Exploit:", font=("Helvetica", 16, "bold")), sg.Combo(exploit_list, default_value=exploit_list[1], key='-EXPLOIT-', enable_events=True, readonly=True, font=("Helvetica", 16))],
+        [sg.Text("Description:", key="-DESCRIPTION-", font=("Helvetica", 16, "bold")), sg.Text(exploit_dict[exploit_list[1]],key="-DESCRIPTION_TEXT-", font=("Helvetica", 16))],
         [sg.Text("Variable 1:", key="-VAR1_TEXT-", visible=False, font=("Helvetica", 16, "bold")), sg.Input("1",key="-VAR1_INPUT-", visible=False, size=(22,1), font=("Helvetica", 16)), 
          sg.Text("Variable 2:",visible=False, key="-VAR2_TEXT-", font=("Helvetica", 16, "bold")), sg.Input("2",key="-VAR2_INPUT-", visible=False, size=(22,1), font=("Helvetica", 16)),
          sg.Text("Variable 3:",visible=False, key="-VAR3_TEXT-", font=("Helvetica", 16, "bold")), sg.Input("3",key="-VAR3_INPUT-", visible=False, size=(22,1), font=("Helvetica", 16))],
@@ -293,7 +295,10 @@ def main():
             window["-VAR5_TEXT-"].update("Variable 5:", visible=False)
             window["-VAR5_INPUT-"].update("5", visible=False)
 
-            if selected_exploit == "Enable user" or selected_exploit == "Disable user" or selected_exploit == "Get single user" or selected_exploit == "Delete user":
+            if selected_exploit == "===== KEP SERVER EXPLOITS =====" or selected_exploit == "===== MODBUS EXPLOITS =====":
+                window["-EXPLOIT-"].update(value=exploit_list[1])
+
+            elif selected_exploit == "Enable user" or selected_exploit == "Disable user" or selected_exploit == "Get single user" or selected_exploit == "Delete user":
                 window["-VAR1_TEXT-"].update("User:", visible=True)
                 window["-VAR1_INPUT-"].update("", visible=True)
             
