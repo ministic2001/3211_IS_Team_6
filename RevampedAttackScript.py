@@ -1318,12 +1318,13 @@ class AttackScript:
     def kep_auto_tag_gen(self, channel, device):
         server = self.kep_connect()
         device_info = ".".join([channel, device])
-        print(json.dumps(connectivity.device.auto_tag_gen(server, device_info, job_ttl=8), indent=4))
+        print(connectivity.device.auto_tag_gen(server, device_info, job_ttl=8), indent=4)
 
-    def kep_add_exchange(self, channel, device):
+    def kep_add_exchange(self, channel, device, ex_type, exchange_name):
         server = self.kep_connect()
         device_info = ".".join([channel, device])
-        print(json.dumps(connectivity.egd.exchange.add_exchange(server, channel, device_info, {"common.ALL_TYPES_NAME": "New Exchange"}), indent=4))
+        print(json.dumps(connectivity.egd.exchange.add_exchange(server, channel, device_info, ex_type,
+                                                                {"common.ALL_TYPES_NAME": exchange_name}), indent=4))
 
     def kep_get_exchange(self, channel, device, ex_type, exchange_name):
         server = self.kep_connect()
@@ -1335,22 +1336,24 @@ class AttackScript:
         device_info = ".".join([channel, device])
         print(json.dumps(connectivity.egd.exchange.del_exchange(server, device_info, ex_type, exchange_name), indent=4))
 
-    def kep_add_name_resolution(self, channel, device):
+    def kep_add_name_resolution(self, channel, device, resolution_name):
         server = self.kep_connect()
         device_info = ".".join([channel, device])
-        print(json.dumps(connectivity.egd.name.add_name_resolution(server, device_info, {"common.ALLTYPES_NAME": "Derrick"}), indent=4))
+        print(json.dumps(
+            connectivity.egd.name.add_name_resolution(server, device_info, {"common.ALLTYPES_NAME": resolution_name}),
+            indent=4))
 
-    def kep_delete_name_resolution(self, channel, device):
+    def kep_delete_name_resolution(self, channel, device, resolution_name):
         server = self.kep_connect()
         device_info = ".".join([channel, device])
-        print(json.dumps(connectivity.egd.name.del_name_resolution(server, device_info, "Derrick"), indent=4))
+        print(json.dumps(connectivity.egd.name.del_name_resolution(server, device_info, resolution_name), indent=4))
 
-    def kep_modify_name_resolution(self, channel, device):
+    def kep_modify_name_resolution(self, channel, device, alias, ip_addr, resolution_name):
         server = self.kep_connect()
         device_info = ".".join([channel, device])
         print(json.dumps(connectivity.egd.name.modify_name_resolution(server, device_info, {
-            "ge_ethernet_global_data.NAME_RESOLUTION_ALIAS": "PLC1",
-            "ge_ethernet_global_data.NAME_RESOLUTION_IP_ADDRESS": "192.168.1.200"}), indent=4))
+            "ge_ethernet_global_data.NAME_RESOLUTION_ALIAS": alias,
+            "ge_ethernet_global_data.NAME_RESOLUTION_IP_ADDRESS": ip_addr}), name= resolution_name, indent=4))
         print(json.dumps(connectivity.egd.name.get_name_resolution(server, device_info), indent=4))
 
     def kep_get_name_resolution(self, channel, device):
@@ -1358,10 +1361,10 @@ class AttackScript:
         device_info = ".".join([channel, device])
         print(json.dumps(connectivity.egd.name.get_name_resolution(server, device_info), indent=4))
 
-    def kep_add_udd_profile(self):
+    def kep_add_udd_profile(self, profile_name, description):
         server = self.kep_connect()
-        print(json.dumps(connectivity.udd.profile.add_profile(server, {"common.ALLTYPES_NAME": "ModbusProfile",
-                                                                       "common.ALLTYPES_DESCRIPTION": "a short description"}),
+        print(json.dumps(connectivity.udd.profile.add_profile(server, {"common.ALLTYPES_NAME": profile_name,
+                                                                       "common.ALLTYPES_DESCRIPTION": description}),
                          indent=4))
 
     def kep_delete_udd_profile(self, profile_name):
@@ -1372,16 +1375,16 @@ class AttackScript:
         server = self.kep_connect()
         print(json.dumps(connectivity.udd.profile.get_all_profiles(server), indent=4))
 
-    def kep_modify_udd_profile(self, profile_name):
+    def kep_modify_udd_profile(self, profile_name, description):
         server = self.kep_connect()
-        print(json.dumps(connectivity.udd.profile.modify_profile(server, {"common.ALLTYPES_NAME": "ModbusProfile",
-                                                                          "common.ALLTYPES_DESCRIPTION": "a short description"}),
+        print(json.dumps(connectivity.udd.profile.modify_profile(server, {"common.ALLTYPES_NAME": profile_name,
+                                                                          "common.ALLTYPES_DESCRIPTION": description}),
                          indent=4))
         print(json.dumps(connectivity.udd.profile.get_profile(server, profile_name), indent=4))
 
-    def kep_add_log_item(self, log_group):
+    def kep_add_log_item(self, log_group, log_item):
         server = self.kep_connect()
-        print(json.dumps(datalogger.log_items.add_log_item(server, log_group, {"common.ALL_TYPES_NAME": "Log Item"}),
+        print(json.dumps(datalogger.log_items.add_log_item(server, log_group, {"common.ALL_TYPES_NAME": log_item}),
                          indent=4))
 
     def kep_get_all_log_items(self, log_group):
@@ -1392,10 +1395,10 @@ class AttackScript:
         server = self.kep_connect()
         print(json.dumps(datalogger.log_items.del_log_item(server, log_group, log_item), indent=4))
 
-    def kep_add_log_group(self):
+    def kep_add_log_group(self, log_group, description):
         server = self.kep_connect()
-        print(json.dumps(datalogger.log_group.add_log_group(server, {"common.ALLTYPES_NAME": "Derrick",
-                                                                     "common.ALLTYPES_DESCRIPTION": "I love dataloggers"}),
+        print(json.dumps(datalogger.log_group.add_log_group(server, {"common.ALLTYPES_NAME": log_group,
+                                                                     "common.ALLTYPES_DESCRIPTION": description}),
                          indent=4))
 
     def kep_delete_log_group(self, log_group):
@@ -1414,9 +1417,10 @@ class AttackScript:
         server = self.kep_connect()
         print(json.dumps(datalogger.log_group.get_all_log_groups(server), indent=4))
 
-    def kep_modify_project_properties(self):
+    def kep_modify_project_properties(self,project_name):
         server = self.kep_connect()
-        print(json.dumps(connection.server.modify_project_properties(server, {"common.ALLTYPES_NAME": "Derrick"}), indent=4))
+        print(json.dumps(connection.server.modify_project_properties(server, {"common.ALLTYPES_NAME": project_name}),
+                         indent=4))
         print(json.dumps(connection.server.get_project_properties(server), indent=4))
 
     def disable_running_schedules(self, revert: bool=False) -> None:
