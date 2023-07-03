@@ -353,6 +353,9 @@ class AttackScript:
         """
         Disable a COM port
         # TODO: Add Exception handling
+
+        Args:
+            revert (bool): Revert the attack. If True, enable the COM Port
         """
 
         self.kep_server_stop()
@@ -603,7 +606,7 @@ class AttackScript:
 
         executable_path = self.MODPOLL_PATH + r"\modpoll.exe"
 
-        found_baudrate: int = 0
+        found_baudrate: str = "0"
         baudrate_list = ["4800", "9600", "19200"]
 
         for baudrate in baudrate_list:
@@ -1306,12 +1309,10 @@ class AttackScript:
         device_to_get = ".".join([channel, device, name])
         print(json.dumps(connectivity.tag.del_tag(server, device_to_get), indent=4))
 
-    def kep_modify_tag(self, channel, device, name,
-                       new_name):  ## ADDED to modify tags ---- NOTE PROJECTID will change everytime so allow user to enter the ID or Copy from get_all_tags function
+    def kep_modify_tag(self, channel, device, name, new_name):  ## ADDED to modify tags ---- NOTE PROJECTID will change everytime so allow user to enter the ID or Copy from get_all_tags function
         server = self.kep_connect()
         device_to_get = ".".join([channel, device, name])
-        print(json.dumps(connectivity.tag.modify_tag(server, device_to_get, {"common.ALLTYPES_NAME": new_name}, True),
-                         indent=4))
+        print(json.dumps(connectivity.tag.modify_tag(server, device_to_get, {"common.ALLTYPES_NAME": new_name}, True), indent=4))
         # print(json.dumps(connectivity.tag.get_all_tags(server, device_to_get), indent=4))
 
     def kep_auto_tag_gen(self, channel, device):
@@ -1322,8 +1323,7 @@ class AttackScript:
     def kep_add_exchange(self, channel, device):
         server = self.kep_connect()
         device_info = ".".join([channel, device])
-        print(json.dumps(connectivity.egd.exchange.add_exchange(server, channel, device_info,
-                                                                {"common.ALL_TYPES_NAME": "New Exchange"}), indent=4))
+        print(json.dumps(connectivity.egd.exchange.add_exchange(server, channel, device_info, {"common.ALL_TYPES_NAME": "New Exchange"}), indent=4))
 
     def kep_get_exchange(self, channel, device, ex_type, exchange_name):
         server = self.kep_connect()
@@ -1338,9 +1338,7 @@ class AttackScript:
     def kep_add_name_resolution(self, channel, device):
         server = self.kep_connect()
         device_info = ".".join([channel, device])
-        print(json.dumps(
-            connectivity.egd.name.add_name_resolution(server, device_info, {"common.ALLTYPES_NAME": "Derrick"}),
-            indent=4))
+        print(json.dumps(connectivity.egd.name.add_name_resolution(server, device_info, {"common.ALLTYPES_NAME": "Derrick"}), indent=4))
 
     def kep_delete_name_resolution(self, channel, device):
         server = self.kep_connect()
@@ -1418,8 +1416,7 @@ class AttackScript:
 
     def kep_modify_project_properties(self):
         server = self.kep_connect()
-        print(json.dumps(connection.server.modify_project_properties(server, {"common.ALLTYPES_NAME": "Derrick"}),
-                         indent=4))
+        print(json.dumps(connection.server.modify_project_properties(server, {"common.ALLTYPES_NAME": "Derrick"}), indent=4))
         print(json.dumps(connection.server.get_project_properties(server), indent=4))
 
     def disable_running_schedules(self, revert: bool=False) -> None:
@@ -1462,6 +1459,7 @@ class AttackScript:
             print("Kepserver is running, Stopping now...")
             command_output = self.ssh_run_command("sc stop KEPServerEXV6")
 
+            counter = 1 # Added counter to make the UI Seem more responsive
             while "STOP_PENDING" in command_output:
                 command_output = self.ssh_run_command("sc query KEPServerEXV6")
                 if "FAILED" in command_output:
@@ -1471,7 +1469,8 @@ class AttackScript:
                     print("Kepserver is stopped")
                     return True
                 else:
-                    print("Kepserver is still stopping... waiting 1 more second")
+                    print(f"Kepserver is still stopping... waiting 1 more second [{counter}]")
+                    counter += 1
                     sleep(1)
 
         elif "STOPPED" in command_output:
@@ -1493,6 +1492,7 @@ class AttackScript:
             print("Kepserver is stopped, starting now...")
             command_output = self.ssh_run_command("sc start KEPServerEXV6")
 
+            counter = 1 # Added counter to make the UI Seem more responsive
             while "START_PENDING" in command_output:
                 command_output = self.ssh_run_command("sc query KEPServerEXV6")
                 if "FAILED" in command_output:
@@ -1502,7 +1502,8 @@ class AttackScript:
                     print("Kepserver is running!")
                     return True
                 else:
-                    print("Kepserver is still starting up... waiting 1 more second")
+                    print(f"Kepserver is still starting up... waiting 1 more second [{counter}]")
+                    counter += 1
                     sleep(1)
 
         elif "RUNNING" in command_output:
