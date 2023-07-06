@@ -93,14 +93,16 @@ def launch_exploit(exploit,ip,window,var1=None, var2=None, var3=None, var4=None,
                 case "Add UDD profile": attack.kep_add_udd_profile(var1,var2) # var1=profile_name, var2=description
                 case "Delete UDD profile": attack.kep_delete_udd_profile(var1) # var1=profile_name
                 case "Modify UDD profile": attack.kep_modify_udd_profile(var1,var2,var3) # var1=profile_name, var2=new_profile_name, var3=description
-                case "Get all log items": attack.kep_get_all_log_items(var1) # var1=log_group
-                case "Add log item": attack.kep_add_log_item(var1,var2) # var1=log_group, var2=log_item
-                case "Delete log item": attack.kep_delete_log_item(var1,var2) # var1=log_group, var2=log_item
+                # case "Get all log items": attack.kep_get_all_log_items(var1) # var1=log_group
+                # case "Add log item": attack.kep_add_log_item(var1,var2) # var1=log_group, var2=log_item
+                # case "Delete log item": attack.kep_delete_log_item(var1,var2) # var1=log_group, var2=log_item
                 case "Get all log groups": attack.kep_get_all_log_groups()
+                case "Get single log group": attack.kep_get_log_group(var1) # var1=log_group 
                 case "Add log group": attack.kep_add_log_group(var1,var2) # var1=log_group, var2=description
                 case "Delete log group": attack.kep_delete_log_group(var1) # var1=log_group
                 case "Enable log group": attack.kep_enable_log_group(var1) # var1=log_group
                 case "Disable log group": attack.kep_disable_log_group(var1) # var1=log_group
+                case "Modify log group": attack.kep_modify_log_group(var1,var2,var3) # var1=log_group, var2=new_log_group, var3=description
                 case "Delete log files": attack.kep_delete_log_files()
                 ## ======================== MODBUS EXPLOITS ======================== ##
                 case "Get hardware information": attack.smartmeter_get_hardware_info()
@@ -110,9 +112,13 @@ def launch_exploit(exploit,ip,window,var1=None, var2=None, var3=None, var4=None,
                 case "Run mod interrupt": attack.run_modinterrupt()
                 case "Disable COM port": attack.disable_COMPort(revert)
                 ## ======================== IT EXPLOITS ======================== ##
+                case "Setup ssh configuration and key": attack.setup_ssh_config_and_key()
                 case "Task scheduler delete files": attack.scheduled_task_delete_files(var1, revert) # var1=folder_path
                 case "Disable running schedules": attack.disable_running_schedules(revert)
                 case "Change log data value": attack.ChangeLogDataValue(var1) # var1=meter_id
+                case "Disable firewall": attack.disable_firewall(revert)
+                case "Disable ssh": attack.disable_ssh()
+
             update_status("Attack success","-STATUS_BOX-",window)
             window.write_event_value("-ATTACK_COMPLETE-", None)
 
@@ -195,14 +201,16 @@ def main():
                     "Add UDD profile":"Add a UDD profile to the KEP server",
                     "Delete UDD profile":"Delete the UDD profile specified",
                     "Modify UDD profile":"Modify the UDD profile's name and description",
-                    "Get all log items":"Gets all the log items of the log group specified",
-                    "Add log item":"Adds a log item to the log group specified",
-                    "Delete log item":"Delete the log item specified",
-                    "Get all log groups":"Get all the log groups in the KEP server",
-                    "Add log group":"Add a log group to the KEP server",
-                    "Delete log group":"Delete the log group specified",
-                    "Enable log group":"Enables the log group specified",
-                    "Disable log group":"Disables the log group specified",
+                    # "Get all log items":"Gets all the log items of the log group specified",
+                    # "Add log item":"Adds a log item to the log group specified",
+                    # "Delete log item":"Delete the log item specified",
+                    "Get all log groups": "Get all the log groups in the KEP server",
+                    "Get single log group": "Get information of a particular log group",
+                    "Add log group": "Add a log group to the KEP server",
+                    "Delete log group": "Delete the log group specified",
+                    "Enable log group": "Enables the log group specified",
+                    "Disable log group": "Disables the log group specified",
+                    "Modify log group": "Modify the log group's name and description",
                     # "Modify project properties":"Modifies the project name of a project",
                     "Delete log files":"Delete the log files to cover up tracks",
                     "====== MODBUS EXPLOITS ======":"",
@@ -213,13 +221,16 @@ def main():
                     "Run mod interrupt": "Run modpoll to interrupt COM1 port by disabling KEP Server and then run modpoll indefinitely",
                     "Disable COM port": "Disable a COM port",
                     "======== IT EXPLOITS ========":"",
+                    "Setup ssh configuration and key":"Inserts an sshd_config file and an access key into a target Windows machine. Once complete, the SSH service (sshd) is restarted.\nAfter running, you will then be able to use the access key to SSH into the target machine.",
                     "Task scheduler delete files": "Delete the smartmeter path prediodically through task scheduler ",
                     "Disable running schedules": "Disables MoveFiles and KEPServerEX 6.12 running schedules in task scheduler",
-                    "Change log data value":"Change the data value of the latest meter log file, in the specified meter ID's folder (E.g. 2)"
+                    "Change log data value": "Change the data value of the latest meter log file, in the specified meter ID's folder (E.g. 2)",
+                    "Disable firewall": "Turn off all three domains of the firewall",
+                    "Disable SSH": "Disable SSH from the firewall. NOTE: THIS ATTACK SHOULD BE RAN LAST AS IT WILL STOP ALL FUNCTIONALITY"
                     } 
 
     exploit_list = list(exploit_dict.keys())
-    revertible_attacks = ["Change meter ID", "Change baud rate", "Disable COM port", "Task scheduler delete files", "Disable running schedules"]
+    revertible_attacks = ["Change meter ID", "Change baud rate", "Disable COM port", "Task scheduler delete files", "Disable running schedules", "Disable firewall"]
     headingrow = ['SERVICE', 'STATUS']
     status_row = [['Firewall Domain Profile', '-'],
                   ['Firewall Private Profile', '-'],
@@ -479,17 +490,23 @@ def main():
                     window["-VAR2_TEXT-"].update("New Description:", visible=True)
                     window["-VAR2_INPUT-"].update("", visible=True)
 
-            elif selected_exploit in ["Get all log items", "Add log item", "Delete log item", "Add log group", "Delete log group", "Enable log group", "Disable log group"]:
+            elif selected_exploit in ["Get single log group", "Add log group", "Delete log group", "Enable log group", "Disable log group", "Modify log group"]:
                 window["-VAR1_TEXT-"].update("Log Group:", visible=True)
                 window["-VAR1_INPUT-"].update("", visible=True)
                 
-                if selected_exploit in ["Add log item", "Delete log item"]:
-                    window["-VAR2_TEXT-"].update("Log Item:", visible=True)
-                    window["-VAR2_INPUT-"].update("", visible=True)
+                # if selected_exploit in ["Add log item", "Delete log item"]:
+                #     window["-VAR2_TEXT-"].update("Log Item:", visible=True)
+                #     window["-VAR2_INPUT-"].update("", visible=True)
                 
-                elif selected_exploit == "Add log group":
+                if selected_exploit == "Add log group":
                     window["-VAR2_TEXT-"].update("Description:", visible=True)
                     window["-VAR2_INPUT-"].update("", visible=True)
+                
+                elif selected_exploit == "Modify log group":
+                    window["-VAR2_TEXT-"].update("New Log Group Name:", visible=True)
+                    window["-VAR2_INPUT-"].update("", visible=True)
+                    window["-VAR3_TEXT-"].update("Description:", visible=True)
+                    window["-VAR3_INPUT-"].update("", visible=True)
 
             elif selected_exploit == "Change log data value":
                 window["-VAR1_TEXT-"].update("Meter ID:", visible=True)

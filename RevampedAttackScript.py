@@ -285,24 +285,29 @@ class AttackScript:
     #     except Exception as e:
     #         print("\nFail.\n")
 
-    def disable_firewall(self) -> None:
+    def disable_firewall(self, revert: bool=False) -> None:
         """
         Turn off all three domains of the firewall
         """
+        able = "Disabled"
+        if revert:
+            able = "Enabled"
+            command_output = self.ssh_run_command("netsh advfirewall set allprofiles state on")
         # cp = run('netsh advfirewall set allprofiles state off',stdout=PIPE , shell=True)
-        command_output = self.ssh_run_command("netsh advfirewall set allprofiles state off")
+        else:
+            command_output = self.ssh_run_command("netsh advfirewall set allprofiles state off")
 
         if "Ok." in command_output:
-            print("Firewall disabled successfully\nOk.\n")
+            print(f"Firewall {able} successfully\nOk.\n")
         else:
-            print("Firewall failed to disable\nFail.\n")
+            print(f"Firewall failed to {able}\nFail.\n")
 
     def disable_ssh(self) -> None:
         """
         Disable SSH from the firewall
         """
         count = 0
-        command_output = self.ssh_run_command(
+        command_output = self.ssh_run_commandx(
             'netsh advfirewall firewall add rule name="QRadar Test" dir=in action=block protocol=TCP localport=22')
         if "Ok." in command_output:
             count += 1
@@ -1440,6 +1445,10 @@ class AttackScript:
     def kep_delete_log_group(self, log_group):
         server = self.kep_connect()
         print(json.dumps(datalogger.log_group.del_log_group(server, log_group), indent=4))
+
+    def kep_modify_log_group(self, log_group, new_log_group, description):
+        server = self.kep_connect()
+        print(json.dumps(datalogger.log_group.modify_log_group(server, {"common.ALLTYPES_NAME": new_log_group, "common.ALLTYPES_DESCRIPTION": description}, log_group=log_group), indent=4))
 
     def kep_disable_log_group(self, log_group):
         server = self.kep_connect()
