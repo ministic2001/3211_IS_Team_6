@@ -2,7 +2,7 @@ import PySimpleGUI as sg
 import ipaddress
 import threading
 import time
-import AttackScript as attackscript
+import RevampedAttackScript as attackscript
 import sys
 
 class IORedirector(object):
@@ -43,8 +43,8 @@ def get_service_statuses(ip, window):
 
 def launch_exploit(exploit,ip,window,var1=None, var2=None, var3=None, var4=None, var5=None, revert: bool=False):
     if is_valid_ip(ip):
-        status = f"The selected attack to run is {exploit} on IP: {ip}, var1 = {var1}, var2 = {var2}, var3={var3}, var4={var4}, var5={var5}, revert={revert}"
-        update_status(status,"-STATUS_BOX-",window)
+        # status = f"The selected attack to run is {exploit} on IP: {ip}, var1 = {var1}, var2 = {var2}, var3={var3}, var4={var4}, var5={var5}, revert={revert}"
+        # update_status(status,"-STATUS_BOX-",window)
         attack = attackscript.AttackScript(ip)
         try:
             match exploit:
@@ -121,18 +121,6 @@ def launch_exploit(exploit,ip,window,var1=None, var2=None, var3=None, var4=None,
 
             update_status("Attack success","-STATUS_BOX-",window)
             window.write_event_value("-ATTACK_COMPLETE-", None)
-
-
-                # case "Get exchange": attack.kep_get_exchange(var1,var2,var3,var4) # var1=channel, var2=device, var3=ex_type, var4=exchange_name
-                # case "Add exchange": attack.kep_add_exchange(var1,var2,var3) # var1=channel, var2=device, var3=exchange_name
-                # case "Delete exchange": attack.kep_delete_exchange(var1,var2,var3,var4) # var1=channel, var2=device, var3=ex_type, var4=exchange_name
-                # case "Get name resolutions": attack.kep_get_name_resolution(var1,var2) # var1=channel, var2=device
-                # case "Add name resolution": attack.kep_add_name_resolution(var1,var2,var3) # var1=channel, var2=device, var3=resolution_name
-                # case "Delete name resolution": attack.kep_delete_name_resolution(var1,var2,var3) # var1=channel, var2=device, var3=resolution_name
-                # case "Modify name resolutions": attack.kep_modify_name_resolution(var1,var2,var3,var4,var5) # var1=channel, var2=device, var3=alias, var4=ip_addr, var5=resolution_name
-                # case "Get all log items": attack.kep_get_all_log_items(var1) # var1=log_group
-                # case "Add log item": attack.kep_add_log_item(var1,var2) # var1=log_group, var2=log_item
-                # case "Delete log item": attack.kep_delete_log_item(var1,var2) # var1=log_group, var2=log_item
 
         except Exception as e:
             print(e)
@@ -219,12 +207,12 @@ def main():
                     "Clear energy reading": "Run modpoll to clear energy reading",
                     "Change baud rate": "Run modpoll to change baud rate - Register 40206",
                     "Run mod interrupt": "Run modpoll to interrupt COM1 port by disabling KEP Server and then run modpoll indefinitely",
-                    "Disable COM port": "Disable a COM port",
                     "======== IT EXPLOITS ========":"",
                     "Setup ssh configuration and key":"Inserts an sshd_config file and an access key into a target Windows machine. Once complete, the SSH service (sshd) is restarted.\nAfter running, you will then be able to use the access key to SSH into the target machine.",
                     "Task scheduler delete files": "Delete the smartmeter path prediodically through task scheduler ",
-                    "Disable running schedules": "Disables MoveFiles and KEPServerEX 6.12 running schedules in task scheduler",
                     "Change log data value": "Change the data value of the latest meter log file, in the specified meter ID's folder (E.g. 2)",
+                    "Disable running schedules": "Disables MoveFiles and KEPServerEX 6.12 running schedules in task scheduler",
+                    "Disable COM port": "Disable a COM port",
                     "Disable firewall": "Turn off all three domains of the firewall",
                     "Disable SSH": "Disable SSH from the firewall. NOTE: THIS ATTACK SHOULD BE RAN LAST AS IT WILL STOP ALL FUNCTIONALITY"
                     } 

