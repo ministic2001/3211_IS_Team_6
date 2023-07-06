@@ -1262,6 +1262,10 @@ class AttackScript:
         server = self.kep_connect()
         print(json.dumps(connectivity.channel.get_all_channels(server), indent=4))
 
+    def kep_get_channel(self):
+        server = self.kep_connect()
+        print(json.dumps(connectivity.channel.get_channel(server, "SmartMeter"), indent=4))
+
     def kep_add_spoofed_channel(self, channel_name):  ### Added to add spoofed channel
         server = self.kep_connect()
         print(connectivity.channel.add_channel(server, {"common.ALLTYPES_NAME": channel_name,
@@ -1909,6 +1913,7 @@ class AttackScript:
             case "26": self.ssh_brute_force()  # Move this up to be with the other ssh functions
             case "27": self.setup_ssh_config_and_key()  # Move this up to be with the other ssh functions
             case "28": self.kep_delete_log_files()
+            case "29": self.kep_get_channel()
             case "-h":
                 print(
                     "\nChoose \n1 Delete file, \n2 Copy file, \n3 Disable firewall, \n4 Disable ssh through firewall, \n5 Disable Kepserver, \n6 Interrupt modbus reading, \n7 Disable COMPORT, \n8 Encrypt files, \n9 Change Meter25 Id to 26, \n10 Clear Energy Reading, \n11 Revert with options, \n12 Bruteforce KEPServer Password, \n13 Disable sshd Service, \n14 Get hardware info, \n15 Obtain KEPServer info, \n16 Get all KEPServer Users, \n17 Enable KEP Users, \n18 Disable KEP Users, \n19 Obtain KEP User Info.")
