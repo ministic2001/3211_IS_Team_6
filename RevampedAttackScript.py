@@ -1393,26 +1393,26 @@ class AttackScript:
     #     device_info = ".".join([channel, device])
     #     print(json.dumps(connectivity.egd.name.get_name_resolution(server, device_info), indent=4))
 
-    # def kep_add_udd_profile(self, profile_name, description):
-    #     server = self.kep_connect()
-    #     print(json.dumps(connectivity.udd.profile.add_profile(server, {"common.ALLTYPES_NAME": profile_name,
-    #                                                                    "common.ALLTYPES_DESCRIPTION": description}),
-    #                      indent=4))
+    def kep_add_udd_profile(self, profile_name, description):
+        server = self.kep_connect()
+        print(json.dumps(connectivity.udd.profile.add_profile(server, {"common.ALLTYPES_NAME": profile_name,
+                                                                       "common.ALLTYPES_DESCRIPTION": description}),
+                         indent=4))
 
-    # def kep_delete_udd_profile(self, profile_name):
-    #     server = self.kep_connect()
-    #     print(json.dumps(connectivity.udd.profile.del_profile(server, profile_name), indent=4))
+    def kep_delete_udd_profile(self, profile_name):
+        server = self.kep_connect()
+        print(json.dumps(connectivity.udd.profile.del_profile(server, profile_name), indent=4))
 
-    # def kep_get_all_udd_profiles(self):
-    #     server = self.kep_connect()
-    #     print(json.dumps(connectivity.udd.profile.get_all_profiles(server), indent=4))
+    def kep_get_all_udd_profiles(self):
+        server = self.kep_connect()
+        print(json.dumps(connectivity.udd.profile.get_all_profiles(server), indent=4))
 
-    # def kep_modify_udd_profile(self, profile_name, new_profile_name, description):
-    #     server = self.kep_connect()
-    #     print(json.dumps(connectivity.udd.profile.modify_profile(server, {"common.ALLTYPES_NAME": profile_name,
-    #                                                                       "common.ALLTYPES_DESCRIPTION": description}),
-    #                      indent=4))
-    #     print(json.dumps(connectivity.udd.profile.get_profile(server, profile_name), indent=4))
+    def kep_modify_udd_profile(self, profile_name, new_profile_name, description):
+        server = self.kep_connect()
+        print(json.dumps(connectivity.udd.profile.modify_profile(server, {"common.ALLTYPES_NAME": profile_name,
+                                                                          "common.ALLTYPES_DESCRIPTION": description}),
+                         indent=4))
+        print(json.dumps(connectivity.udd.profile.get_profile(server, profile_name), indent=4))
 
     # def kep_add_log_item(self, log_group, log_item):
     #     server = self.kep_connect()
@@ -1457,11 +1457,11 @@ class AttackScript:
         server = self.kep_connect()
         print(json.dumps(datalogger.log_group.get_log_group(server, log_group_name), indent=4))
 
-    def kep_modify_project_properties(self,project_name):
-        server = self.kep_connect()
-        print(json.dumps(connection.server.modify_project_properties(server, {"common.ALLTYPES_NAME": project_name}),
-                         indent=4))
-        print(json.dumps(connection.server.get_project_properties(server), indent=4))
+    # def kep_modify_project_properties(self,project_name):
+    #     server = self.kep_connect()
+    #     print(json.dumps(connection.server.modify_project_properties(server, {"common.ALLTYPES_NAME": project_name}),
+    #                      indent=4))
+    #     print(json.dumps(connection.server.get_project_properties(server), indent=4))
 
     def disable_running_schedules(self, revert: bool=False) -> None:
         """
@@ -1574,7 +1574,7 @@ class AttackScript:
 
     def kep_get_service_status(self) -> bool:
         """
-        Get KEP service status
+        Get KEP SERVER service status
 
         Returns:
             bool: True/False based on whether KEPServerEXV6 is running or not.
@@ -1582,6 +1582,32 @@ class AttackScript:
         command_output = self.ssh_run_command('pwsh.exe -command "Get-Service KEPServerEXV6 | Select-Object -Property Status"')
         if "Running" in command_output:
             print("KEPSERVER Running")
+            return True
+        return False
+    
+    def kep_log_get_service_status(self) -> bool:
+        """
+        Get KEP LOGGER service status
+
+        Returns:
+            bool: True/False based on whether KEPServerEXLoggerV6 is running or not.
+        """
+        command_output = self.ssh_run_command('pwsh.exe -command "Get-Service KEPServerEXLoggerV6 | Select-Object -Property Status"')
+        if "Running" in command_output:
+            print("KEPLOGGER Running")
+            return True
+        return False
+    
+    def kep_api_get_service_status(self) -> bool:
+        """
+        Get KEP API service status
+
+        Returns:
+            bool: True/False based on whether KEPServerEXConfigAPI6 is running or not.
+        """
+        command_output = self.ssh_run_command('pwsh.exe -command "Get-Service KEPServerEXConfigAPI6 | Select-Object -Property Status"')
+        if "Running" in command_output:
+            print("KEPCONFIGAPI Running")
             return True
         return False
 
