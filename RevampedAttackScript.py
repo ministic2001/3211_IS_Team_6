@@ -1581,8 +1581,10 @@ class AttackScript:
         """
         command_output = self.ssh_run_command('pwsh.exe -command "Get-Service KEPServerEXV6 | Select-Object -Property Status"')
         if "Running" in command_output:
-            print("KEPSERVER Running")
+            print("KEP Server Running")
             return True
+        else:
+            print("KEP Server Not Running")
         return False
     
     def kep_log_get_service_status(self) -> bool:
@@ -1594,8 +1596,10 @@ class AttackScript:
         """
         command_output = self.ssh_run_command('pwsh.exe -command "Get-Service KEPServerEXLoggerV6 | Select-Object -Property Status"')
         if "Running" in command_output:
-            print("KEPLOGGER Running")
+            print("KEP Logger Running")
             return True
+        else:
+            print("KEP Logger Not Running")
         return False
     
     def kep_api_get_service_status(self) -> bool:
@@ -1607,8 +1611,10 @@ class AttackScript:
         """
         command_output = self.ssh_run_command('pwsh.exe -command "Get-Service KEPServerEXConfigAPI6 | Select-Object -Property Status"')
         if "Running" in command_output:
-            print("KEPCONFIGAPI Running")
+            print("KEP Config API Running")
             return True
+        else:
+            print("KEP Config API Not Running")
         return False
 
     def get_windef_status(self) -> bool:
@@ -1622,6 +1628,8 @@ class AttackScript:
         if "True" in command_output:
             print("Windows Defender Running")
             return True
+        else:
+            print("Windows Defender Not Running")
         return False
 
     def get_firewall_status(self):
@@ -1639,7 +1647,7 @@ class AttackScript:
         results.append("OFF" if "OFF" in command_output.split()[11] else "ON")
         results.append("OFF" if "OFF" in command_output.split()[17] else "ON")
 
-        print(results)
+        #print(results)
         return results
 
     def scp_transfer_file(self, local_full_path: str, remote_full_path: str) -> None:

@@ -30,6 +30,8 @@ def get_service_statuses(ip, window):
         status_list = attack.get_firewall_status()
         status_list.append("ON") if attack.get_windef_status() else status_list.append("OFF")
         status_list.append("ON") if attack.kep_get_service_status() else status_list.append("OFF")
+        status_list.append("ON") if attack.kep_log_get_service_status() else status_list.append("OFF")
+        status_list.append("ON") if attack.kep_api_get_service_status() else status_list.append("OFF")
         print(f"status_list is : {status_list}",file=sys.__stdout__)
         
         if status_list != None:
@@ -223,7 +225,9 @@ def main():
                   ['Firewall Private Profile', '-'],
                   ['Firewall Public Profile', '-' ], 
                   ['Windows Defender', '-'], 
-                  ['KEP Server', '-']]
+                  ['KEP Server', '-'],
+                  ['KEP Logger', '-'],
+                  ['KEP Config API', '-']]
 
 
     # Set the theme of the GUI
@@ -253,7 +257,7 @@ def main():
             sg.Radio("Custom IP", "ip", key="-IP_CUSTOM-", enable_events=True, font=("Helvetica", 16))],
         [sg.Text("Please enter IP:", key="-IP_TEXT-",visible=False, font=("Helvetica", 16, "bold")), sg.Input("172.16.2.223", key="-IP_INPUT-",visible=False, size=(25,1), font=("Helvetica", 16))],
         [sg.Text("Service Statuses:", font=("helvetica", 16, "bold"))],
-        [sg.Table(values=status_row, header_font=("Helvetica", 16, "bold"),selected_row_colors=("black","white"),row_height=35, headings=headingrow, num_rows=5, expand_x=True, auto_size_columns=True, display_row_numbers=False, justification='center', key='-STATUS_TABLE-', hide_vertical_scroll=True, font=("Helvetica", 16))],
+        [sg.Table(values=status_row, header_font=("Helvetica", 16, "bold"),selected_row_colors=("black","white"),row_height=35, headings=headingrow, num_rows=7, expand_x=True, auto_size_columns=True, display_row_numbers=False, justification='center', key='-STATUS_TABLE-', hide_vertical_scroll=True, font=("Helvetica", 16))],
         [sg.Column([
             [sg.Button('Get Service Status', key="-GET_STATUS_BUTTON-", expand_x=True, font=("Helvetica", 16, "bold")),sg.Image("./images/Spinner-1s-21px.gif", size=(0.5,0.5),visible=False, key="-SERVICE_SPINNER-")],
         ], justification="center", expand_x=True)],
@@ -322,6 +326,8 @@ def main():
             status_row[2][1] = values["-SERVICE_STATUS_SUCCESS-"][2]
             status_row[3][1] = values["-SERVICE_STATUS_SUCCESS-"][3]
             status_row[4][1] = values["-SERVICE_STATUS_SUCCESS-"][4]
+            status_row[5][1] = values["-SERVICE_STATUS_SUCCESS-"][5]
+            status_row[6][1] = values["-SERVICE_STATUS_SUCCESS-"][6]
             window["-STATUS_TABLE-"].update(status_row)
 
         elif event == "-SERVICE_STATUS_FAILED-":
