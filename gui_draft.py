@@ -21,7 +21,6 @@ def is_valid_ip(address):
     try:
         ipaddress.ip_address(address)
         return True
-    
     except ValueError:
         return False
     
@@ -49,6 +48,7 @@ def launch_exploit(exploit,ip,window,var1=None, var2=None, var3=None, var4=None,
         ##TODO: Add checks for attack success or fail even if there was no errors raised
         try:
             match exploit:
+                ## ======================== KEP EXPLOITS ======================== ##
                 case "Start KEP server": attack.kep_server_start()
                 case "Stop KEP server": attack.kep_server_stop()
                 case "Get server information": attack.kep_server_info()
@@ -60,7 +60,7 @@ def launch_exploit(exploit,ip,window,var1=None, var2=None, var3=None, var4=None,
                 case "Enable user": attack.kep_enable_user(var1) # var1=user
                 case "Disable user": attack.kep_disable_user(var1) # var1=user
                 case "Modify user": attack.kep_modify_user(var1,var2,var3,var4) # var1=user, var2=description, var3=password, var4=groupname
-                case "Get all user groups": attack.kep_get_all_user_groups()
+                case "Get all user group": attack.kep_get_all_user_groups()
                 case "Get single user group": attack.kep_get_single_user_group(var1) # var1=usergroup
                 case "Add user group": attack.kep_add_user_group(var1) #var1=usergroup
                 case "Delete user group": attack.kep_del_user_group(var1) # var1=usergroup
@@ -80,7 +80,37 @@ def launch_exploit(exploit,ip,window,var1=None, var2=None, var3=None, var4=None,
                 case "Add tag": attack.kep_add_tag(var1,var2,var3,var4) # var1=channel, var2=device, var3=name, var4=tag_address
                 case "Delete tag": attack.kep_del_tag(var1,var2,var3) # var1=channel, var2=device, var3=name
                 case "Modify tag": attack.kep_modify_tag(var1,var2,var3,var4) # var1=channel, var2=device, var3=name, var4=projectID, var5=new_name
-            
+                case "Auto generate tags": attack.kep_auto_tag_gen(var1,var2) # var1=channel, var2=device
+                case "Get exchange": attack.kep_get_exchange(var1,var2,var3,var4) # var1=channel, var2=device, var3=ex_type, var4=exchange_name
+                case "Add exchange": attack.kep_add_exchange(var1,var2,var3) # var1=channel, var2=device, var3=exchange_name
+                case "Delete exchange": attack.kep_delete_exchange(var1,var2,var3,var4) # var1=channel, var2=device, var3=ex_type, var4=exchange_name
+                case "Get name resolutions": attack.kep_get_name_resolution(var1,var2) # var1=channel, var2=device
+                case "Add name resolution": attack.kep_add_name_resolution(var1,var2,var3) # var1=channel, var2=device, var3=resolution_name
+                case "Delete name resolution": attack.kep_delete_name_resolution(var1,var2,var3) # var1=channel, var2=device, var3=resolution_name
+                case "Modify name resolutions": attack.kep_modify_name_resolution(var1,var2,var3,var4,var5) # var1=channel, var2=device, var3=alias, var4=ip_addr, var5=resolution_name
+                case "Get all UDD profiles": attack.kep_get_all_udd_profiles()
+                case "Add UDD profile": attack.kep_add_udd_profile(var1,var2) # var1=profile_name, var2=description
+                case "Delete UDD profile": attack.kep_delete_udd_profile(var1) # var1=profile_name
+                case "Modify UDD profile": attack.kep_modify_udd_profile(var1,var2) # var1=profile_name, var2=description
+                case "Get all log items": attack.kep_get_all_log_items(var1) # var1=log_group
+                case "Add log item": attack.kep_add_log_item(var1,var2) # var1=log_group, var2=log_item
+                case "Delete log item": attack.kep_delete_log_item(var1,var2) # var1=log_group, var2=log_item
+                case "Get all log groups": attack.kep_get_all_log_groups()
+                case "Add log group": attack.kep_add_log_group(var1,var2) # var1=log_group, var2=description
+                case "Delete log group": attack.kep_delete_log_group(var1) # var1=log_group
+                case "Enable log group": attack.kep_enable_log_group(var1) # var1=log_group
+                case "Disable log group": attack.kep_disable_log_group(var1) # var1=log_group
+                # case "Modify project properties": attack.kep_modify_project_properties()
+                case "Delete log files": attack.kep_delete_log_files()
+                ## ======================== MODBUS EXPLOITS ======================== ##
+                case "Get hardware information": attack.smartmeter_get_hardware_info()
+                case "Change meter ID": attack.change_meterID()
+                case "Clear energy reading": attack.clear_energy_reading()
+                case "Change baud rate": attack.baudrate_change()
+                case "Run mod interrupt": attack.run_modinterrupt()
+                ## ======================== IT EXPLOITS ======================== ##
+                case "Disable running schedules": attack.disable_running_schedules()
+
             update_status("Attack success","-STATUS_BOX-",window)
             window.write_event_value("-ATTACK_COMPLETE-", None)
 
@@ -88,7 +118,6 @@ def launch_exploit(exploit,ip,window,var1=None, var2=None, var3=None, var4=None,
             print(e)
             update_status("Attack failed","-STATUS_BOX-",window)
             window.write_event_value("-ATTACK_FAILED-", None)
-
     else:
         print("error")
 
@@ -105,7 +134,7 @@ def update_status(text, status_box, window, color = "black"):
     window[status_box].update(f"{text}\n", append=True, text_color = color)
 
 def main():
-    # Variables
+    # ============= Variables ============= 
     # Store all the options for exploits for KEP server attacks and their descriptions
     exploit_dict = {"===== KEP SERVER EXPLOITS =====":"",
                     "Start KEP server":"Starts the KEP server",
@@ -119,7 +148,7 @@ def main():
                     "Enable user":"Enables the user specified",
                     "Disable user":"Disable the user specified",
                     "Modify user":"Modify the description, groupname and password of the specified user",
-                    "Get all user groups":"Get all user groups in the KEP server",
+                    "Get all user group":"Get all user groups in the KEP server",
                     "Get single user group":"Get the information of a particular user group",
                     "Add user group":"Add a user group to the KEP server",
                     "Delete user group":"Delete the user group specified",
@@ -128,7 +157,7 @@ def main():
                     "Get all channels":"Get all channels of the KEP server",
                     "Add spoofed channel":"Add a spoofed channel to the KEP server",
                     "Delete channel":"Delete the specified channel",
-                    "Modify channel":"Modify the channel specified to change the project id and channel name of the channel",
+                    "Modify channel":"Modify the channel specified to change the channel name of the channel",
                     "Get all devices":"Get all devices of a channel",
                     "Get single device":"Get the information of a particular device",
                     "Add device":"Add a spoofed device to the KEP server under the channel specified",
@@ -139,13 +168,39 @@ def main():
                     "Add tag":"Add a spoofed tag to the KEP server under the channel and device specified",
                     "Delete tag":"Delete the specified tag under the channel and device name provided",
                     "Modify tag":"Modify the name of an existing tag",
-                    "===== MODBUS EXPLOITS =====":"",
+                    "Auto generate tags":"Execute the auto tag generation function on the KEP server",
+                    "Get exchange":"Get the properties of the exchange specified",
+                    "Add exchange":"Add an exchange object to the KEP server",
+                    "Delete exchange":"Delete the exchange object specified",
+                    "Get name resolutions":"Get all the name resolutions on the KEP server",
+                    "Add name resolution":"Add a name resolution to the KEP server",
+                    "Delete name resolution":"Delete the name resolution specified",
+                    "Modify name resolutions":"Modify the alias and IP address of a name resolution",
+                    "Get all UDD profiles":"Get all UDD profiles in the KEP server",
+                    "Add UDD profile":"Add a UDD profile to the KEP server",
+                    "Delete UDD profile":"Delete the UDD profile specified",
+                    "Modify UDD profile":"Modify the UDD profile's name and description",
+                    "Get all log items":"Gets all the log items of the log group specified",
+                    "Add log item":"Adds a log item to the log group specified",
+                    "Delete log item":"Delete the log item specified",
+                    "Get all log groups":"Get all the log groups in the KEP server",
+                    "Add log group":"Add a log group to the KEP server",
+                    "Delete log group":"Delete the log group specified",
+                    "Enable log group":"Enables the log group specified",
+                    "Disable log group":"Disables the log group specified",
+                    # "Modify project properties":"Modifies the project name of a project",
+                    "Delete log files":"Delete the log files to cover up tracks",
+                    "====== MODBUS EXPLOITS ======":"",
+                    "Get hardware information": "Get hardware information of the smartmeter",
+                    "Change meter ID": "Run modpoll to change register 40201 (Which handle the meter ID) to 26",
+                    "Clear energy reading": "Run modpoll to clear energy reading",
+                    "Change baud rate": "Run modpoll to change baud rate - Register 40206",
+                    "Run mod interrupt": "Run modpoll to interrupt COM1 port by disabling KEP Server and then run modpoll indefinitely",
+                    "======== IT EXPLOITS ========":"",
+                    "Disable running schedules": "Disables MoveFiles and KEPServerEX 6.12 running schedules in task scheduler",
                     } 
-    modbus_exploit_dict = {"Exploit 1":"Exploit 1 description", "Exploit 2":"Exploit 2 description", "Exploit 3":"Exploit 3 description"} # Stores all the options for exploits for Modbus related attacks
+
     exploit_list = list(exploit_dict.keys())
-    modbus_exploit_list = list(modbus_exploit_dict.keys())
-    # Set the theme of the GUI
-    sg.theme('Reddit')
     headingrow = ['SERVICE', 'STATUS']
     status_row = [['Firewall Domain Profile', '-'],
                   ['Firewall Private Profile', '-'],
@@ -153,6 +208,9 @@ def main():
                   ['Windows Defender', '-'], 
                   ['KEP Server', '-']]
 
+
+    # Set the theme of the GUI
+    sg.theme('Reddit')
     
     # Layout for the kep server exploits
     exploit_layout = [
@@ -195,9 +253,8 @@ def main():
         [sg.Column(home_layout, key= '-HOME-',expand_x=True, expand_y=True, scrollable=True, vertical_scroll_only=True, sbar_background_color="grey", sbar_width=18, sbar_arrow_width=18),]
     ]
 
-
     # Create the main window
-    window = sg.Window('Attack Dashboard', main_layout, finalize=True)
+    window = sg.Window('Attack Dashboard', main_layout, size=(None,None), finalize=True)
     window.maximize()
 
     # Redirect stdout to status box
@@ -296,10 +353,16 @@ def main():
             window["-VAR5_TEXT-"].update("Variable 5:", visible=False)
             window["-VAR5_INPUT-"].update("5", visible=False)
 
-            if selected_exploit == "===== KEP SERVER EXPLOITS =====" or selected_exploit == "===== MODBUS EXPLOITS =====":
+            if selected_exploit == "===== KEP SERVER EXPLOITS =====":
                 window["-EXPLOIT-"].update(value=exploit_list[1])
+            
+            elif selected_exploit == "====== MODBUS EXPLOITS ======":
+                window["-EXPLOIT-"].update(value=exploit_list[54])
+                
+            elif selected_exploit == "======== IT EXPLOITS ========":
+                window["-EXPLOIT-"].update(value=exploit_list[60])
 
-            elif selected_exploit in ["Enable user",  "Disable user", "Get single user", "Delete user"]:
+            elif selected_exploit in ["Enable user", "Disable user", "Get single user", "Delete user"]:
                 window["-VAR1_TEXT-"].update("User:", visible=True)
                 window["-VAR1_INPUT-"].update("", visible=True)
             
@@ -321,7 +384,7 @@ def main():
                 window["-VAR4_TEXT-"].update("New Group Name:", visible=True)
                 window["-VAR4_INPUT-"].update("", visible=True)
             
-            elif selected_exploit in ["Get single user group", "Add user group", "Delete user group", "Upgrade user group", "Downgrade user group"] :
+            elif selected_exploit in ["Get single user group", "Add user group", "Delete user group", "Upgrade user group", "Downgrade user group"]:
                 window["-VAR1_TEXT-"].update("User group:", visible=True)
                 window["-VAR1_INPUT-"].update("", visible=True)
 
@@ -339,7 +402,7 @@ def main():
                 window["-VAR1_TEXT-"].update("Channel:", visible=True)
                 window["-VAR1_INPUT-"].update("", visible=True)
 
-            elif selected_exploit in ["Get single device", "Add device", "Delete device", "Get full tag structure", "Get single tag"]:
+            elif selected_exploit in ["Get single device", "Add device", "Delete device", "Get full tag structure", "Get single tag", "Auto generate tags", "Get exchange", "Add exchange", "Delete exchange", "Get name resolutions", "Add name resolution", "Delete name resolution", "Modify name resolutions"]:
                 window["-VAR1_TEXT-"].update("Channel:", visible=True)
                 window["-VAR1_INPUT-"].update("", visible=True)
                 window["-VAR2_TEXT-"].update("Device:", visible=True)
@@ -348,6 +411,24 @@ def main():
                 if selected_exploit == "Get single tag":
                     window["-VAR3_TEXT-"].update("Tag Name:", visible=True)
                     window["-VAR3_INPUT-"].update("", visible=True)
+                
+                elif selected_exploit == "Get exchange" or selected_exploit == "Add exchange" or selected_exploit == "Delete exchange":
+                    window["-VAR3_TEXT-"].update("Exchange type:", visible=True)
+                    window["-VAR3_INPUT-"].update("", visible=True)
+                    window["-VAR4_TEXT-"].update("Exchange name:", visible=True)
+                    window["-VAR4_INPUT-"].update("", visible=True)
+
+                elif selected_exploit == "Add name resolution" or selected_exploit == "Delete name resolution":
+                    window["-VAR3_TEXT-"].update("Resolution Name:", visible=True)
+                    window["-VAR3_INPUT-"].update("", visible=True)
+
+                elif selected_exploit == "Modify name resolutions":
+                    window["-VAR3_TEXT-"].update("Alias:", visible=True)
+                    window["-VAR3_INPUT-"].update("", visible=True)
+                    window["-VAR4_TEXT-"].update("IP Address:", visible=True)
+                    window["-VAR4_INPUT-"].update("", visible=True)
+                    window["-VAR5_TEXT-"].update("Resolution Name:", visible=True)
+                    window["-VAR5_INPUT-"].update("", visible=True)
 
             elif selected_exploit == "Modify device":
                 window["-VAR1_TEXT-"].update("Channel:", visible=True)
@@ -359,7 +440,7 @@ def main():
                 window["-VAR4_TEXT-"].update("Device ID:", visible=True)
                 window["-VAR4_INPUT-"].update("", visible=True)
 
-            elif selected_exploit in ["Add tag",  "Delete tag", "Modify tag"]:
+            elif selected_exploit == "Add tag" or selected_exploit == "Delete tag" or selected_exploit == "Modify tag":
                 window["-VAR1_TEXT-"].update("Channel:", visible=True)
                 window["-VAR1_INPUT-"].update("", visible=True)
                 window["-VAR2_TEXT-"].update("Device:", visible=True)
@@ -374,6 +455,26 @@ def main():
                 elif selected_exploit == "Modify tag":
                     window["-VAR4_TEXT-"].update("New Name:",visible=True)
                     window["-VAR4_INPUT-"].update("", visible=True)
+
+            elif selected_exploit in ["Add UDD profile", "Delete UDD profile", "Modify UDD profile"]:
+                window["-VAR1_TEXT-"].update("Profile Name:", visible=True)
+                window["-VAR1_INPUT-"].update("", visible=True)
+
+                if selected_exploit == "Add UDD profile" or selected_exploit == "Modify UDD profile":
+                    window["-VAR2_TEXT-"].update("Description:", visible=True)
+                    window["-VAR2_INPUT-"].update("", visible=True)
+
+            elif selected_exploit in ["Get all log items", "Add log item", "Delete log item", "Add log group", "Delete log group", "Enable log group", "Disable log group"]:
+                window["-VAR1_TEXT-"].update("Log Group:", visible=True)
+                window["-VAR1_INPUT-"].update("", visible=True)
+                
+                if selected_exploit in ["Add log item", "Delete log item"]:
+                    window["-VAR2_TEXT-"].update("Log Item:", visible=True)
+                    window["-VAR2_INPUT-"].update("", visible=True)
+                
+                elif selected_exploit == "Add log group":
+                    window["-VAR2_TEXT-"].update("Description:", visible=True)
+                    window["-VAR2_INPUT-"].update("", visible=True)
 
         window['-SPINNER-'].update_animation("./images/loading.gif",  time_between_frames=25)
         window['-SERVICE_SPINNER-'].update_animation("./images/Spinner-1s-21px.gif",  time_between_frames=25)
