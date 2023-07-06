@@ -285,23 +285,29 @@ class AttackScript:
     #     except Exception as e:
     #         print("\nFail.\n")
 
-    def disable_firewall(self) -> None:
+    def disable_firewall(self, revert: bool=False) -> None:
         """
         Turn off all three domains of the firewall
         """
-        command_output = self.ssh_run_command("netsh advfirewall set allprofiles state off")
+        able = "Disabled"
+        if revert:
+            able = "Enabled"
+            command_output = self.ssh_run_command("netsh advfirewall set allprofiles state on")
+        # cp = run('netsh advfirewall set allprofiles state off',stdout=PIPE , shell=True)
+        else:
+            command_output = self.ssh_run_command("netsh advfirewall set allprofiles state off")
 
         if "Ok." in command_output:
-            print("Firewall disabled successfully\nOk.\n")
+            print(f"Firewall {able} successfully\nOk.\n")
         else:
-            raise Exception("Firewall failed to disable\nFail.\n")
+            print(f"Firewall failed to {able}\nFail.\n")
 
     def disable_ssh(self) -> None:
         """
         Disable SSH from the firewall
         """
         count = 0
-        command_output = self.ssh_run_command(
+        command_output = self.ssh_run_commandx(
             'netsh advfirewall firewall add rule name="QRadar Test" dir=in action=block protocol=TCP localport=22')
         if "Ok." in command_output:
             count += 1
@@ -1362,46 +1368,46 @@ class AttackScript:
         device_info = ".".join([channel, device])
         print(connectivity.device.auto_tag_gen(server, device_info, job_ttl=8))
 
-    def kep_add_exchange(self, channel, device, ex_type, exchange_name):
-        server = self.kep_connect()
-        device_info = ".".join([channel, device])
-        print(json.dumps(connectivity.egd.exchange.add_exchange(server, channel, device_info, ex_type,
-                                                                {"common.ALL_TYPES_NAME": exchange_name}), indent=4))
+    # def kep_add_exchange(self, channel, device, ex_type, exchange_name):
+    #     server = self.kep_connect()
+    #     device_info = ".".join([channel, device])
+    #     print(json.dumps(connectivity.egd.exchange.add_exchange(server, channel, device_info, ex_type,
+    #                                                             {"common.ALL_TYPES_NAME": exchange_name}), indent=4))
 
-    def kep_get_exchange(self, channel, device, ex_type, exchange_name):
-        server = self.kep_connect()
-        device_info = ".".join([channel, device])
-        print(json.dumps(connectivity.egd.exchange.get_exchange(server, device_info, ex_type, exchange_name), indent=4))
+    # def kep_get_exchange(self, channel, device, ex_type, exchange_name):
+    #     server = self.kep_connect()
+    #     device_info = ".".join([channel, device])
+    #     print(json.dumps(connectivity.egd.exchange.get_exchange(server, device_info, ex_type, exchange_name), indent=4))
 
-    def kep_delete_exchange(self, channel, device, ex_type, exchange_name):
-        server = self.kep_connect()
-        device_info = ".".join([channel, device])
-        print(json.dumps(connectivity.egd.exchange.del_exchange(server, device_info, ex_type, exchange_name), indent=4))
+    # def kep_delete_exchange(self, channel, device, ex_type, exchange_name):
+    #     server = self.kep_connect()
+    #     device_info = ".".join([channel, device])
+    #     print(json.dumps(connectivity.egd.exchange.del_exchange(server, device_info, ex_type, exchange_name), indent=4))
 
-    def kep_add_name_resolution(self, channel, device, resolution_name):
-        server = self.kep_connect()
-        device_info = ".".join([channel, device])
-        print(json.dumps(
-            connectivity.egd.name.add_name_resolution(server, device_info, {"common.ALLTYPES_NAME": resolution_name}),
-            indent=4))
+    # def kep_add_name_resolution(self, channel, device, resolution_name):
+    #     server = self.kep_connect()
+    #     device_info = ".".join([channel, device])
+    #     print(json.dumps(
+    #         connectivity.egd.name.add_name_resolution(server, device_info, {"common.ALLTYPES_NAME": resolution_name}),
+    #         indent=4))
 
-    def kep_delete_name_resolution(self, channel, device, resolution_name):
-        server = self.kep_connect()
-        device_info = ".".join([channel, device])
-        print(json.dumps(connectivity.egd.name.del_name_resolution(server, device_info, resolution_name), indent=4))
+    # def kep_delete_name_resolution(self, channel, device, resolution_name):
+    #     server = self.kep_connect()
+    #     device_info = ".".join([channel, device])
+    #     print(json.dumps(connectivity.egd.name.del_name_resolution(server, device_info, resolution_name), indent=4))
 
-    def kep_modify_name_resolution(self, channel, device, alias, ip_addr, resolution_name):
-        server = self.kep_connect()
-        device_info = ".".join([channel, device])
-        print(json.dumps(connectivity.egd.name.modify_name_resolution(server, device_info, {
-            "ge_ethernet_global_data.NAME_RESOLUTION_ALIAS": alias,
-            "ge_ethernet_global_data.NAME_RESOLUTION_IP_ADDRESS": ip_addr}), name= resolution_name, indent=4))
-        print(json.dumps(connectivity.egd.name.get_name_resolution(server, device_info), indent=4))
+    # def kep_modify_name_resolution(self, channel, device, alias, ip_addr, resolution_name):
+    #     server = self.kep_connect()
+    #     device_info = ".".join([channel, device])
+    #     print(json.dumps(connectivity.egd.name.modify_name_resolution(server, device_info, {
+    #         "ge_ethernet_global_data.NAME_RESOLUTION_ALIAS": alias,
+    #         "ge_ethernet_global_data.NAME_RESOLUTION_IP_ADDRESS": ip_addr}), name= resolution_name, indent=4))
+    #     print(json.dumps(connectivity.egd.name.get_name_resolution(server, device_info), indent=4))
 
-    def kep_get_name_resolution(self, channel, device):
-        server = self.kep_connect()
-        device_info = ".".join([channel, device])
-        print(json.dumps(connectivity.egd.name.get_name_resolution(server, device_info), indent=4))
+    # def kep_get_name_resolution(self, channel, device):
+    #     server = self.kep_connect()
+    #     device_info = ".".join([channel, device])
+    #     print(json.dumps(connectivity.egd.name.get_name_resolution(server, device_info), indent=4))
 
     def kep_add_udd_profile(self, profile_name, description):
         server = self.kep_connect()
@@ -1424,28 +1430,36 @@ class AttackScript:
                          indent=4))
         print(json.dumps(connectivity.udd.profile.get_profile(server, profile_name), indent=4))
 
-    def kep_add_log_item(self, log_group, log_item):
-        server = self.kep_connect()
-        print(json.dumps(datalogger.log_items.add_log_item(server, log_group, {"common.ALL_TYPES_NAME": log_item}),
-                         indent=4))
+    # def kep_add_log_item(self, log_group, log_item):
+    #     server = self.kep_connect()
+    #     print(json.dumps(datalogger.log_items.add_log_item(server, log_group="Derrick", log_item="WHYNOT"),
+    #                      indent=4))
 
-    def kep_get_all_log_items(self, log_group):
-        server = self.kep_connect()
-        print(json.dumps(datalogger.log_items.get_all_log_items(server, log_group), indent=4))
+    # def kep_get_all_log_items(self):
+    #     server = self.kep_connect()
+    #     print(json.dumps(datalogger.log_items.get_all_log_items(server, log_group="asd"), indent=4))
 
-    def kep_delete_log_item(self, log_group, log_item):
-        server = self.kep_connect()
-        print(json.dumps(datalogger.log_items.del_log_item(server, log_group, log_item), indent=4))
+    # def kep_get_log_item(self, log_group, log_item):
+    #     server = self.kep_connect()
+    #     print(json.dumps(datalogger.log_items.get_log_item(server, log_group="Derrick", log_item="1"), indent=4))
 
+    # def kep_delete_log_item(self, log_group, log_item):
+    #     server = self.kep_connect()
+    #     print(json.dumps(datalogger.log_items.del_log_item(server, log_group, log_item), indent=4))
+        
     def kep_add_log_group(self, log_group, description):
         server = self.kep_connect()
         print(json.dumps(datalogger.log_group.add_log_group(server, {"common.ALLTYPES_NAME": log_group,
                                                                      "common.ALLTYPES_DESCRIPTION": description}),
                          indent=4))
-
+        
     def kep_delete_log_group(self, log_group):
         server = self.kep_connect()
         print(json.dumps(datalogger.log_group.del_log_group(server, log_group), indent=4))
+
+    def kep_modify_log_group(self, log_group, new_log_group, description):
+        server = self.kep_connect()
+        print(json.dumps(datalogger.log_group.modify_log_group(server, {"common.ALLTYPES_NAME": new_log_group, "common.ALLTYPES_DESCRIPTION": description}, log_group=log_group), indent=4))
 
     def kep_disable_log_group(self, log_group):
         server = self.kep_connect()
@@ -1459,11 +1473,15 @@ class AttackScript:
         server = self.kep_connect()
         print(json.dumps(datalogger.log_group.get_all_log_groups(server), indent=4))
 
-    def kep_modify_project_properties(self,project_name):
+    def kep_get_log_group(self, log_group_name):
         server = self.kep_connect()
-        print(json.dumps(connection.server.modify_project_properties(server, {"common.ALLTYPES_NAME": project_name}),
-                         indent=4))
-        print(json.dumps(connection.server.get_project_properties(server), indent=4))
+        print(json.dumps(datalogger.log_group.get_log_group(server, log_group_name), indent=4))
+
+    # def kep_modify_project_properties(self,project_name):
+    #     server = self.kep_connect()
+    #     print(json.dumps(connection.server.modify_project_properties(server, {"common.ALLTYPES_NAME": project_name}),
+    #                      indent=4))
+    #     print(json.dumps(connection.server.get_project_properties(server), indent=4))
 
     def disable_running_schedules(self, revert: bool=False) -> None:
         """
@@ -1604,15 +1622,47 @@ class AttackScript:
 
     def kep_get_service_status(self) -> bool:
         """
-        Get KEP service status
+        Get KEP SERVER service status
 
         Returns:
             bool: True/False based on whether KEPServerEXV6 is running or not.
         """
         command_output = self.ssh_run_command('pwsh.exe -command "Get-Service KEPServerEXV6 | Select-Object -Property Status"')
         if "Running" in command_output:
-            print("KEPSERVER Running")
+            print("KEP Server Running")
             return True
+        else:
+            print("KEP Server Not Running")
+        return False
+    
+    def kep_log_get_service_status(self) -> bool:
+        """
+        Get KEP LOGGER service status
+
+        Returns:
+            bool: True/False based on whether KEPServerEXLoggerV6 is running or not.
+        """
+        command_output = self.ssh_run_command('pwsh.exe -command "Get-Service KEPServerEXLoggerV6 | Select-Object -Property Status"')
+        if "Running" in command_output:
+            print("KEP Logger Running")
+            return True
+        else:
+            print("KEP Logger Not Running")
+        return False
+    
+    def kep_api_get_service_status(self) -> bool:
+        """
+        Get KEP API service status
+
+        Returns:
+            bool: True/False based on whether KEPServerEXConfigAPI6 is running or not.
+        """
+        command_output = self.ssh_run_command('pwsh.exe -command "Get-Service KEPServerEXConfigAPI6 | Select-Object -Property Status"')
+        if "Running" in command_output:
+            print("KEP Config API Running")
+            return True
+        else:
+            print("KEP Config API Not Running")
         return False
 
     def get_windef_status(self) -> bool:
@@ -1626,6 +1676,8 @@ class AttackScript:
         if "True" in command_output:
             print("Windows Defender Running")
             return True
+        else:
+            print("Windows Defender Not Running")
         return False
 
     def get_firewall_status(self):
@@ -1643,7 +1695,7 @@ class AttackScript:
         results.append("OFF" if "OFF" in command_output.split()[11] else "ON")
         results.append("OFF" if "OFF" in command_output.split()[17] else "ON")
 
-        print(results)
+        #print(results)
         return results
 
     def scp_transfer_file(self, local_full_path: str, remote_full_path: str) -> None:
@@ -1948,7 +2000,7 @@ class AttackScript:
             case "26": self.ssh_brute_force()  # Move this up to be with the other ssh functions
             case "27": self.setup_ssh_config_and_key()  # Move this up to be with the other ssh functions
             case "28": self.kep_delete_log_files()
-            case "29": self.kep_get_channel()
+            case "29": self.kep_get_log_group()
             case "-h":
                 print(
                     "\nChoose \n1 Delete file, \n2 Copy file, \n3 Disable firewall, \n4 Disable ssh through firewall, \n5 Disable Kepserver, \n6 Interrupt modbus reading, \n7 Disable COMPORT, \n8 Encrypt files, \n9 Change Meter25 Id to 26, \n10 Clear Energy Reading, \n11 Revert with options, \n12 Bruteforce KEPServer Password, \n13 Disable sshd Service, \n14 Get hardware info, \n15 Obtain KEPServer info, \n16 Get all KEPServer Users, \n17 Enable KEP Users, \n18 Disable KEP Users, \n19 Obtain KEP User Info.")
