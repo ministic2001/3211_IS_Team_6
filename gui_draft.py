@@ -39,13 +39,11 @@ def get_service_statuses(ip, window):
         print(e,file=sys.__stderr__)
         window.write_event_value("-SERVICE_STATUS_FAILED-", None)
 
-def launch_exploit(exploit,ip,window,var1=None, var2=None, var3=None, var4=None, var5=None):
+def launch_exploit(exploit,ip,window,var1=None, var2=None, var3=None, var4=None, var5=None, revert: bool=False):
     if is_valid_ip(ip):
-        # status = f"The selected attack to run is {exploit} on IP: {ip}, var1 = {var1}, var2 = {var2}"
-        # update_status(status,"-STATUS_BOX-",window)
-        ## Logic for attack selection here
+        status = f"The selected attack to run is {exploit} on IP: {ip}, var1 = {var1}, var2 = {var2}, var3={var3}, var4={var4}, var5={var5}, revert={revert}"
+        update_status(status,"-STATUS_BOX-",window)
         attack = attackscript.AttackScript(ip)
-        ##TODO: Add checks for attack success or fail even if there was no errors raised
         try:
             match exploit:
                 ## ======================== KEP EXPLOITS ======================== ##
@@ -104,14 +102,15 @@ def launch_exploit(exploit,ip,window,var1=None, var2=None, var3=None, var4=None,
                 case "Delete log files": attack.kep_delete_log_files()
                 ## ======================== MODBUS EXPLOITS ======================== ##
                 case "Get hardware information": attack.smartmeter_get_hardware_info()
-                case "Change meter ID": attack.change_meterID()
+                case "Change meter ID": attack.change_meterID(revert)
                 case "Clear energy reading": attack.clear_energy_reading()
-                case "Change baud rate": attack.baudrate_change()
+                case "Change baud rate": attack.baudrate_change(revert)
                 case "Run mod interrupt": attack.run_modinterrupt()
+                case "Disable COM port": attack.disable_COMPort(revert)
                 ## ======================== IT EXPLOITS ======================== ##
-                case "Disable running schedules": attack.disable_running_schedules()
+                case "Task scheduler delete files": attack.scheduled_task_delete_files(var1, revert) # var1=folder_path
+                case "Disable running schedules": attack.disable_running_schedules(revert)
                 case "Change log data value": attack.ChangeLogDataValue(var1) # var1=meter_id
-
             update_status("Attack success","-STATUS_BOX-",window)
             window.write_event_value("-ATTACK_COMPLETE-", None)
 
@@ -210,12 +209,15 @@ def main():
                     "Clear energy reading": "Run modpoll to clear energy reading",
                     "Change baud rate": "Run modpoll to change baud rate - Register 40206",
                     "Run mod interrupt": "Run modpoll to interrupt COM1 port by disabling KEP Server and then run modpoll indefinitely",
+                    "Disable COM port": "Disable a COM port",
                     "======== IT EXPLOITS ========":"",
+                    "Task scheduler delete files": "Delete the smartmeter path prediodically through task scheduler ",
                     "Disable running schedules": "Disables MoveFiles and KEPServerEX 6.12 running schedules in task scheduler",
                     "Change log data value":"Change the data value of the latest meter log file, in the specified meter ID's folder (E.g. 2)"
                     } 
 
     exploit_list = list(exploit_dict.keys())
+    revertible_attacks = ["Change meter ID", "Change baud rate", "Disable COM port", "Task scheduler delete files", "Disable running schedules"]
     headingrow = ['SERVICE', 'STATUS']
     status_row = [['Firewall Domain Profile', '-'],
                   ['Firewall Private Profile', '-'],
@@ -230,7 +232,7 @@ def main():
     # Layout for the kep server exploits
     exploit_layout = [
         [sg.Text("Exploits",font=("Helvetica", 28, "bold"), expand_x=True, justification="center", background_color="#363636", text_color="white",pad=((0, 0), (30, 30)))],
-        [sg.Text("Exploit:", font=("Helvetica", 16, "bold")), sg.Combo(exploit_list, default_value=exploit_list[1], key='-EXPLOIT-', enable_events=True, readonly=True, font=("Helvetica", 16))],
+        [sg.Text("Exploit:", font=("Helvetica", 16, "bold")), sg.Combo(exploit_list, default_value=exploit_list[1], key='-EXPLOIT-', enable_events=True, readonly=True, font=("Helvetica", 16)),sg.Checkbox("Revert Attack", key="-REVERT_CHECKBOX-", visible=False, font=("Helvetica", 16))],
         [sg.Text("Description:", key="-DESCRIPTION-", font=("Helvetica", 16, "bold")), sg.Text(exploit_dict[exploit_list[1]],key="-DESCRIPTION_TEXT-", font=("Helvetica", 16))],
         [sg.Text("Variable 1:", key="-VAR1_TEXT-", visible=False, font=("Helvetica", 16, "bold")), sg.Input("1",key="-VAR1_INPUT-", visible=False, size=(22,1), font=("Helvetica", 16)), 
          sg.Text("Variable 2:",visible=False, key="-VAR2_TEXT-", font=("Helvetica", 16, "bold")), sg.Input("2",key="-VAR2_INPUT-", visible=False, size=(22,1), font=("Helvetica", 16)),
@@ -308,7 +310,7 @@ def main():
                 window["-SPINNER-"].update(visible=True)
                 window["-LAUNCH_EXPLOIT-"].update(disabled=True)
                 window["-STATUS_BOX-"].update("")
-                thread = threading.Thread(target=launch_exploit, args=(values['-EXPLOIT-'], values["-IP_INPUT-"], window, values["-VAR1_INPUT-"], values["-VAR2_INPUT-"], values["-VAR3_INPUT-"], values["-VAR4_INPUT-"], values["-VAR5_INPUT-"]))
+                thread = threading.Thread(target=launch_exploit, args=(values['-EXPLOIT-'], values["-IP_INPUT-"], window, values["-VAR1_INPUT-"], values["-VAR2_INPUT-"], values["-VAR3_INPUT-"], values["-VAR4_INPUT-"], values["-VAR5_INPUT-"], values["-REVERT_CHECKBOX-"]))
                 thread.start()
 
         elif event == "-SERVICE_STATUS_SUCCESS-":
@@ -357,6 +359,7 @@ def main():
             window["-DESCRIPTION_TEXT-"].update(exploit_dict[selected_exploit])
             # print(f"selected exploit == {selected_exploit}", file=sys.__stdout__)
             window["-EXPLOIT_ERROR_TEXT-"].update(visible=False)
+            window["-REVERT_CHECKBOX-"].update(visible=False, value=False)
             window["-VAR1_TEXT-"].update("Variable 1:", visible=False)
             window["-VAR1_INPUT-"].update("1", visible=False)
             window["-VAR2_TEXT-"].update("Variable 2:", visible=False)
@@ -367,6 +370,9 @@ def main():
             window["-VAR4_INPUT-"].update("4", visible=False)
             window["-VAR5_TEXT-"].update("Variable 5:", visible=False)
             window["-VAR5_INPUT-"].update("5", visible=False)
+
+            if selected_exploit in revertible_attacks:
+                window["-REVERT_CHECKBOX-"].update(visible=True)
 
             if selected_exploit == "===== KEP SERVER EXPLOITS =====":
                 window["-EXPLOIT-"].update(value=exploit_list[1])

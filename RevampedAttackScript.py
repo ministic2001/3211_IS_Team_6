@@ -513,7 +513,7 @@ class AttackScript:
             print("File have not been encrypted.")
 
     # Run modpoll to change register 40201 to 26
-    def change_meterID(self, revert: bool=True) -> None:
+    def change_meterID(self, revert: bool=False) -> None:
         """
         Run modpoll to change register 40201 (Which handle the meter ID) to 26
         
@@ -1347,10 +1347,10 @@ class AttackScript:
         print(json.dumps(connectivity.tag.modify_tag(server, device_to_get, {"common.ALLTYPES_NAME": new_name}, True), indent=4))
         # print(json.dumps(connectivity.tag.get_all_tags(server, device_to_get), indent=4))
 
-    # def kep_auto_tag_gen(self, channel, device):
-    #     server = self.kep_connect()
-    #     device_info = ".".join([channel, device])
-    #     print(connectivity.device.auto_tag_gen(server, device_info, job_ttl=8))
+    def kep_auto_tag_gen(self, channel, device):
+        server = self.kep_connect()
+        device_info = ".".join([channel, device])
+        print(connectivity.device.auto_tag_gen(server, device_info, job_ttl=8))
 
     # def kep_add_exchange(self, channel, device, ex_type, exchange_name):
     #     server = self.kep_connect()
