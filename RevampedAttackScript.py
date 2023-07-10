@@ -1531,13 +1531,7 @@ class AttackScript:
         Returns:
             bool: True/False based on whether the command `stop service` could execute or not.
         """
-        if revert:
-            return self.kep_server_start()
-        
-        services = ["KEPServerEXV6", "KEPServerEXConfigAPI6", "KEPServerEXLoggerV6"]
-        services_state = [False] * len(services)
-
-        for service_index, service in enumerate(services):
+        def kep_server_stop_thread(service: str, services_state: list, service_index: int):
             command_output = self.ssh_run_command(f"sc query {service}")
             if "RUNNING" in command_output:
                 print(f"{service} is running, stopping now...")
@@ -1548,10 +1542,9 @@ class AttackScript:
                     command_output = self.ssh_run_command(f"sc query {service}")
                     if "FAILED" in command_output:
                         print("FAILED:", "\nFail.\n")
-                        services_state[service_index] = False
 
                     elif "STOPPED" in command_output:
-                        #print(f"{service} has stopped!")
+                        print(f"{service} has stopped!")
                         services_state[service_index] = True
                     else:
                         print(f"{service} is still stopping... waiting 1 more second [{counter}]")
@@ -1559,12 +1552,26 @@ class AttackScript:
                         sleep(1)
 
             elif "STOPPED" in command_output:
-                #print(f"{service} has stopped!")
+                print(f"{service} has stopped!")
                 services_state[service_index] = True
             else:
                 print(command_output)
                 print("Something went wrong!")
-                services_state[service_index] = False
+
+        if revert:
+            return self.kep_server_start()
+        
+        services = ["KEPServerEXV6", "KEPServerEXConfigAPI6", "KEPServerEXLoggerV6"]
+        services_state = [False] * len(services)
+        threads = []
+
+        for service_index, service in enumerate(services):
+            thread = threading.Thread(target=kep_server_stop_thread, args=(service, services_state, service_index))
+            thread.start()
+            threads.append(thread)
+        
+        for thread in threads: thread.join()
+        print(services_state)
 
         print("\nCollating service status for all services...")
         state = "success"
@@ -1585,14 +1592,10 @@ class AttackScript:
         Returns:
             bool: True/False based on whether the command `start service` could execute or not.
         """
-
-        services = ["KEPServerEXV6", "KEPServerEXConfigAPI6", "KEPServerEXLoggerV6"]
-        services_state = [False] * len(services)
-
-        for service_index, service in enumerate(services):
+        def kep_server_start_thread(service: str, services_state: list, service_index: int):
             command_output = self.ssh_run_command(f"sc query {service}")
             if "STOPPED" in command_output:
-                print(f"{service} has stopped, starting now...")
+                print(f"{service} has stopped, starting now... {service_index}")
                 command_output = self.ssh_run_command(f"sc start {service}")
 
                 counter = 1 # Added counter to make the UI Seem more responsive
@@ -1603,7 +1606,7 @@ class AttackScript:
                         services_state[service_index] = False
 
                     elif "RUNNING" in command_output:
-                        #print(f"{service} is running!")
+                        print(f"{service} is running!")
                         services_state[service_index] = True
                     else:
                         print(f"{service} is still starting up... waiting 1 more second [{counter}]")
@@ -1611,12 +1614,23 @@ class AttackScript:
                         sleep(1)
 
             elif "RUNNING" in command_output:
-                #print(f"{service} is running!")
+                print(f"{service} is running!")
                 services_state[service_index] = True
             else:
                 print(command_output)
                 print("Something went wrong!")
                 services_state[service_index] = False
+        
+        services = ["KEPServerEXV6", "KEPServerEXConfigAPI6", "KEPServerEXLoggerV6"]
+        services_state = [False] * len(services)
+        threads = []
+        for service_index, service in enumerate(services):
+            thread = threading.Thread(target=kep_server_start_thread, args=(service, services_state, service_index))
+            thread.start()
+            threads.append(thread)
+        
+        for thread in threads: thread.join()
+        print(services_state)
 
         print("\nCollating service status for all services...")
         state = "success"
