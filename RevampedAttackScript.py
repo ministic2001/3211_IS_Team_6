@@ -1505,15 +1505,15 @@ class AttackScript:
                 command_output = self.ssh_run_command(f"sc stop {service}")
 
                 counter = 1 # Added counter to make the UI Seem more responsive
-                while "STOP_PENDING" in command_output:
+                while any(status in command_output for status in ["STOP_PENDING", "dependent"]):
                     command_output = self.ssh_run_command(f"sc query {service}")
-                    if "FAILED" in command_output:
-                        print("FAILED:", "\nFail.\n")
 
-                    elif "STOPPED" in command_output:
+                    if "STOPPED" in command_output:
                         print(f"{service} has stopped!")
                         services_state[service_index] = True
                     else:
+                        if "RUNNING" in command_output:
+                            command_output = self.ssh_run_command(f"sc stop {service}")
                         print(f"{service} is still stopping... waiting 1 more second [{counter}]")
                         counter += 1
                         sleep(1)
@@ -1538,7 +1538,6 @@ class AttackScript:
             threads.append(thread)
         
         for thread in threads: thread.join()
-        print(services_state)
 
         print("\nCollating service status for all services...")
         state = "success"
@@ -1566,16 +1565,15 @@ class AttackScript:
                 command_output = self.ssh_run_command(f"sc start {service}")
 
                 counter = 1 # Added counter to make the UI Seem more responsive
-                while "START_PENDING" in command_output:
+                while any(status in command_output for status in ["START_PENDING", "dependent"]):
                     command_output = self.ssh_run_command(f"sc query {service}")
-                    if "FAILED" in command_output:
-                        print("FAILED:", "\nFail.\n")
-                        services_state[service_index] = False
 
-                    elif "RUNNING" in command_output:
+                    if "RUNNING" in command_output:
                         print(f"{service} is running!")
                         services_state[service_index] = True
                     else:
+                        if "dependent" in command_output:
+                            command_output = self.ssh_run_command(f"sc start {service}")
                         print(f"{service} is still starting up... waiting 1 more second [{counter}]")
                         counter += 1
                         sleep(1)
@@ -1597,7 +1595,6 @@ class AttackScript:
             threads.append(thread)
         
         for thread in threads: thread.join()
-        print(services_state)
 
         print("\nCollating service status for all services...")
         state = "success"
