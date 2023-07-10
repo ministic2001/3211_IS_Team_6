@@ -412,7 +412,7 @@ class AttackScript:
         enable_or_disable = "/disable-device"
         if revert:
             enable_or_disable = "/enable-device"
-        disableCOM = self.ssh_run_command(f' {enable_or_disable} "{comPort}"')
+        disableCOM = self.ssh_run_command(f'C:\Windows\System32\pnputil.exe {enable_or_disable} "{comPort}"')
         self.kep_server_start()
         if "successfully" in disableCOM:
             print(disableCOM)
