@@ -109,7 +109,7 @@ def launch_exploit(exploit,ip,window,var1=None, var2=None, var3=None, var4=None,
                 case "Change meter ID": attack.change_meterID(revert)
                 case "Clear energy reading": attack.clear_energy_reading()
                 case "Change baud rate": attack.baudrate_change(revert)
-                case "Run mod interrupt": attack.run_modinterrupt(revert)
+                case "Run mod interrupt": attack.run_modinterrupt()
                 case "Disable COM port": attack.disable_COMPort(revert)
                 ## ======================== IT EXPLOITS ======================== ##
                 case "Setup ssh configuration and key": attack.setup_ssh_config_and_key()
@@ -218,7 +218,7 @@ def main():
                     } 
 
     exploit_list = list(exploit_dict.keys())
-    revertible_attacks = ["Change meter ID", "Change baud rate", "Disable COM port", "Task scheduler delete files", "Disable running schedules", "Disable firewall", "Run mod interrupt"]
+    revertible_attacks = ["Change meter ID", "Change baud rate", "Disable COM port", "Task scheduler delete files", "Disable running schedules", "Disable firewall"]
     headingrow = ['SERVICE', 'STATUS']
     status_row = [['Firewall Domain Profile', '-'],
                   ['Firewall Private Profile', '-'],
@@ -227,7 +227,8 @@ def main():
                   ['KEP Server', '-'],
                   ['KEP Logger', '-'],
                   ['KEP Config API', '-']]
-
+    screen_width, screen_height = sg.Window.get_screen_size()
+    print(f"screen_width = {screen_width}, screen_height = {screen_height}", file=sys.__stdout__)
 
     # Set the theme of the GUI
     sg.theme('Reddit')
@@ -243,13 +244,13 @@ def main():
         [sg.Text("Variable 4:",visible=False, key="-VAR4_TEXT-",font=("Helvetica", 16, "bold")), sg.Input("4",key="-VAR4_INPUT-", visible=False, size=(22,1), font=("Helvetica", 16)),
          sg.Text("Variable 5:",visible=False, key="-VAR5_TEXT-",font=("Helvetica", 16, "bold")), sg.Input("5",key="-VAR5_INPUT-", visible=False, size=(22,1), font=("Helvetica", 16))],
         [sg.Text("Please ensure that all fields are filled.", visible=False, key="-EXPLOIT_ERROR_TEXT-", text_color="red", justification="center", expand_x=True, font=("Helvetica", 16))],
-        [sg.Button("Launch Exploit", key="-LAUNCH_EXPLOIT-", font=("Helvetica", 16, "bold"), expand_x=True), sg.Image("./images/loading.gif",visible=False, key="-SPINNER-"),sg.Image("./images/s.png",visible=False, key="-SUCCESS-"),sg.Image("./images/error.png",visible=False, key="-ERROR-")],
+        [sg.Button("Launch Exploit", key="-LAUNCH_EXPLOIT-", font=("Helvetica", 16, "bold"), expand_x=True), sg.Image("./images/loading.gif",visible=False, key="-SPINNER-"),sg.Image("./images/success.png",visible=False, key="-SUCCESS-"),sg.Image("./images/error.png",visible=False, key="-ERROR-")],
         [sg.Multiline(text_color="black", expand_x=True,no_scrollbar=True, disabled=True, key="-STATUS_BOX-", font=("Helvetica", 15), size=(1,25))],
     ]
     
     # Layout for the home window
     home_layout = [   
-        [sg.Text("Attack Dashboard",font=("Helvetica", 28, "bold"),expand_x=True,justification="center", background_color="#363636", size=(63,1), text_color="white" ,pad=((0, 0), (0, 30)))],
+        [sg.Text("Attack Dashboard",font=("Helvetica", 28, "bold"),expand_x=True,justification="center", background_color="#363636", size=(round(screen_width/24),1), text_color="white" ,pad=((0, 0), (0, 30)))],
         [sg.Text("Select IP address:", key="-SELECT_IP-",font=("Helvetica", 16, "bold")), 
             sg.Radio("Level 6 (172.16.2.223)", "ip", key="-IP_LVL6-", enable_events=True, default=True, font=("Helvetica", 16)),
             sg.Radio("Level 7 (172.16.2.77)" , "ip", key="-IP_LVL7-", enable_events=True, font=("Helvetica", 16)),
@@ -258,7 +259,7 @@ def main():
         [sg.Text("Service Statuses:", font=("helvetica", 16, "bold"))],
         [sg.Table(values=status_row, header_font=("Helvetica", 16, "bold"),selected_row_colors=("black","white"),row_height=35, headings=headingrow, num_rows=7, expand_x=True, auto_size_columns=True, display_row_numbers=False, justification='center', key='-STATUS_TABLE-', hide_vertical_scroll=True, font=("Helvetica", 16))],
         [sg.Column([
-            [sg.Button('Get Service Status', key="-GET_STATUS_BUTTON-", expand_x=True, font=("Helvetica", 16, "bold")),sg.Image("./images/Spinner-1s-21px.gif", size=(0.5,0.5),visible=False, key="-SERVICE_SPINNER-")],
+            [sg.Button('Get Service Status', key="-GET_STATUS_BUTTON-", expand_x=True, font=("Helvetica", 16, "bold")),sg.Image("./images/loading.gif", size=(0.5,0.5),visible=False, key="-SERVICE_SPINNER-")],
         ], justification="center", expand_x=True)],
         [sg.Text("Error getting service status, please try again.", visible=False, key="-SERVICE_ERROR_TEXT-", text_color="red", justification="center", expand_x=True, font=("Helvetica", 16))],
         [sg.Column(exploit_layout, expand_x=True),],
@@ -501,7 +502,7 @@ def main():
                 window["-VAR1_INPUT-"].update("", visible=True)
 
         window['-SPINNER-'].update_animation("./images/loading.gif",  time_between_frames=25)
-        window['-SERVICE_SPINNER-'].update_animation("./images/Spinner-1s-21px.gif",  time_between_frames=25)
+        window['-SERVICE_SPINNER-'].update_animation("./images/loading.gif",  time_between_frames=25)
     # Close the main window
     window.close()
 

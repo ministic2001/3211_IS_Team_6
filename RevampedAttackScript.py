@@ -1642,10 +1642,10 @@ class AttackScript:
         """
         command_output = self.ssh_run_command('pwsh.exe -command "Get-Service KEPServerEXV6 | Select-Object -Property Status"')
         if "Running" in command_output:
-            print("KEP Server Running")
+            print("KEP Server Running", file=sys.__stdout__)
             return True
         else:
-            print("KEP Server Not Running")
+            print("KEP Server Not Running", file=sys.__stdout__)
         return False
     
     def kep_log_get_service_status(self) -> bool:
@@ -1657,10 +1657,10 @@ class AttackScript:
         """
         command_output = self.ssh_run_command('pwsh.exe -command "Get-Service KEPServerEXLoggerV6 | Select-Object -Property Status"')
         if "Running" in command_output:
-            print("KEP Logger Running")
+            print("KEP Logger Running", file=sys.__stdout__)
             return True
         else:
-            print("KEP Logger Not Running")
+            print("KEP Logger Not Running", file=sys.__stdout__)
         return False
     
     def kep_api_get_service_status(self) -> bool:
@@ -1672,10 +1672,10 @@ class AttackScript:
         """
         command_output = self.ssh_run_command('pwsh.exe -command "Get-Service KEPServerEXConfigAPI6 | Select-Object -Property Status"')
         if "Running" in command_output:
-            print("KEP Config API Running")
+            print("KEP Config API Running", file=sys.__stdout__)
             return True
         else:
-            print("KEP Config API Not Running")
+            print("KEP Config API Not Running", file=sys.__stdout__)
         return False
 
     def get_windef_status(self) -> bool:
@@ -1687,10 +1687,10 @@ class AttackScript:
         """
         command_output = self.ssh_run_command('pwsh.exe -command "Get-MpComputerStatus | select Antivirusenabled"')
         if "True" in command_output:
-            print("Windows Defender Running")
+            print("Windows Defender Running", file=sys.__stdout__)
             return True
         else:
-            print("Windows Defender Not Running")
+            print("Windows Defender Not Running", file=sys.__stdout__)
         return False
 
     def get_firewall_status(self):
