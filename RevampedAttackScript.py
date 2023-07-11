@@ -703,7 +703,7 @@ class AttackScript:
 
         executable_path = self.MODPOLL_PATH + r"\modpoll.exe"
 
-        found_baudrate = 0
+        found_baudrate: str = "0"
         baudrate_list = ["4800", "9600", "19200"]
 
         for baudrate in baudrate_list:

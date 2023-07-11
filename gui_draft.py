@@ -308,10 +308,7 @@ def main():
             
             elif values["-EXPLOIT-"] == "Add user" and len(values["-VAR3_INPUT-"]) < 14:
                 window["-EXPLOIT_ERROR_TEXT-"].update("Password must be more than 14 characters",visible=True)
-
-            elif values["-EXPLOIT-"] == "Change log data value" and not values["-VAR1_INPUT-"].isdigit():
-                window["-EXPLOIT_ERROR_TEXT-"].update("Meter ID must be a numeric value", visible=True)
-
+                
             else:
                 window["-EXPLOIT_ERROR_TEXT-"].update(visible=False)
                 window["-SPINNER-"].update(visible=True)
