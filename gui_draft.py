@@ -112,11 +112,13 @@ def launch_exploit(exploit,ip,window,var1=None, var2=None, var3=None, var4=None,
                 case "Run mod interrupt": attack.run_modinterrupt()
                 case "Disable COM port": attack.disable_COMPort(revert)
                 ## ======================== IT EXPLOITS ======================== ##
-                case "Setup ssh configuration and key": attack.setup_ssh_config_and_key()
+                case "Bruteforce SSH": attack.ssh_brute_force()
+                case "Setup SSH configuration and key": attack.setup_ssh_config_and_key()
                 case "Task scheduler delete files": attack.scheduled_task_delete_files(var1, revert) # var1=folder_path
                 case "Disable running schedules": attack.disable_running_schedules(revert)
                 case "Change log data value": attack.ChangeLogDataValue(var1) # var1=meter_id
                 case "Disable firewall": attack.disable_firewall(revert)
+                case "Ransom": attack.Ransom()
                 case "Disable ssh": attack.disable_ssh()
 
             update_status("Attack success","-STATUS_BOX-",window)
@@ -208,13 +210,15 @@ def main():
                     "Change baud rate": "Run modpoll to change baud rate - Register 40206",
                     "Run mod interrupt": "Run modpoll to interrupt COM1 port by disabling KEP Server and then run modpoll indefinitely",
                     "======== IT EXPLOITS ========":"",
-                    "Setup ssh configuration and key":"Inserts an sshd_config file and an access key into a target Windows machine. Once complete, the SSH service (sshd) is restarted.\nAfter running, you will then be able to use the access key to SSH into the target machine.",
-                    "Task scheduler delete files": "Delete the smartmeter path prediodically through task scheduler ",
+                    "Bruteforce SSH": "Attempts to brute force an SSH connection given a hostname, port, username, and password list file",
+                    "Setup SSH configuration and key": "Inserts an sshd_config file and an access key into a target Windows machine. Once complete, the SSH service (sshd) is restarted.\nAfter running, you will then be able to use the access key to SSH into the target machine.",
+                    "Task scheduler delete files": "Delete the smartmeter path prediodically through task scheduler",
                     "Change log data value": "Change the data value of the latest meter log file, in the specified meter ID's folder (E.g. 2)",
                     "Disable running schedules": "Disables MoveFiles and KEPServerEX 6.12 running schedules in task scheduler",
                     "Disable COM port": "Disable a COM port",
                     "Disable firewall": "Turn off all three domains of the firewall",
-                    "Disable SSH": "Disable SSH from the firewall. NOTE: THIS ATTACK SHOULD BE RAN LAST AS IT WILL STOP ALL FUNCTIONALITY"
+                    "Ransom": "Ransom Description",
+                    "Disable SSH": "Disable SSH from the firewall. NOTE: THIS ATTACK SHOULD BE RAN LAST AS IT WILL STOP ALL FUNCTIONALITY",
                     } 
 
     exploit_list = list(exploit_dict.keys())
