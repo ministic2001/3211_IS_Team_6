@@ -19,7 +19,8 @@ from scp import SCPClient
 import socket
 import platform
 import threading
-
+import argparse
+import textwrap
 
 class AttackScript:
     def __init__(self, ip, username="Student", password="Student12345@"):
@@ -1807,9 +1808,6 @@ class AttackScript:
             return None
         ssh.close()
 
-    def dummy_test(self) -> None:
-        print("Hello, I am very cooool")
-
     def transfer_exe_remotely(self, remote_path=None):
         """
         Convert this current script to exe and transfer to the specified remote_path
@@ -2004,31 +2002,27 @@ class AttackScript:
     ########
     # MAIN #
     ########
-    def main(self):
-        attack_option = str(argv[1])
-
-        revert = False # Default vale for revert
-
-        if len(argv) > 2: # NOTE: This is not final, may use Args Parse instead to specify revert=True
-            revert = True
+    def main(self, cli_input):
+        
+        attack_option = cli_input.attack_no
+        revert = cli_input.revert
 
         match attack_option:
-            case "cool": self.dummy_test()
             case "start": self.kep_server_start()
             case "check": self.baudrate_check()
             case "1":  self.scheduled_task_delete_files(self.SMARTMETER_PATH)  # TODO: Determine if this function is depricated or can be modified
             # case "2":  create_shared_folder(), copy_file(SMARTMETER_PATH) # TODO: Determine if this function is depricated
-            case "3":  self.disable_firewall()
+            case "3":  self.disable_firewall(revert)
             case "4":  self.disable_ssh()
             case "5":  self.kep_server_stop(revert)
-            case "6":  self.run_modinterrupt()
+            case "6":  self.run_modinterrupt(revert)
             case "7":  self.disable_COMPort(revert)
             case "8":  self.encrypt_files()
-            case "9":  self.change_meterID()
+            case "9":  self.change_meterID(revert)
             case "10": self.clear_energy_reading()
             case "11": self.revert(revert_option := str(argv[2])) # TODO: Completely depricate this by implementing most function with revert=False/True
             case "12": self.kep_bruteforce()
-            case "13": self.baudrate_change()
+            case "13": self.baudrate_change(revert)
             case "14": self.smartmeter_get_hardware_info()
             case "15": self.kep_server_info()
             case "16": self.kep_get_all_users()
@@ -2046,45 +2040,77 @@ class AttackScript:
             case "28": self.kep_delete_log_files()
             case "29": self.kep_get_log_group("Derrick")
             case "30": self.encrypt_files()
-            case "31": self.Ransom()
+            case "31": self.Ransom(revert)
             case "32": self.revert_decrypt()
-            case "-h":
-                print("\nChoose \n" +
-                      "1  Delete file, \n" +
-                      "2  Copy file, \n" +
-                      "3  Disable firewall, \n" +
-                      "4  Disable ssh through firewall, \n" +
-                      "5  Disable Kepserver, \n" +
-                      "6  Interrupt modbus reading, \n" +
-                      "7  Disable COMPORT, \n" +
-                      "8  Encrypt files, \n" +
-                      "9  Change Meter25 Id to 26, \n" +
-                      "10 Clear Energy Reading, \n" +
-                      "11 Revert with options, \n" +
-                      "12 Bruteforce KEPServer Password, \n" +
-                      "13 Disable sshd Service, \n" +
-                      "14 Get Smartmeter hardware info, \n" +
-                      "15 Get KEP Server info, \n" + 
-                      "16 Get all KEP Server Users, \n" +
-                      "17 Enable KEP User, \n" +
-                      "18 Disable KEP User, \n" +
-                      "19 Get single KEP User info, \n" +
-                      "20 Disable running schedules, \n" +
-                      "21 Get all KEP Channels, \n" + 
-                      "22 Get all KEP Devices, \n" + 
-                      "23 Get single KEP Device, \n" +
-                      "24 Delete KEP Spoofed Device, \n" +
-                      "25 Add KEP Spoofed Device, \n" +
-                      "26 Bruteforce SSH credentials, \n" +
-                      "27 Setup SSH Configuration and Keys, \n" +
-                      "28 Delete KEP Log Files, \n" +
-                      "29 Get Log Group, \n" +
-                      "30 Encrypt Files, \n" +
-                      "31 Ransom, \n" +
-                      "32 Decrypt Files")       
             case _:
-                print("Invalid Option! Use option \"-h\" for help!")
+                print("Invalid Attack Option! Use option \"-h\" for help!")
 
+def main():
+    class CustomFormatter(argparse.ArgumentDefaultsHelpFormatter, argparse.RawTextHelpFormatter):
+        # def __init__(self):
+        #     lambda prog: argparse.RawDescriptionHelpFormatter(prog, max_help_position=10)
+        pass
+    parser = argparse.ArgumentParser(prog="python AttackScript.py", description="CLI Attack Script for the SmartMeter laptop", formatter_class=CustomFormatter)
+
+    # Positional Arguments
+    parser.add_argument("attack_no", metavar="attack_option", type=str, 
+                        help=textwrap.dedent('''
+                        Specify the attack number based on the choices below:
+                            1  Delete file
+                            2  Copy file
+                            3  Disable firewall
+                            4  Disable ssh through firewall
+                            5  Disable Kepserver service
+                            6  Interrupt modbus reading
+                            7  Disable COM port
+                            8  Encrypt files
+                            9  Change Meter25 Id to 26
+                            10 Clear Energy Reading
+                            11 Revert with options
+                            12 Bruteforce KEPServer Password
+                            13 Change baudrate
+                            14 Get Smartmeter hardware info
+                            15 Get KEP Server info
+                            16 Get all KEP Server Users
+                            17 Enable KEP User
+                            18 Disable KEP User
+                            19 Get single KEP User info
+                            20 Disable running schedules
+                            21 Get all KEP Channels
+                            22 Get all KEP Devices
+                            23 Get single KEP Device
+                            24 Delete KEP Spoofed Device
+                            25 Add KEP Spoofed Device
+                            26 Bruteforce SSH credentials
+                            27 Setup SSH Configuration and Keys
+                            28 Delete KEP Log Files
+                            29 Get Log Group
+                            30 Encrypt Files
+                            31 Ransom
+                            32 Decrypt Files
+                        '''))
+
+    # Optional Arguments
+    parser.add_argument("-r", "--revert", action="store_true", 
+                        help=textwrap.dedent('''
+                        Revert the attack. These numbers are the following revertible attacks and their effects:
+                            3  Enable firewall
+                            5  Enable Kepserver service
+                            6  Remove modbus reading interruption
+                            7  Enable COM port
+                            9  Change Meter26 Id back to 25
+                            13 Change baudrate back to standard 9600
+                            20 Enable running schedules
+                            31 Decrypt Ransomware
+                        '''))
+    parser.add_argument("--ip", dest="ip_address", metavar="ip_address", default="172.16.2.223", help="Specify the ip address.")
+    
+    parser._optionals.title = 'Optional arguments'
+
+    cli_input = parser.parse_args()
+
+    attack = AttackScript(cli_input.ip_address)
+    attack.main(cli_input)
+    
 if __name__ == '__main__':
-    attack = AttackScript("172.16.2.77")
-    attack.main()
+    main()
