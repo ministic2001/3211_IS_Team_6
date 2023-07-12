@@ -2050,7 +2050,17 @@ def main():
         # def __init__(self):
         #     lambda prog: argparse.RawDescriptionHelpFormatter(prog, max_help_position=10)
         pass
-    parser = argparse.ArgumentParser(prog="python AttackScript.py", description="CLI Attack Script for the SmartMeter laptop", formatter_class=CustomFormatter)
+    parser = argparse.ArgumentParser(prog="python AttackScript.py", description="CLI Attack Script for the SmartMeter laptop", formatter_class=CustomFormatter,
+                                    epilog=textwrap.dedent('''
+                                    IS-2: Hacking A Smart Meter Network
+                                    Github Link: https://github.com/ministic2001/3211_IS_Team_6
+                                    Project made by:
+                                        CHEW ZHI HAO TERENCE  (2102389@sit.singaporetech.edu.sg) @Terence2389
+                                        CHUA YUE KAH NICHOLAS (2102785@sit.singaporetech.edu.sg) @NicholasChua
+                                        EE ZONG HAN DERRICK   (2102080@sit.singaporetech.edu.sg) @Derrickeee
+                                        JON TAN JUN TING      (2100787@sit.singaporetech.edu.sg) @JonTJT
+                                        KEH SHAO XUAN         (2101946@sit.singaporetech.edu.sg) @ministic2001
+                                    '''))
 
     # Positional Arguments
     parser.add_argument("attack_no", metavar="attack_option", type=str, 
