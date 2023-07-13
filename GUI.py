@@ -108,7 +108,7 @@ def launch_exploit(exploit,ip,window,var1=None, var2=None, var3=None, var4=None,
                 case "Change meter ID": attack.change_meterID(revert)
                 case "Clear energy reading": attack.clear_energy_reading()
                 case "Change baud rate": attack.baudrate_change(revert)
-                case "Run mod interrupt": attack.run_modinterrupt()
+                case "Run mod interrupt": attack.run_modinterrupt(revert)
                 case "Disable COM port": attack.disable_COMPort(revert)
                 ## ======================== IT EXPLOITS ======================== ##
                 case "Bruteforce SSH": attack.ssh_brute_force()
@@ -118,7 +118,7 @@ def launch_exploit(exploit,ip,window,var1=None, var2=None, var3=None, var4=None,
                 case "Change log data value": attack.ChangeLogDataValue(var1) # var1=meter_id
                 case "Disable firewall": attack.disable_firewall(revert)
                 case "Ransomware": attack.Ransom(revert)
-                case "Disable ssh": attack.disable_ssh()
+                case "Disable SSH": attack.disable_ssh()
 
             update_status("Attack success","-STATUS_BOX-",window)
             window.write_event_value("-ATTACK_COMPLETE-", None)
