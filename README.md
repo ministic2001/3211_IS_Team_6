@@ -18,7 +18,7 @@
 # 3211_IS_Team_6
 
 <div align="center">
-Python 3.10 is required for this to work.
+Python 3.10 and above is required for this to work.
 </div>
 <br />
 
@@ -32,7 +32,7 @@ To install the packages, type the command pip install -r requirements.txt.
 
 <div align="center">
   
-Execute the bruteforce attack from the dashboard to gain SSH access for the program to work.
+Execute the bruteforce attack, setup SSH key from the dashboard to gain SSH access for the program to work.
 
 </div>
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -72,52 +72,6 @@ Instructions on setting up your project locally. To get a local copy up and runn
 List of things you need, to use the software and how to install them.
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-## Setup SSH key on target machine
-1. Create the SSH key pair
-   ```sh
-   cd .ssh
-   ssh-keygen -t ed25519 -b 256 -f <sshKeyName> -q -N ""
-   ```
-2. Transfer the sshd_config file to your machine, edit, then transfer it back
-   
-   Changes made:
-   ``` 
-   PubkeyAuthentication yes
-   PasswordAuthentication yes
-   Subsystem powershell c:/progra~1/powershell/7/pwsh.exe -sshs -nologo
-   # Match Group administrators
-   #       AuthorizedKeysFile __PROGRAMDATA__/ssh/administrators_authorized_keys
-   ```
-   
-   ```sh
-   scp <user>@<ip>:C:\ProgramData\ssh\sshd_config sshd_config
-   <Make above edits>
-   scp sshd_config <user>@<ip>:C:\ProgramData\ssh\sshd_config
-   ```
-3. Transfer the contents of the SSH key to the target machine, and place it in the authorized_keys file
-   ```sh
-   scp accessKey.pub <user>@<ip>:C:\Users\<user>\.ssh\authorized_keys
-   ```
-4. SSH into the target machine and edit the ACL of the authorized_keys file, then restart the sshd service
-   ```sh
-   ssh <user>@<ip>
-   $acl = Get-Acl C:\Users\<user>\.ssh\authorized_keys
-   $acl.SetAccessRuleProtection($true, $false)
-   $administratorsRule = New-Object system.security.accesscontrol.filesystemaccessrule("Administrators","FullControl","Allow")
-   $systemRule = New-Object system.security.accesscontrol.filesystemaccessrule("SYSTEM","FullControl","Allow")
-   $acl.SetAccessRule($administratorsRule)
-   $acl.SetAccessRule($systemRule)
-   $acl | Set-Acl
-   Restart-Service sshd
-   ```
-   
-5. Test the SSH access using the private key
-   ```sh
-   ssh -i <sshKeyName> <user>@<ip>
-   ```
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
 ## Installation and Usage on Windows, Linux and Mac
 1. Clone the repo
    ```sh
@@ -130,7 +84,7 @@ List of things you need, to use the software and how to install them.
    ```
 3. Run the program
    ```sh
-   python gui_draft.py
+   python GUI.py
    ```
    
 4. Target to Attack
