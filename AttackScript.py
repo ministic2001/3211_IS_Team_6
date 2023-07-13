@@ -2042,6 +2042,7 @@ class AttackScript:
             case "30": self.encrypt_files()
             case "31": self.Ransom(revert)
             case "32": self.revert_decrypt()
+            case "33": self.ChangeLogDataValue("2_1")
             case _:
                 print("Invalid Attack Option! Use option \"-h\" for help!")
 
@@ -2098,6 +2099,7 @@ def main():
                             30 Encrypt Files
                             31 Ransom
                             32 Decrypt Files
+                            33 Change Log Data Value
                         '''))
 
     # Optional Arguments
