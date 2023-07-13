@@ -1082,14 +1082,15 @@ class AttackScript:
         """
         def kep_server_start_thread(service: str, services_state: list, service_index: int):
             command_output = self.ssh_run_command(f"sc query {service}")
-            if "STOPPED" in command_output:
-                print(f"{service} has stopped, starting now... {service_index}")
-                command_output = self.ssh_run_command(f"sc start {service}")
 
+            if "STOPPED" in command_output:
+                print(f"{service} has stopped, starting now...")
+                command_output = self.ssh_run_command(f"sc start {service}")
                 counter = 1 # Added counter to make the UI Seem more responsive
-                while any(status in command_output for status in ["START_PENDING", "dependent"]):
+                while any(status in command_output for status in ["START_PENDING", "dependent", "1056"]):
                     command_output = self.ssh_run_command(f"sc query {service}")
 
+                        
                     if "RUNNING" in command_output:
                         print(f"{service} is running!")
                         services_state[service_index] = True

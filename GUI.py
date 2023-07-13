@@ -221,7 +221,7 @@ def main():
                     } 
 
     exploit_list = list(exploit_dict.keys())
-    revertible_attacks = ["Change meter ID", "Change baud rate", "Disable COM port", "Task scheduler delete files", "Disable running schedules", "Disable firewall"]
+    revertible_attacks = ["Change meter ID", "Change baud rate", "Disable COM port", "Task scheduler delete files", "Disable running schedules", "Disable firewall", "Run mod interrupt","Ransomware"]
     headingrow = ['SERVICE', 'STATUS']
     status_row = [['Firewall Domain Profile', '-'],
                   ['Firewall Private Profile', '-'],
@@ -387,10 +387,10 @@ def main():
                 window["-EXPLOIT-"].update(value=exploit_list[1])
             
             elif selected_exploit == "====== MODBUS EXPLOITS ======":
-                window["-EXPLOIT-"].update(value=exploit_list[54])
+                window["-EXPLOIT-"].update(value=exploit_list[exploit_list.index('Get hardware information')])
                 
             elif selected_exploit == "======== IT EXPLOITS ========":
-                window["-EXPLOIT-"].update(value=exploit_list[60])
+                window["-EXPLOIT-"].update(value=exploit_list[exploit_list.index('Bruteforce SSH')])
 
             elif selected_exploit in ["Enable user", "Disable user", "Get single user", "Delete user"]:
                 window["-VAR1_TEXT-"].update("User:", visible=True)
