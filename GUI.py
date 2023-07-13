@@ -117,7 +117,7 @@ def launch_exploit(exploit,ip,window,var1=None, var2=None, var3=None, var4=None,
                 case "Disable running schedules": attack.disable_running_schedules(revert)
                 case "Change log data value": attack.ChangeLogDataValue(var1) # var1=meter_id
                 case "Disable firewall": attack.disable_firewall(revert)
-                case "Ransom": attack.Ransom()
+                case "Ransomware": attack.Ransom()
                 case "Disable ssh": attack.disable_ssh()
 
             update_status("Attack success","-STATUS_BOX-",window)
@@ -216,7 +216,7 @@ def main():
                     "Disable running schedules": "Disables MoveFiles and KEPServerEX 6.12 running schedules in task scheduler",
                     "Disable COM port": "Disable a COM port",
                     "Disable firewall": "Turn off all three domains of the firewall",
-                    "Ransom": "Ransom Description",
+                    "Ransomware": "Encrypt all files in the attack folder",
                     "Disable SSH": "Disable SSH from the firewall. NOTE: THIS ATTACK SHOULD BE RAN LAST AS IT WILL STOP ALL FUNCTIONALITY",
                     } 
 
