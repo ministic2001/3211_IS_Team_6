@@ -1,7 +1,6 @@
 import PySimpleGUI as sg
 import ipaddress
 import threading
-import time
 import AttackScript as attackscript
 import sys
 

