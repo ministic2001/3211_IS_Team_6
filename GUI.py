@@ -117,7 +117,7 @@ def launch_exploit(exploit,ip,window,var1=None, var2=None, var3=None, var4=None,
                 case "Disable running schedules": attack.disable_running_schedules(revert)
                 case "Change log data value": attack.ChangeLogDataValue(var1) # var1=meter_id
                 case "Disable firewall": attack.disable_firewall(revert)
-                case "Ransomware": attack.Ransom()
+                case "Ransomware": attack.Ransom(revert)
                 case "Disable ssh": attack.disable_ssh()
 
             update_status("Attack success","-STATUS_BOX-",window)
