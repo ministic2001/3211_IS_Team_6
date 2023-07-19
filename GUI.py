@@ -81,20 +81,10 @@ def launch_exploit(exploit,ip,window,var1=None, var2=None, var3=None, var4=None,
                 case "Delete tag": attack.kep_del_tag(var1,var2,var3) # var1=channel, var2=device, var3=name
                 case "Modify tag": attack.kep_modify_tag(var1,var2,var3,var4) # var1=channel, var2=device, var3=name, var4=projectID, var5=new_name
                 case "Auto generate tags": attack.kep_auto_tag_gen(var1,var2) # var1=channel, var2=device
-                # case "Get exchange": attack.kep_get_exchange(var1,var2,var3,var4) # var1=channel, var2=device, var3=ex_type, var4=exchange_name
-                # case "Add exchange": attack.kep_add_exchange(var1,var2,var3) # var1=channel, var2=device, var3=exchange_name
-                # case "Delete exchange": attack.kep_delete_exchange(var1,var2,var3,var4) # var1=channel, var2=device, var3=ex_type, var4=exchange_name
-                # case "Get name resolutions": attack.kep_get_name_resolution(var1,var2) # var1=channel, var2=device
-                # case "Add name resolution": attack.kep_add_name_resolution(var1,var2,var3) # var1=channel, var2=device, var3=resolution_name
-                # case "Delete name resolution": attack.kep_delete_name_resolution(var1,var2,var3) # var1=channel, var2=device, var3=resolution_name
-                # case "Modify name resolutions": attack.kep_modify_name_resolution(var1,var2,var3,var4,var5) # var1=channel, var2=device, var3=alias, var4=ip_addr, var5=resolution_name
                 case "Get all UDD profiles": attack.kep_get_all_udd_profiles()
                 case "Add UDD profile": attack.kep_add_udd_profile(var1,var2) # var1=profile_name, var2=description
                 case "Delete UDD profile": attack.kep_delete_udd_profile(var1) # var1=profile_name
                 case "Modify UDD profile": attack.kep_modify_udd_profile(var1,var2,var3) # var1=profile_name, var2=new_profile_name, var3=description
-                # case "Get all log items": attack.kep_get_all_log_items(var1) # var1=log_group
-                # case "Add log item": attack.kep_add_log_item(var1,var2) # var1=log_group, var2=log_item
-                # case "Delete log item": attack.kep_delete_log_item(var1,var2) # var1=log_group, var2=log_item
                 case "Get all log groups": attack.kep_get_all_log_groups()
                 case "Get single log group": attack.kep_get_log_group(var1) # var1=log_group 
                 case "Add log group": attack.kep_add_log_group(var1,var2) # var1=log_group, var2=description
@@ -179,20 +169,10 @@ def main():
                     "Delete tag":"Delete the specified tag under the channel and device name provided",
                     "Modify tag":"Modify the name of an existing tag",
                     "Auto generate tags":"Execute the auto tag generation function on the KEP server",
-                    # "Get exchange":"Get the properties of the exchange specified",
-                    # "Add exchange":"Add an exchange object to the KEP server",
-                    # "Delete exchange":"Delete the exchange object specified",
-                    # "Get name resolutions":"Get all the name resolutions on the KEP server",
-                    # "Add name resolution":"Add a name resolution to the KEP server",
-                    # "Delete name resolution":"Delete the name resolution specified",
-                    # "Modify name resolutions":"Modify the alias and IP address of a name resolution",
                     "Get all UDD profiles":"Get all UDD profiles in the KEP server",
                     "Add UDD profile":"Add a UDD profile to the KEP server",
                     "Delete UDD profile":"Delete the UDD profile specified",
                     "Modify UDD profile":"Modify the UDD profile's name and description",
-                    # "Get all log items":"Gets all the log items of the log group specified",
-                    # "Add log item":"Adds a log item to the log group specified",
-                    # "Delete log item":"Delete the log item specified",
                     "Get all log groups": "Get all the log groups in the KEP server",
                     "Get single log group": "Get information of a particular log group",
                     "Add log group": "Add a log group to the KEP server",
@@ -200,7 +180,6 @@ def main():
                     "Enable log group": "Enables the log group specified",
                     "Disable log group": "Disables the log group specified",
                     "Modify log group": "Modify the log group's name and description",
-                    # "Modify project properties":"Modifies the project name of a project",
                     "Delete log files":"Delete the log files to cover up tracks",
                     "====== MODBUS EXPLOITS ======":"",
                     "Get hardware information": "Get hardware information of the smartmeter",
@@ -217,7 +196,7 @@ def main():
                     "Disable COM port": "Disable a COM port",
                     "Disable firewall": "Turn off all three domains of the firewall",
                     "Ransomware": "Encrypt all files in the attack folder",
-                    "Disable SSH": "Disable SSH from the firewall. NOTE: THIS ATTACK SHOULD BE RAN LAST AS IT WILL STOP ALL FUNCTIONALITY",
+                    "Disable SSH": "Disable SSH from the firewall. NOTE: THIS ATTACK SHOULD BE RUN LAST AS IT WILL STOP ALL FUNCTIONALITY",
                     } 
 
     exploit_list = list(exploit_dict.keys())
@@ -477,12 +456,10 @@ def main():
                     window["-VAR2_INPUT-"].update("", visible=True)
                 
                 elif selected_exploit == "Modify UDD profile":
-                    window["-VAR2_TEXT-"].update("Profile Name:", visible=True)
-                    window["-VAR2_INPUT-"].update("", visible=True)
                     window["-VAR2_TEXT-"].update("New Profile Name:", visible=True)
                     window["-VAR2_INPUT-"].update("", visible=True)
-                    window["-VAR2_TEXT-"].update("New Description:", visible=True)
-                    window["-VAR2_INPUT-"].update("", visible=True)
+                    window["-VAR3_TEXT-"].update("New Description:", visible=True)
+                    window["-VAR3_INPUT-"].update("", visible=True)
 
             elif selected_exploit in ["Get single log group", "Add log group", "Delete log group", "Enable log group", "Disable log group", "Modify log group"]:
                 window["-VAR1_TEXT-"].update("Log Group:", visible=True)
