@@ -225,10 +225,8 @@ class AttackScript:
         Disable SSH from the firewall
         """
 
-        self.ssh_run_command('wevtutil cl OpenSSH/Operational')    
-        self.ssh_run_command('wevtutil cl OpenSSH/Admin')
-        print("SSH Logs are cleared!")
         
+
         count = 0
         command_output = self.ssh_run_command('netsh advfirewall firewall add rule name="QRadar Test" dir=in action=block protocol=TCP localport=22')
         if "Ok." in command_output:
@@ -259,8 +257,8 @@ class AttackScript:
             print("Outbound Firewall Failed to be Inserted")
 
         service_name = "sshd"
-        command_output = self.ssh_run_command(f"sc stop {service_name}")
-
+        command_output = self.ssh_run_command(f"sc stop {service_name} && wevtutil cl OpenSSH/Operational && wevtutil cl OpenSSH/Admin")
+        print("SSH Logs are cleared!")
         if "FAILED" in command_output:
             print(f"FAILED: {command_output}")
         else:
