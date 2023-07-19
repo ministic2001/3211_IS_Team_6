@@ -971,7 +971,7 @@ class AttackScript:
         server = self.kep_connect()
         print(json.dumps(connectivity.udd.profile.get_all_profiles(server), indent=4))
 
-    def kep_modify_udd_profile(self, profile_name, new_profile_name, description):
+    def kep_modify_udd_profile(self, profile_name, description):
         server = self.kep_connect()
         print(json.dumps(connectivity.udd.profile.modify_profile(server, {"common.ALLTYPES_NAME": profile_name,
                                                                           "common.ALLTYPES_DESCRIPTION": description}), indent=4))

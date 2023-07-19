@@ -477,6 +477,8 @@ def main():
                     window["-VAR2_INPUT-"].update("", visible=True)
                 
                 elif selected_exploit == "Modify UDD profile":
+                    window["-VAR2_TEXT-"].update("Profile Name:", visible=True)
+                    window["-VAR2_INPUT-"].update("", visible=True)
                     window["-VAR2_TEXT-"].update("New Profile Name:", visible=True)
                     window["-VAR2_INPUT-"].update("", visible=True)
                     window["-VAR2_TEXT-"].update("New Description:", visible=True)
@@ -485,10 +487,6 @@ def main():
             elif selected_exploit in ["Get single log group", "Add log group", "Delete log group", "Enable log group", "Disable log group", "Modify log group"]:
                 window["-VAR1_TEXT-"].update("Log Group:", visible=True)
                 window["-VAR1_INPUT-"].update("", visible=True)
-                
-                # if selected_exploit in ["Add log item", "Delete log item"]:
-                #     window["-VAR2_TEXT-"].update("Log Item:", visible=True)
-                #     window["-VAR2_INPUT-"].update("", visible=True)
                 
                 if selected_exploit == "Add log group":
                     window["-VAR2_TEXT-"].update("Description:", visible=True)
