@@ -8,24 +8,21 @@
 
 
 <!-- PROJECT LOGO -->
+
 <br />
 <div align="center">
-
 <h3 align="center">IS-2: Hacking A Smart Meter Network</h3>
+<img src="https://github.com/ministic2001/3211_IS_Team_6/assets/94297073/d9a67d60-9d8b-4b70-8f7e-19a2c386a5c9" width="300" height="300">
 
 </div>
 
 # 3211_IS_Team_6
 
 <div align="center">
-Python 3.10 and above is required for this to work.
+Python 3.10 and above is required
 </div>
-<br />
 
-<div align="center">
-To install the packages, type the command pip install -r requirements.txt. 
 
-</div>
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ## Gaining Access to Server
@@ -92,11 +89,20 @@ List of things you need, to use the software and how to install them.
    
    ![SCR-20230626-l5x](https://github.com/ministic2001/3211_IS_Team_6/assets/94297073/00e9d49f-84e6-4c03-ac1c-bcfa34262d23)
 
-5. Execution of Scripts
+5. Bruteforce and Setup SSH and KEPConfig
+
+	From the list of attacks select "Bruteforce SSH",  and "Setup SSH Configuration an Key"
+	
+	![SCR-20230726-fx1](https://github.com/ministic2001/3211_IS_Team_6/assets/94297073/9403fe9f-fe98-434e-b9e5-8d3b7e609e29)
+	![SCR-20230727-fx2](https://github.com/ministic2001/3211_IS_Team_6/assets/94297073/94f6a6e5-5463-45d2-b355-ca75b4420392)
+
+6. Execution of Scripts
 
    From the dropdown list, select the attack to execute:
    
    ![SCR-20230626-l6s](https://github.com/ministic2001/3211_IS_Team_6/assets/94297073/4f1f28d7-07be-4435-a93e-3648716e7616)
+
+
 
 
 
@@ -123,6 +129,5 @@ Distributed under the MIT License. See `LICENSE.md` for more information.
 [issues-url]: https://github.com/ministic2001/3211_IS_Team_6/issues
 [license-shield]: https://img.shields.io/github/license/ministic2001/3211_IS_Team_6.svg?style=for-the-badge
 [license-url]: https://github.com/ministic2001/3211_IS_Team_6/blob/master/LICENSE.md
-[product-screenshot]: images/screenshot.png
 [Python-logo]: https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54
 [Python-url]: https://www.python.org/
