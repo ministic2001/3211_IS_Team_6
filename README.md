@@ -31,8 +31,7 @@ To install the packages, type the command pip install -r requirements.txt.
 ## Gaining Access to Server
 
 <div align="center">
-  
-Execute the bruteforce attack, setup SSH key from the dashboard to gain SSH access for the program to work.
+This GUI is meant to work with the Smartmeter laptop. If not done so, or the resources/accessKey is invalid/not present, execute the bruteforce attack, run "Setup SSH configuration and key" from the dashboard to gain SSH access for the program to work.
 
 </div>
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
