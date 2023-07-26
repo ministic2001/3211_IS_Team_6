@@ -146,7 +146,7 @@ def main():
                     "Delete user":"Delete the user specified",
                     "Enable user":"Enables the user specified",
                     "Disable user":"Disable the user specified",
-                    "Modify user":"Modify the description, groupname and password of the specified user",
+                    "Modify user":"Modify the description, groupname and password of the specified user. (Note: password must be 14 characters or more)",
                     "Get all user group":"Get all user groups in the KEP server",
                     "Get single user group":"Get the information of a particular user group",
                     "Add user group":"Add a user group to the KEP server",

@@ -91,7 +91,7 @@ class AttackScript:
                 ssh.connect(self.WINDOWS_SERVER_IP, username=self.USERNAME, pkey=private_key)
             if self.PASSWORD is not None:
                 # Connect using password
-                ssh.connect(self.WINDOWS_SERVER_IP, username=self.USERNAME, password=self.PASSWORD)
+                ssh.connect(self.WINDOWS_SERVER_IP, username=self.USERNAME, password=self.PASSWORD, timeout=15)
             else:
                 # Handle case when neither password nor private key is provided
                 print("Please provide either a password or a private key.")
